@@ -1,0 +1,164 @@
+/* Variáveis de Cores para Tema Dark */
+:root {
+  --primary-color: #5d98ff; /* Azul claro para destaque */
+  --secondary-color: #adb5bd; /* Cinza claro para texto secundário */
+  --background-dark: #1e1e2d; /* Fundo principal escuro */
+  --surface-dark: #27293d; /* Fundo de cartões/sidebar (Superfície) */
+  --text-light: #f8f9fa; /* Cor principal do texto */
+  --border-dark: #3a3b50; /* Cor da borda suave */
+  --hover-dark: #33364f; /* Cor para hover/seleção sutil */
+}
+
+/* Base e Tipografia */
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--background-dark);
+  color: var(--text-light);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Estrutura Principal */
+.main {
+  flex: 1;
+  padding: 30px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--surface-dark);
+  padding: 30px 0;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4); /* Sombra mais profunda */
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar h2 {
+  font-size: 20px;
+  color: var(--primary-color);
+  padding: 0 20px;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.nav-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  margin: 4px 0;
+  transition: background-color 0.3s, color 0.3s;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+/* Item de navegação em Hover */
+.nav-item:hover {
+  background: var(--hover-dark); 
+  color: var(--primary-color);
+}
+
+/* Item de navegação Ativo (Ex: Início) */
+.nav-item:first-child { 
+    background: var(--primary-color);
+    color: var(--background-dark); /* Texto escuro sobre o azul */
+    border-radius: 0 20px 20px 0;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(93, 152, 255, 0.4);
+}
+
+/* Cards de Métricas */
+.cards {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: var(--surface-dark);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Sombra mais destacada */
+  flex: 1;
+  min-width: 250px;
+  transition: transform 0.3s;
+  border: 1px solid var(--border-dark); /* Borda sutil para separar superfícies */
+}
+
+.card:hover {
+    transform: translateY(-3px); 
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.card h3 {
+  font-size: 15px;
+  color: var(--secondary-color);
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card p {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* Tabela */
+#candidatesTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface-dark);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+th, td {
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-dark); /* Borda escura suave */
+  border-right: none;
+}
+
+/* Remove a borda do último elemento para manter a tabela limpa */
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+thead tr {
+    /* Fundo ligeiramente diferente para o cabeçalho */
+    background: #2e3047; 
+    color: var(--primary-color);
+}
+
+th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+/* Linhas pares (Zebra-striping) */
+tbody tr:nth-child(even) {
+  background-color: #232537; 
+}
+
+/* Destaque da linha ao passar o mouse */
+tbody tr:hover {
+  background-color: var(--hover-dark); 
+  cursor: pointer;
+}
+
+/* Estilo para a célula 'Nenhum candidato' */
+table tbody tr td[colspan="5"] {
+    text-align: center;
+    color: var(--secondary-color) !important;
+    font-style: italic;
+    padding: 40px 20px;
+    background-color: var(--surface-dark);
+}
