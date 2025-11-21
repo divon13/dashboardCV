@@ -31,3 +31,20 @@ async function carregarUsuarios() {
 }
 
 carregarUsuarios();
+
+async function carregarCandidatos() {
+  const { count, error } = await supabaseClient.from("candidatos").select("*", { count: "exact" });
+  
+  if (error) {
+    console.error("Erro ao carregar contagem de candidatos:", error);
+    return;
+  } else {
+    const totalCandidatos = count || 0;
+    const candidateCountElement = document.querySelector(".card:first-child p")
+    if (candidateCountElement) {
+      candidateCountElement.textContent = totalCandidatos;
+    }
+  }
+}
+
+carregarCandidatos();
