@@ -51,6 +51,8 @@ body {
   font-size: 15px;
   display: flex;
   align-items: center;
+  text-decoration: none;
+  color: white ;
 }
 
 /* Item de navegação em Hover */
