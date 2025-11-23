@@ -1,3 +1,74 @@
+.form-group select {
+  background: #232537;
+  color: var(--text-light);
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 15px;
+}
+.vaga-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.btn-add-vaga {
+  background: var(--primary-color);
+  color: var(--background-dark);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(93,152,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, color 0.3s;
+}
+.btn-add-vaga:hover {
+  background: var(--hover-dark);
+  color: var(--primary-color);
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background: rgba(30,30,45,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: var(--surface-dark);
+  padding: 32px 28px 24px 28px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  min-width: 340px;
+  max-width: 420px;
+  position: relative;
+}
+.close {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  font-size: 28px;
+  color: var(--secondary-color);
+  cursor: pointer;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+.close:hover {
+  color: var(--primary-color);
+}
 /* Variáveis de Cores para Tema Dark */
 :root {
   --primary-color: #5d98ff; /* Azul claro para destaque */
@@ -27,7 +98,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-  width: 220px;
+  width: 180px;
   background: var(--surface-dark);
   padding: 30px 0;
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4); /* Sombra mais profunda */
@@ -41,6 +112,7 @@ body {
   padding: 0 20px;
   margin-bottom: 30px;
   font-weight: 600;
+  text-align: center;
 }
 
 .nav-item {
@@ -163,4 +235,86 @@ table tbody tr td[colspan="5"] {
     font-style: italic;
     padding: 40px 20px;
     background-color: var(--surface-dark);
+}
+
+/* CRUD Vagas */
+.main {
+  flex: 1;
+  padding: 30px;
+}
+
+.vaga-form {
+  background: var(--surface-dark);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  margin-bottom: 30px;
+  max-width: 500px;
+}
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.form-group label {
+  color: var(--primary-color);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.form-group input,
+.form-group textarea {
+  background: #232537;
+  color: var(--text-light);
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 15px;
+  resize: none;
+}
+.form-group textarea {
+  min-height: 60px;
+}
+#btnSalvar, #btnCancelar {
+  background: var(--primary-color);
+  color: var(--background-dark);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-top: 10px;
+  transition: background 0.3s, color 0.3s;
+}
+#btnSalvar:hover, #btnCancelar:hover {
+  background: var(--hover-dark);
+  color: var(--primary-color);
+}
+
+#vagasTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface-dark);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn-editar, .btn-apagar {
+  background: var(--primary-color);
+  color: var(--background-dark);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: background 0.3s, color 0.3s;
+}
+.btn-editar:hover, .btn-apagar:hover {
+  background: var(--hover-dark);
+  color: var(--primary-color);
 }

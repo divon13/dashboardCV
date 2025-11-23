@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="./css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- JS -->
+  <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/dashboard.js" defer></script>
 </head>
 <body>
     
@@ -15,5 +20,55 @@
     <a class="nav-item" href="vagas.html">💼 Vagas</a>
     <a class="nav-item" href="definicoes.html">⚙️ Definições</a>
   </div>
+    <div class="main">
+
+      <div class="vaga-header">
+        <h1>Gestão de Vagas</h1>
+        <button id="btnAbrirModal" class="btn-add-vaga">+</button>
+      </div>
+
+      <div id="vagaModal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" id="btnFecharModal">&times;</span>
+          <form id="vagaForm" class="vaga-form">
+            <input type="hidden" id="vagaId">
+            <div class="form-group">
+              <label for="titulo">Título da Vaga</label>
+              <input type="text" id="titulo" required>
+            </div>
+            <div class="form-group">
+              <label for="descricao">Descrição</label>
+              <textarea id="descricao" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="requisitos">Requisitos</label>
+              <textarea id="requisitos" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="dataEncerramento">Data de Encerramento</label>
+              <input type="date" id="dataEncerramento" required>
+            </div>
+            <button type="submit" id="btnSalvar">Salvar Vaga</button>
+            <button type="button" id="btnCancelar">Cancelar</button>
+          </form>
+        </div>
+      </div>
+
+      <h2>Vagas Abertas</h2>
+      <table id="vagasTable">
+        <thead>
+          <tr>
+            <th><strong>Título</strong></th>
+            <th><strong>Descrição</strong></th>
+            <th><strong>Requisitos</strong></th>
+            <th><strong>Status</strong></th>
+            <th><strong>Data de Abertura</strong></th>
+            <th><strong>Data de Encerramento</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
 </body>
 </html>
