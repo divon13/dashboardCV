@@ -13,24 +13,54 @@
   margin-bottom: 20px;
 }
 .btn-add-vaga {
-  background: var(--primary-color);
-  color: var(--background-dark);
-  border: none;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  font-size: 32px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(93,152,255,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s, color 0.3s;
+    /* Base */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 40px;
+    width: 40px;
+    padding: 0 14px;
+    border-radius: 20px;
+    border: none;
+    background-color: #3f5efb;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+
+    /* Efeito */
+    overflow: hidden;
+    transition: width 0.35s ease, background-color 0.3s ease;
 }
+
+/* Ícone */
+.icone-btn {
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+/* Texto */
+.texto-btn {
+    white-space: nowrap;
+    margin-left: 8px;
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+/* Hover */
 .btn-add-vaga:hover {
-  background: var(--hover-dark);
-  color: var(--primary-color);
+    width: 150px;
+    background-color: #fc466b;
+}
+
+.btn-add-vaga:hover .texto-btn {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.btn-add-vaga:hover .icone-btn {
+    transform: rotate(90deg);
 }
 
 /* Modal */
