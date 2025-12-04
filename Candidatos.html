@@ -1,19 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="./css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- JS -->
+  <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/dashboard.js" defer></script>
+  <title>Dashboard RH</title>
 </head>
 <body>
-    
-  <div class="sidebar">
+
+ <div class="sidebar">
     <h2>Menu</h2>
     <a class="nav-item" href="index.html">🏠 Início</a>
     <a class="nav-item" href="Candidatos.html">👤 Candidatos</a>
     <a class="nav-item" href="vagas.html">💼 Vagas</a>
     <a class="nav-item" href="definicoes.html">⚙️ Definições</a>
   </div>
+
+  <div class="main">
+    <div class="cards">
+      <div class="card">
+        <h3>Total de Candidatos</h3>
+        <p>0</p>
+      </div>
+      <div class="card">
+        <h3>Taxa de Contratação</h3>
+        <p>0%</p>
+      </div>
+    </div>
+
+    <table id="candidatesTable">
+      <thead>
+        <tr>
+            <th><strong>Nome</strong></th>
+            <th><strong>Email</strong></th>
+            <th><strong>Endereço</strong></th>
+            <th><strong>Nota Final</strong></th>
+            <th><strong>Vagas Sugerida</strong></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="4" style="text-align:center; color:#777; padding:20px;">Nenhum candidato carregado</td></tr>
+      </tbody>
+    </table>
+  </div>
+
 </body>
 </html>

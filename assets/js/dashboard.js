@@ -83,6 +83,22 @@ async function carregarCandidatos() {
 }
 
 carregarCandidatos();
+async function carregarVagasAbertas() {
+  const { count, error } = await supabaseClient.from("Vagas").select("*", { count: "exact" }).eq('status_vagas', 'aberta');
+
+  if (error) {
+    console.error("Erro ao carregar contagem de vagas abertas:", error);
+    return;
+  } else {
+    const totalVagasAbertas = count || 0;
+    const vagasAbertasCountElement = document.querySelector(".card:nth-child(3) p")
+    if (vagasAbertasCountElement) {
+      vagasAbertasCountElement.textContent = totalVagasAbertas;
+    }
+  }
+}
+
+carregarVagasAbertas();
 
 // CRUD Vagas - Modal
 
@@ -127,3 +143,40 @@ function formatarData(dataISO) {
   const min = String(data.getMinutes()).padStart(2, '0');
   return `${dia}/${mes}/${ano} (${hora}:${min})`;
 }
+
+// 4. meter dados do formulário no banco de dados
+vagaForm.addEventListener('submit', async (event) => {
+    event.preventDefault(); 
+
+    // Coleta os dados do formulário
+    const Titulo = document.getElementById('titulo').value;
+    const Descricao = document.getElementById('descricao').value;
+    const Requisitos = document.getElementById('requisitos').value;
+    const AdminID = 1 ; // placeholder
+    const data_encerramento = document.getElementById('dataEncerramento').value;
+
+    const dadosVaga = {
+        Titulo,
+        Descricao,
+        Requisitos,
+        data_encerramento,
+        AdminID
+    };
+
+    console.log('Tentando inserir nova vaga:', dadosVaga);
+
+    const { data, error } = await supabaseClient
+        .from('Vagas')
+        .insert([dadosVaga])
+        .select(); 
+
+    if (error) {
+        console.error('❌ Erro ao criar a vaga:', error.message);
+        alert('Erro ao criar a vaga: ' + error.message);
+    } else {
+        console.log('✅ Vaga criada com sucesso:', data[0]);
+        carregarVagas();
+        document.getElementById('vagaModal').style.display = 'none';
+        document.getElementById('vagaForm').reset();
+    }
+});
