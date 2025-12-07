@@ -33,35 +33,85 @@ async function carregarUsuarios() {
 carregarUsuarios();
 
 async function carregarVagas() {
+  // Pega as vagas e inclui os candidatos relacionados para poder contar
   const { data, error } = await supabaseClient
     .from("Vagas")
-    .select("*");
+    .select("*, candidatos(id)")
+    .order('id', { ascending: false });
 
   if (error) {
-    console.error("Erro ao carregar:", error);
+    console.error("Erro ao carregar vagas:", error);
     return;
   }
 
-  const tbody = document.querySelector("#vagasTable tbody");
-  if (!tbody) {
-    console.error("Tabela não encontrada: #vagasTable tbody");
+  const container = document.getElementById('vagasContainer');
+  if (!container) {
+    console.error('Container de vagas não encontrado: #vagasContainer');
     return;
   }
-  tbody.innerHTML = "";
+  container.innerHTML = '';
 
-  data.forEach(Vagas => {
-    const tr = document.createElement("tr");
+  data.forEach(vaga => {
+    const card = document.createElement('div');
+    card.className = 'card-vaga';
+    // calcula quantidade de candidatos a partir do relacionamento retornado
+    const candidatosCount = vaga.candidatos ? vaga.candidatos.length : 0;
 
-    tr.innerHTML = `
-    <td>${Vagas.Titulo}</td>
-    <td>${Vagas.Descricao}</td>
-    <td>${Vagas.Requisitos}</td>
-    <td>${Vagas.status_vagas}</td>
-    <td>${formatarData(Vagas.data_abertura)}</td>
-    <td>${formatarData(Vagas.data_encerramento)}</td>
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="title-area">
+          <div class="job-title">${vaga.Titulo || ''}</div>
+          <div class="chip-status">${vaga.status_vagas || 'aberto'}</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-link view-btn" data-id="${vaga.id}">View Details</button>
+          <button class="btn-link edit-btn" data-id="${vaga.id}">Edit</button>
+          <button class="btn-link delete-btn" data-id="${vaga.id}">Delete</button>
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span>🗓️ ${vaga.data_abertura ? formatarData(vaga.data_abertura) : ''}</span>
+        <span>👤 ${candidatosCount} candidatos</span>
+      </div>
     `;
+    container.appendChild(card);
+  });
 
-    tbody.appendChild(tr);
+  // eventos
+  container.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.getAttribute('data-id');
+      const vaga = data.find(v => v.id == id);
+      if (!vaga) return;
+      document.getElementById('vagaId').value = vaga.id;
+      document.getElementById('titulo').value = vaga.Titulo || '';
+      document.getElementById('descricao').value = vaga.Descricao || '';
+      document.getElementById('requisitos').value = vaga.Requisitos || '';
+      document.getElementById('dataEncerramento').value = vaga.data_encerramento ? vaga.data_encerramento.substring(0,10) : '';
+      document.getElementById('vagaModal').style.display = 'flex';
+    };
+  });
+
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.onclick = async function() {
+      const id = this.getAttribute('data-id');
+      if (!confirm('Tem certeza que deseja apagar esta vaga?')) return;
+      const { error } = await supabaseClient.from('Vagas').delete().eq('id', id);
+      if (error) {
+        alert('Erro ao apagar vaga: ' + error.message);
+      } else {
+        carregarVagas();
+      }
+    };
+  });
+
+  container.querySelectorAll('.view-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.getAttribute('data-id');
+      const vaga = data.find(v => v.id == id);
+      if (!vaga) return;
+      alert(`\n${vaga.Titulo}\n\n${vaga.Descricao}`);
+    };
   });
 }
 
@@ -110,6 +160,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (btnAbrirModal && vagaModal) {
     btnAbrirModal.onclick = function() {
+      // Limpa o formulário para criar nova vaga
+      document.getElementById('vagaForm').reset();
+      document.getElementById('vagaId').value = '';
       vagaModal.style.display = 'flex';
     };
   }
@@ -146,37 +199,55 @@ function formatarData(dataISO) {
 
 // 4. meter dados do formulário no banco de dados
 vagaForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); 
+  event.preventDefault();
 
-    // Coleta os dados do formulário
-    const Titulo = document.getElementById('titulo').value;
-    const Descricao = document.getElementById('descricao').value;
-    const Requisitos = document.getElementById('requisitos').value;
-    const AdminID = 1 ; // placeholder
-    const data_encerramento = document.getElementById('dataEncerramento').value;
+  // Coleta os dados do formulário
+  const id = document.getElementById('vagaId').value;
+  const Titulo = document.getElementById('titulo').value;
+  const Descricao = document.getElementById('descricao').value;
+  const Requisitos = document.getElementById('requisitos').value;
+  const data_encerramento = document.getElementById('dataEncerramento').value;
+  const AdminID = 1; // placeholder
 
-    const dadosVaga = {
-        Titulo,
-        Descricao,
-        Requisitos,
-        data_encerramento,
-        AdminID
-    };
+  const dadosVaga = {
+    Titulo,
+    Descricao,
+    Requisitos,
+    data_encerramento,
+    AdminID
+  };
 
-    console.log('Tentando inserir nova vaga:', dadosVaga);
+  try {
+    if (id) {
+      // Atualiza vaga existente
+      console.log('Atualizando vaga id=', id, dadosVaga);
+      const { data, error } = await supabaseClient
+        .from('Vagas')
+        .update(dadosVaga)
+        .eq('id', id)
+        .select();
 
-    const { data, error } = await supabaseClient
+      if (error) throw error;
+      console.log('Vaga atualizada:', data[0]);
+    } else {
+      // Insere nova vaga
+      console.log('Inserindo nova vaga:', dadosVaga);
+      const { data, error } = await supabaseClient
         .from('Vagas')
         .insert([dadosVaga])
-        .select(); 
+        .select();
 
-    if (error) {
-        console.error('❌ Erro ao criar a vaga:', error.message);
-        alert('Erro ao criar a vaga: ' + error.message);
-    } else {
-        console.log('✅ Vaga criada com sucesso:', data[0]);
-        carregarVagas();
-        document.getElementById('vagaModal').style.display = 'none';
-        document.getElementById('vagaForm').reset();
+      if (error) throw error;
+      console.log('Vaga criada:', data[0]);
     }
+
+    // sucesso: recarrega e fecha modal
+    carregarVagas();
+    document.getElementById('vagaModal').style.display = 'none';
+    document.getElementById('vagaForm').reset();
+    document.getElementById('vagaId').value = '';
+  } catch (err) {
+    console.error('Erro ao salvar vaga:', err.message || err);
+    alert('Erro ao salvar vaga: ' + (err.message || err));
+  }
 });

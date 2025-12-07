@@ -31,47 +31,46 @@
       </div>
 
       <div id="vagaModal" class="modal" style="display:none;">
-        <div class="modal-content">
-          <span class="close" id="btnFecharModal">&times;</span>
-          <form id="vagaForm" class="vaga-form">
+        <div class="modal-content-vaga">
+          <div class="modal-header">
+            <h2>Adicionar/Editar Vaga</h2>
+            <span class="close" id="btnFecharModal">&times;</span>
+          </div>
+          <form id="vagaForm" class="vaga-form-v2">
             <input type="hidden" id="vagaId">
-            <div class="form-group">
-              <label for="titulo">Título da Vaga</label>
-              <input type="text" id="titulo" required>
+            
+            <div class="form-group-v2">
+              <label for="titulo">📌 Título da Vaga</label>
+              <input type="text" id="titulo" placeholder="ex: Senior Frontend Developer" required>
             </div>
-            <div class="form-group">
-              <label for="descricao">Descrição</label>
-              <textarea id="descricao" required></textarea>
+
+            <div class="form-group-v2">
+              <label for="descricao">📝 Descrição</label>
+              <textarea id="descricao" placeholder="Descreva a função e responsabilidades..." required></textarea>
             </div>
-            <div class="form-group">
-              <label for="requisitos">Requisitos</label>
-              <textarea id="requisitos" required></textarea>
+
+            <div class="form-group-v2">
+              <label for="requisitos">✅ Requisitos</label>
+              <textarea id="requisitos" placeholder="Liste os requisitos obrigatórios..." required></textarea>
             </div>
-            <div class="form-group">
-              <label for="dataEncerramento">Data de Encerramento</label>
+
+            <div class="form-group-v2">
+              <label for="dataEncerramento">📅 Data de Encerramento</label>
               <input type="date" id="dataEncerramento" required>
             </div>
-            <button type="submit" id="btnSalvar">Salvar Vaga</button>
-            <button type="button" id="btnCancelar">Cancelar</button>
+
+            <div class="form-actions">
+              <button type="button" id="btnCancelar" class="btn-cancel">Cancelar</button>
+              <button type="submit" id="btnSalvar" class="btn-submit">Salvar Vaga</button>
+            </div>
           </form>
         </div>
       </div>
 
       <h2>Vagas Abertas</h2>
-      <table id="vagasTable">
-        <thead>
-          <tr>
-            <th><strong>Título</strong></th>
-            <th><strong>Descrição</strong></th>
-            <th><strong>Requisitos</strong></th>
-            <th><strong>Status</strong></th>
-            <th><strong>Data de Abertura</strong></th>
-            <th><strong>Data de Encerramento</strong></th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
+      <div id="vagasContainer" class="cards-vagas">
+        <!-- Os cartões de vaga serão inseridos aqui via JS -->
+      </div>
     </div>
 </body>
 </html>
