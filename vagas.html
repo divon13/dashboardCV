@@ -30,6 +30,24 @@
         </button>
       </div>
 
+      <!-- Modal de Confirmação de Exclusão -->
+      <div id="confirmDeleteModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:420px;">
+          <div class="modal-header">
+            <h2>Confirmar Exclusão</h2>
+            <span class="close" id="fecharConfirmDelete">&times;</span>
+          </div>
+          <div class="modal-body" style="padding:18px;">
+            <p>Tem certeza que deseja apagar esta vaga? Esta ação não pode ser desfeita.</p>
+            <p id="deleteVagaTitulo" style="color:var(--secondary-color); margin-top:8px;"></p>
+          </div>
+          <div class="modal-actions" style="padding:14px; display:flex; justify-content:flex-end; gap:8px;">
+            <button id="cancelarDeleteBtn" class="btn-cancel">Cancelar</button>
+            <button id="confirmarDeleteBtn" class="btn-submit" style="background:#fc466b;">Apagar</button>
+          </div>
+        </div>
+      </div>
+
       <div id="vagaModal" class="modal" style="display:none;">
         <div class="modal-content-vaga">
           <div class="modal-header">
@@ -67,9 +85,32 @@
         </div>
       </div>
 
+      <!-- Modal de Detalhes da Vaga -->
+      <div id="vagaDetalhesModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:700px;">
+          <div class="modal-header">
+            <h2>Detalhes da Vaga</h2>
+            <span class="close" id="fecharDetalhes">&times;</span>
+          </div>
+          <div class="modal-body" style="padding:22px;">
+            <p><strong>Título:</strong> <span id="det-titulo"></span></p>
+            <p><strong>Descrição:</strong></p>
+            <p id="det-descricao" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
+            <p><strong>Requisitos:</strong></p>
+            <p id="det-requisitos" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
+            <p style="margin-top:12px;"><strong>Status:</strong> <span id="det-status"></span></p>
+            <p><strong>Data de Abertura:</strong> <span id="det-abertura"></span></p>
+            <p><strong>Data de Encerramento:</strong> <span id="det-encerramento"></span></p>
+          </div>
+          <div class="modal-actions" style="padding:18px; display:flex; justify-content:flex-end; gap:8px;">
+            <button id="fecharDetalhesBtn" class="btn-cancel">Fechar</button>
+          </div>
+        </div>
+      </div>
+
       <h2>Vagas Abertas</h2>
       <div id="vagasContainer" class="cards-vagas">
-        <!-- Os cartões de vaga serão inseridos aqui via JS -->
+        <!-- cartoes do Js -->
       </div>
     </div>
 </body>

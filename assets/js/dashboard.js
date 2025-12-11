@@ -64,9 +64,9 @@ async function carregarVagas() {
           <div class="chip-status">${vaga.status_vagas || 'aberto'}</div>
         </div>
         <div class="card-actions">
-          <button class="btn-link view-btn" data-id="${vaga.id}">View Details</button>
-          <button class="btn-link edit-btn" data-id="${vaga.id}">Edit</button>
-          <button class="btn-link delete-btn" data-id="${vaga.id}">Delete</button>
+          <button class="btn-link view-btn" data-id="${vaga.id}">Ver detalhes</button>
+          <button class="btn-link edit-btn" data-id="${vaga.id}">Editar</button>
+          <button class="btn-link delete-btn" data-id="${vaga.id}">Apagar</button>
         </div>
       </div>
       <div class="card-bottom">
@@ -93,15 +93,17 @@ async function carregarVagas() {
   });
 
   container.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.onclick = async function() {
+    btn.onclick = function() {
       const id = this.getAttribute('data-id');
-      if (!confirm('Tem certeza que deseja apagar esta vaga?')) return;
-      const { error } = await supabaseClient.from('Vagas').delete().eq('id', id);
-      if (error) {
-        alert('Erro ao apagar vaga: ' + error.message);
-      } else {
-        carregarVagas();
-      }
+      const vaga = data.find(v => v.id == id);
+      if (!vaga) return;
+      // abre modal de confirmação e mostra título
+      const confirmModal = document.getElementById('confirmDeleteModal');
+      const deleteTitulo = document.getElementById('deleteVagaTitulo');
+      const confirmarBtn = document.getElementById('confirmarDeleteBtn');
+      if (deleteTitulo) deleteTitulo.textContent = vaga.Titulo ? `Vaga: ${vaga.Titulo}` : '';
+      if (confirmarBtn) confirmarBtn.setAttribute('data-id', id);
+      if (confirmModal) confirmModal.style.display = 'flex';
     };
   });
 
@@ -110,7 +112,23 @@ async function carregarVagas() {
       const id = this.getAttribute('data-id');
       const vaga = data.find(v => v.id == id);
       if (!vaga) return;
-      alert(`\n${vaga.Titulo}\n\n${vaga.Descricao}`);
+      // popular campos do modal de detalhes
+      const detTitulo = document.getElementById('det-titulo');
+      const detDescricao = document.getElementById('det-descricao');
+      const detRequisitos = document.getElementById('det-requisitos');
+      const detStatus = document.getElementById('det-status');
+      const detAbertura = document.getElementById('det-abertura');
+      const detEncerramento = document.getElementById('det-encerramento');
+
+      if (detTitulo) detTitulo.textContent = vaga.Titulo || '';
+      if (detDescricao) detDescricao.textContent = vaga.Descricao || '';
+      if (detRequisitos) detRequisitos.textContent = vaga.Requisitos || '';
+      if (detStatus) detStatus.textContent = vaga.status_vagas || '';
+      if (detAbertura) detAbertura.textContent = vaga.data_abertura ? formatarData(vaga.data_abertura) : '';
+      if (detEncerramento) detEncerramento.textContent = vaga.data_encerramento ? formatarData(vaga.data_encerramento) : '';
+
+      const detalhesModal = document.getElementById('vagaDetalhesModal');
+      if (detalhesModal) detalhesModal.style.display = 'flex';
     };
   });
 }
@@ -158,6 +176,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const btnFecharModal = document.getElementById('btnFecharModal');
   const btnCancelar = document.getElementById('btnCancelar');
 
+  // Modal de confirmação de exclusão
+  const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+  const fecharConfirmDelete = document.getElementById('fecharConfirmDelete');
+  const cancelarDeleteBtn = document.getElementById('cancelarDeleteBtn');
+  const confirmarDeleteBtn = document.getElementById('confirmarDeleteBtn');
+  // Modal de detalhes
+  const detalhesModal = document.getElementById('vagaDetalhesModal');
+  const fecharDetalhes = document.getElementById('fecharDetalhes');
+  const fecharDetalhesBtn = document.getElementById('fecharDetalhesBtn');
+
   if (btnAbrirModal && vagaModal) {
     btnAbrirModal.onclick = function() {
       // Limpa o formulário para criar nova vaga
@@ -177,12 +205,56 @@ document.addEventListener('DOMContentLoaded', function() {
       vagaModal.style.display = 'none';
     };
   }
-  // Fecha modal ao clicar fora do conteúdo
+
+  // Handlers para modal de confirmação
+  if (fecharConfirmDelete && confirmDeleteModal) {
+    fecharConfirmDelete.onclick = function() { confirmDeleteModal.style.display = 'none'; };
+  }
+  if (cancelarDeleteBtn && confirmDeleteModal) {
+    cancelarDeleteBtn.onclick = function() { confirmDeleteModal.style.display = 'none'; };
+  }
+  if (confirmarDeleteBtn && confirmDeleteModal) {
+    confirmarDeleteBtn.onclick = async function() {
+      const id = this.getAttribute('data-id');
+      if (!id) return;
+      const { error } = await supabaseClient.from('Vagas').delete().eq('id', id);
+      if (error) {
+        alert('Erro ao apagar vaga: ' + error.message);
+      } else {
+        carregarVagas();
+      }
+      confirmDeleteModal.style.display = 'none';
+    };
+  }
+
+  // Fecha modais ao clicar fora do conteúdo
   window.onclick = function(event) {
     if (event.target === vagaModal) {
       vagaModal.style.display = 'none';
     }
+    if (confirmDeleteModal && event.target === confirmDeleteModal) {
+      confirmDeleteModal.style.display = 'none';
+    }
+    if (detalhesModal && event.target === detalhesModal) {
+      detalhesModal.style.display = 'none';
+    }
   };
+
+  // Fecha modais com ESC
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (vagaModal && vagaModal.style.display === 'flex') vagaModal.style.display = 'none';
+      if (confirmDeleteModal && confirmDeleteModal.style.display === 'flex') confirmDeleteModal.style.display = 'none';
+      if (detalhesModal && detalhesModal.style.display === 'flex') detalhesModal.style.display = 'none';
+    }
+  });
+  // Handlers para modal de detalhes (X e botão Fechar)
+  if (fecharDetalhes && detalhesModal) {
+    fecharDetalhes.onclick = function() { detalhesModal.style.display = 'none'; };
+  }
+  if (fecharDetalhesBtn && detalhesModal) {
+    fecharDetalhesBtn.onclick = function() { detalhesModal.style.display = 'none'; };
+  }
 });
 
 function formatarData(dataISO) {
