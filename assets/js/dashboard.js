@@ -70,7 +70,7 @@ async function carregarVagas() {
         </div>
       </div>
       <div class="card-bottom">
-        <span>🗓️ ${vaga.data_abertura ? formatarData(vaga.data_abertura) : ''}</span>
+        <span>🗓️ ${vaga.data_encerramento ? formatarData(vaga.data_encerramento) : ''}</span>
         <span>👤 ${candidatosCount} candidatos</span>
       </div>
     `;
