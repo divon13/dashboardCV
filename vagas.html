@@ -14,7 +14,7 @@
 <body>
     
   <div class="sidebar">
-    <h2>Menu</h2>
+    <img src="midia/logo.png" alt="" class="logo-sidebar">
     <a class="nav-item" href="index.html">🏠 Início</a>
     <a class="nav-item" href="Candidatos.html">👤 Candidatos</a>
     <a class="nav-item" href="vagas.html">💼 Vagas</a>
@@ -24,51 +24,94 @@
 
       <div class="vaga-header">
         <h1>Gestão de Vagas</h1>
-        <button id="btnAbrirModal" class="btn-add-vaga">+</button>
+        <button id="btnAbrirModal" class="btn-add-vaga">
+          <span class="icone-btn">+</span>
+          <span class="texto-btn">Adicionar Vaga</span>
+        </button>
+      </div>
+
+      <!-- Modal de Confirmação de Exclusão -->
+      <div id="confirmDeleteModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:420px;">
+          <div class="modal-header">
+            <h2>Confirmar Exclusão</h2>
+            <span class="close" id="fecharConfirmDelete">&times;</span>
+          </div>
+          <div class="modal-body" style="padding:18px;">
+            <p>Tem certeza que deseja apagar esta vaga? Esta ação não pode ser desfeita.</p>
+            <p id="deleteVagaTitulo" style="color:var(--secondary-color); margin-top:8px;"></p>
+          </div>
+          <div class="modal-actions" style="padding:14px; display:flex; justify-content:flex-end; gap:8px;">
+            <button id="cancelarDeleteBtn" class="btn-cancel">Cancelar</button>
+            <button id="confirmarDeleteBtn" class="btn-submit" style="background:#fc466b;">Apagar</button>
+          </div>
+        </div>
       </div>
 
       <div id="vagaModal" class="modal" style="display:none;">
-        <div class="modal-content">
-          <span class="close" id="btnFecharModal">&times;</span>
-          <form id="vagaForm" class="vaga-form">
+        <div class="modal-content-vaga">
+          <div class="modal-header">
+            <h2>Adicionar/Editar Vaga</h2>
+            <span class="close" id="btnFecharModal">&times;</span>
+          </div>
+          <form id="vagaForm" class="vaga-form-v2">
             <input type="hidden" id="vagaId">
-            <div class="form-group">
-              <label for="titulo">Título da Vaga</label>
-              <input type="text" id="titulo" required>
+            
+            <div class="form-group-v2">
+              <label for="titulo">📌 Título da Vaga</label>
+              <input type="text" id="titulo" placeholder="ex: Senior Frontend Developer" required>
             </div>
-            <div class="form-group">
-              <label for="descricao">Descrição</label>
-              <textarea id="descricao" required></textarea>
+
+            <div class="form-group-v2">
+              <label for="descricao">📝 Descrição</label>
+              <textarea id="descricao" placeholder="Descreva a função e responsabilidades..." required></textarea>
             </div>
-            <div class="form-group">
-              <label for="requisitos">Requisitos</label>
-              <textarea id="requisitos" required></textarea>
+
+            <div class="form-group-v2">
+              <label for="requisitos">✅ Requisitos</label>
+              <textarea id="requisitos" placeholder="Liste os requisitos obrigatórios..." required></textarea>
             </div>
-            <div class="form-group">
-              <label for="dataEncerramento">Data de Encerramento</label>
+
+            <div class="form-group-v2">
+              <label for="dataEncerramento">📅 Data de Encerramento</label>
               <input type="date" id="dataEncerramento" required>
             </div>
-            <button type="submit" id="btnSalvar">Salvar Vaga</button>
-            <button type="button" id="btnCancelar">Cancelar</button>
+
+            <div class="form-actions">
+              <button type="button" id="btnCancelar" class="btn-cancel">Cancelar</button>
+              <button type="submit" id="btnSalvar" class="btn-submit">Salvar Vaga</button>
+            </div>
           </form>
         </div>
       </div>
 
+      <!-- Modal de Detalhes da Vaga -->
+      <div id="vagaDetalhesModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:700px;">
+          <div class="modal-header">
+            <h2>Detalhes da Vaga</h2>
+            <span class="close" id="fecharDetalhes">&times;</span>
+          </div>
+          <div class="modal-body" style="padding:22px;">
+            <p><strong>Título:</strong> <span id="det-titulo"></span></p>
+            <p><strong>Descrição:</strong></p>
+            <p id="det-descricao" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
+            <p><strong>Requisitos:</strong></p>
+            <p id="det-requisitos" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
+            <p style="margin-top:12px;"><strong>Status:</strong> <span id="det-status"></span></p>
+            <p><strong>Data de Abertura:</strong> <span id="det-abertura"></span></p>
+            <p><strong>Data de Encerramento:</strong> <span id="det-encerramento"></span></p>
+          </div>
+          <div class="modal-actions" style="padding:18px; display:flex; justify-content:flex-end; gap:8px;">
+            <button id="fecharDetalhesBtn" class="btn-cancel">Fechar</button>
+          </div>
+        </div>
+      </div>
+
       <h2>Vagas Abertas</h2>
-      <table id="vagasTable">
-        <thead>
-          <tr>
-            <th><strong>Título</strong></th>
-            <th><strong>Descrição</strong></th>
-            <th><strong>Requisitos</strong></th>
-            <th><strong>Status</strong></th>
-            <th><strong>Data de Abertura</strong></th>
-            <th><strong>Data de Encerramento</strong></th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
+      <div id="vagasContainer" class="cards-vagas">
+        <!-- cartoes do Js -->
+      </div>
     </div>
 </body>
 </html>
