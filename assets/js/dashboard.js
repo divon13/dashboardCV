@@ -255,8 +255,8 @@ async function carregarEntrevistas() {
         <div class="chip-status chip-status-${statusClass}">${status}</div>
       </div>
       <div class="card-bottom">
-        <span>🗓️ ${dataFormatada}</span>
-        <span>👤 ${entrevista.Entrevistador || 'Não definido'}</span>
+        <span><i class="fa-solid fa-calendar-week"></i> ${dataFormatada}</span>
+        <span><i class="fa-solid fa-user"></i> ${entrevista.Entrevistador || 'Não definido'}</span>
       </div>
       ${observacoesHTML}
     `;

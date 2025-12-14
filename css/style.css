@@ -156,6 +156,9 @@ body {
   text-decoration: none;
   color: white ;
 }
+.nav-item i {
+  margin-right: 8px;
+}
 
 /* Item de navegação em Hover */
 .nav-item:hover {
@@ -519,12 +522,12 @@ table tbody tr td[colspan="5"] {
 }
 
 .logo-sidebar {
-    width: 80px;             /* tamanho padrão de logo */
+    width: 50px;             /* tamanho padrão de logo */
     height: auto;            /* mantém proporção */
     display: block;
 
     position: absolute;
-    top: 50px;               /* distância do topo */
+    top: 20px;               /* distância do topo */
     left: 50%;
     transform: translateX(-50%) scale(1);
     transition: transform 0.3s ease;   /* transição suave na entrada e saída */
@@ -534,7 +537,7 @@ table tbody tr td[colspan="5"] {
 
 .sidebar {
     position: relative;
-    padding-top: 160px;  
+    padding-top: 90px;  
 }
 
 
@@ -675,3 +678,9 @@ table tbody tr td[colspan="5"] {
   color: #ff9800;
 }
 
+.fa-solid fa-house {
+ margin-right: 100px;
+ margin-left: 100px;
+ padding-left: 100px;
+ padding-right: 100px;
+}
