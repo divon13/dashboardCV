@@ -1,5 +1,5 @@
 .form-group select {
-  background: #232537;
+  background: var(--hover-dark);
   color: var(--text-light);
   border: 1px solid var(--border-dark);
   border-radius: 6px;
@@ -22,8 +22,8 @@
     padding: 0 14px;
     border-radius: 20px;
     border: none;
-    background-color: #3f5efb;
-    color: #fff;
+    background-color: var(--primary-color);
+    color: var(--text-light);
     font-weight: bold;
     cursor: pointer;
 
@@ -51,7 +51,7 @@
 /* Hover */
 .btn-add-vaga:hover {
     width: 150px;
-    background-color: #fc466b;
+    background-color: var(--purple-color);
 }
 
 .btn-add-vaga:hover .texto-btn {
@@ -72,7 +72,7 @@
   width: 100vw;
   height: 100vh;
   overflow: auto;
-  background: rgba(30,30,45,0.85);
+  background: rgba(2, 6, 23, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,15 +99,26 @@
 .close:hover {
   color: var(--primary-color);
 }
-/* Variáveis de Cores para Tema Dark */
+/* Variáveis de Cores para Tema Dark - Slate Palette */
 :root {
-  --primary-color: #5d98ff; /* Azul claro para destaque */
-  --secondary-color: #adb5bd; /* Cinza claro para texto secundário */
-  --background-dark: #1e1e2d; /* Fundo principal escuro */
-  --surface-dark: #27293d; /* Fundo de cartões/sidebar (Superfície) */
-  --text-light: #f8f9fa; /* Cor principal do texto */
-  --border-dark: #3a3b50; /* Cor da borda suave */
-  --hover-dark: #33364f; /* Cor para hover/seleção sutil */
+  /* Primary Colors - Slate */
+  --background-dark: #020617; /* slate-950 - Fundo principal escuro */
+  --surface-dark: #0f172a; /* slate-900 - Fundo de cartões/sidebar */
+  --hover-dark: #1e293b; /* slate-800 - Hover/seleção, tabela headers */
+  --border-dark: #334155; /* slate-700 - Bordas */
+  
+  /* Text Colors - Slate */
+  --text-light: #f1f5f9; /* slate-100 - Texto principal */
+  --secondary-color: #cbd5e1; /* slate-300 - Texto secundário */
+  --text-tertiary: #94a3b8; /* slate-400 - Texto terciário */
+  --text-muted: #64748b; /* slate-500 - Texto muted */
+  
+  /* Accent Colors */
+  --primary-color: #2563eb; /* blue-600 - Botões e elementos interativos */
+  --success-color: #22c55e; /* green-500 - Estados de sucesso */
+  --warning-color: #eab308; /* yellow-500 - Avisos */
+  --error-color: #ef4444; /* red-500 - Alertas/erros */
+  --purple-color: #a855f7; /* purple-500 - Ações secundárias */
 }
 
 /* Base e Tipografia */
@@ -172,7 +183,7 @@ body {
     color: var(--background-dark); /* Texto escuro sobre o azul */
     border-radius: 0 20px 20px 0;
     font-weight: bold;
-    box-shadow: 0 4px 10px rgba(93, 152, 255, 0.4);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
 }
 
 /* Cards de Métricas */
@@ -208,7 +219,7 @@ body {
 
 .card-header i {
   font-size: 16px;
-  color: white;
+  color: var(--text-light);
 }
 
 .card h3 {
@@ -252,8 +263,8 @@ tbody tr:last-child td {
 
 thead tr {
     /* Fundo ligeiramente diferente para o cabeçalho */
-    background: #2e3047; 
-    color: white;
+    background: var(--hover-dark); 
+    color: var(--text-light);
 }
 
 th {
@@ -265,7 +276,7 @@ th {
 
 /* Linhas pares (Zebra-striping) */
 tbody tr:nth-child(even) {
-  background-color: #232537; 
+  background-color: var(--hover-dark); 
 }
 
 /* Destaque da linha ao passar o mouse */
@@ -291,7 +302,7 @@ table tbody tr td[colspan="5"] {
 
 /* Enhanced Modal Styling for Jobs Form */
 .modal-content-vaga {
-  background: linear-gradient(135deg, var(--surface-dark) 0%, #2f3350 100%);
+  background: linear-gradient(135deg, var(--surface-dark) 0%, var(--hover-dark) 100%);
   padding: 0;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -309,7 +320,7 @@ table tbody tr td[colspan="5"] {
   align-items: center;
   padding: 24px 28px;
   border-bottom: 1px solid var(--border-dark);
-  background: rgba(93, 152, 255, 0.08);
+  background: rgba(37, 99, 235, 0.08);
 }
 .modal-header h2 {
   margin: 0;
@@ -371,7 +382,7 @@ table tbody tr td[colspan="5"] {
   outline: none;
   border-color: var(--primary-color);
   background: rgba(2, 6, 23, 0.6);
-  box-shadow: 0 0 0 3px rgba(93, 152, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 .form-group-v2 textarea {
   min-height: 70px;
@@ -405,13 +416,13 @@ table tbody tr td[colspan="5"] {
   border-color: var(--primary-color);
 }
 .btn-submit {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #4580ff 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(93, 152, 255, 0.3);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+  color: var(--text-light);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 .btn-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(93, 152, 255, 0.5);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
 }
 .btn-submit:active {
   transform: translateY(0);
@@ -452,7 +463,7 @@ table tbody tr td[colspan="5"] {
 .chip-status {
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(93,152,255,0.12);
+  background: rgba(37, 99, 235, 0.12);
   color: var(--primary-color);
   font-weight: 700;
   font-size: 12px;
@@ -491,7 +502,7 @@ table tbody tr td[colspan="5"] {
 
 .loader {
   fill: none;
-  stroke: #106ee8;
+  stroke: var(--primary-color);
   stroke-width: 10;
   stroke-dasharray: 2, 200;
   stroke-dashoffset: 0;
@@ -655,27 +666,27 @@ table tbody tr td[colspan="5"] {
 /* Chips de status para entrevistas */
 .chip-status-agendada,
 .chip-status-agendado {
-  background: rgba(93, 152, 255, 0.12);
+  background: rgba(37, 99, 235, 0.12);
   color: var(--primary-color);
 }
 
 .chip-status-concluida,
 .chip-status-concluído,
 .chip-status-concluida {
-  background: rgba(76, 175, 80, 0.12);
-  color: #4caf50;
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success-color);
 }
 
 .chip-status-cancelada,
 .chip-status-cancelado {
-  background: rgba(244, 67, 54, 0.12);
-  color: #f44336;
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error-color);
 }
 
 .chip-status-em-andamento,
 .chip-status-em-andamento {
-  background: rgba(255, 152, 0, 0.12);
-  color: #ff9800;
+  background: rgba(234, 179, 8, 0.12);
+  color: var(--warning-color);
 }
 
 .fa-solid fa-house {
