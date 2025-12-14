@@ -168,6 +168,105 @@ async function carregarVagasAbertas() {
 
 carregarVagasAbertas();
 
+async function carregarEntrevistas() {
+  // Obtém a data de hoje no formato ISO (sem hora, para comparar apenas datas)
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const hojeISO = hoje.toISOString().split('T')[0];
+
+  // Busca entrevistas com joins para Vagas e Candidatos
+  const { data, error } = await supabaseClient
+    .from("Entrevistas")
+    .select(`
+      *,
+      Vagas(Titulo),
+      candidatos(nome)
+    `)
+    .gte('Data', hojeISO)
+    .order('Data', { ascending: true })
+    .limit(7);
+
+  if (error) {
+    console.error("Erro ao carregar entrevistas:", error);
+    const container = document.getElementById('entrevistasContainer');
+    if (container) {
+      container.innerHTML = '<p style="color: var(--secondary-color); text-align: center; padding: 20px;">Erro ao carregar entrevistas.</p>';
+    }
+    return;
+  }
+
+  const container = document.getElementById('entrevistasContainer');
+  if (!container) {
+    console.error('Container de entrevistas não encontrado: #entrevistasContainer');
+    return;
+  }
+
+  container.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p style="color: var(--secondary-color); text-align: center; padding: 20px;">Nenhuma entrevista agendada.</p>';
+    return;
+  }
+
+  data.forEach(entrevista => {
+    const card = document.createElement('div');
+    card.className = 'card-entrevista';
+
+    // Obtém o nome da vaga e do candidato dos relacionamentos
+    // No Supabase, os dados relacionados podem vir como objeto ou array
+    let nomeVaga = 'Vaga não encontrada';
+    let nomeCandidato = 'Candidato não encontrado';
+    
+    if (entrevista.Vagas) {
+      if (Array.isArray(entrevista.Vagas) && entrevista.Vagas.length > 0) {
+        nomeVaga = entrevista.Vagas[0].Titulo || nomeVaga;
+      } else if (entrevista.Vagas.Titulo) {
+        nomeVaga = entrevista.Vagas.Titulo;
+      }
+    }
+    
+    if (entrevista.candidatos) {
+      if (Array.isArray(entrevista.candidatos) && entrevista.candidatos.length > 0) {
+        nomeCandidato = entrevista.candidatos[0].nome || nomeCandidato;
+      } else if (entrevista.candidatos.nome) {
+        nomeCandidato = entrevista.candidatos.nome;
+      }
+    }
+    
+    // Formata a data
+    const dataFormatada = entrevista.Data ? formatarData(entrevista.Data) : 'Data não definida';
+    
+    // Status com chip visual
+    const status = entrevista.Status || 'Agendada';
+    const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+    
+    // Observações (se houver)
+    const observacoes = entrevista.Observações || entrevista.Observacoes || '';
+    const observacoesHTML = observacoes ? `<div class="entrevista-observacoes">${observacoes}</div>` : '';
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="title-area">
+          <div class="entrevista-titulo">
+            <div class="entrevista-candidato">${nomeCandidato}</div>
+            <div class="entrevista-vaga">${nomeVaga}</div>
+          </div>
+        </div>
+        <div class="chip-status chip-status-${statusClass}">${status}</div>
+      </div>
+      <div class="card-bottom">
+        <span>🗓️ ${dataFormatada}</span>
+        <span>👤 ${entrevista.Entrevistador || 'Não definido'}</span>
+      </div>
+      ${observacoesHTML}
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+carregarEntrevistas();
+
 // CRUD Vagas - Modal
 
 document.addEventListener('DOMContentLoaded', function() {

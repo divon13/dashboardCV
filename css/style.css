@@ -542,3 +542,136 @@ table tbody tr td[colspan="5"] {
     transform: translateX(-50%) scale(1.05);
 }
 
+/* Seção de Entrevistas */
+.entrevistas-section {
+  margin-top: 40px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cards-entrevistas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-entrevista {
+  background: var(--surface-dark);
+  color: var(--text-light);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  border: 1px solid var(--border-dark);
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+
+.card-entrevista:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+}
+
+.card-entrevista .card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-entrevista .chip-status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.card-entrevista .title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  padding-right: 100px;
+}
+
+.entrevista-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entrevista-candidato {
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--text-light);
+}
+
+.entrevista-vaga {
+  font-size: 14px;
+  color: var(--secondary-color);
+  font-weight: 500;
+}
+
+.card-entrevista .card-bottom {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  color: var(--secondary-color);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.entrevista-observacoes {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-dark);
+  font-size: 13px;
+  color: var(--secondary-color);
+  line-height: 1.5;
+}
+
+.loading-entrevistas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+/* Chips de status para entrevistas */
+.chip-status-agendada,
+.chip-status-agendado {
+  background: rgba(93, 152, 255, 0.12);
+  color: var(--primary-color);
+}
+
+.chip-status-concluida,
+.chip-status-concluído,
+.chip-status-concluida {
+  background: rgba(76, 175, 80, 0.12);
+  color: #4caf50;
+}
+
+.chip-status-cancelada,
+.chip-status-cancelado {
+  background: rgba(244, 67, 54, 0.12);
+  color: #f44336;
+}
+
+.chip-status-em-andamento,
+.chip-status-em-andamento {
+  background: rgba(255, 152, 0, 0.12);
+  color: #ff9800;
+}
+
