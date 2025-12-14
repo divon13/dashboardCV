@@ -195,6 +195,19 @@ body {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.card-header i {
+  font-size: 16px;
+  color: white;
+}
+
 .card h3 {
   font-size: 15px;
   color: var(--secondary-color);
@@ -503,7 +516,6 @@ table tbody tr td[colspan="5"] {
   100% {
     stroke-dashoffset: -125px;
   }
-<<<<<<< HEAD
 }
 
 .logo-sidebar {
@@ -529,6 +541,4 @@ table tbody tr td[colspan="5"] {
 .logo-sidebar:hover {
     transform: translateX(-50%) scale(1.05);
 }
-=======
-}
->>>>>>> cb73d416e1f6aca2cecfcdf527424e77d1b8d185
+
