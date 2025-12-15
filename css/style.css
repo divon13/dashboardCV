@@ -135,16 +135,22 @@ body {
 .main {
   flex: 1;
   padding: 30px;
+  margin-left: 180px;
 }
 
 /* Sidebar */
 .sidebar {
-  width: 180px;
-  background: var(--surface-dark);
-  padding: 30px 0;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4); /* Sombra mais profunda */
-  display: flex;
-  flex-direction: column;
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 180px;
+    height: 100vh; /* Ocupa 100% da altura da viewport */
+    padding: 30px 0;
+    background: var(--surface-dark);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4); 
+    display: flex;
+    flex-direction: column;
+    
 }
 
 .sidebar h2 {
@@ -537,19 +543,13 @@ table tbody tr td[colspan="5"] {
     height: auto;            /* mantém proporção */
     display: block;
 
-    position: absolute;
+    position: static;
     top: 20px;               /* distância do topo */
-    left: 50%;
+    left: 50%;               /* centraliza horizontalmente */
     transform: translateX(-50%) scale(1);
     transition: transform 0.3s ease;   /* transição suave na entrada e saída */
 }
 
-
-
-.sidebar {
-    position: relative;
-    padding-top: 90px;  
-}
 
 
 .logo-sidebar:hover {
@@ -694,4 +694,236 @@ table tbody tr td[colspan="5"] {
  margin-left: 100px;
  padding-left: 100px;
  padding-right: 100px;
+}
+
+/* ============================================
+   PIPELINE DE RECRUTAMENTO
+   ============================================ */
+
+/* Container Principal do Pipeline */
+.pipeline-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 0 !important;
+  overflow: hidden;
+  margin: 0;
+  margin-left: 180px;
+}
+
+/* Cabeçalho Fixo */
+.pipeline-header {
+  padding: 30px;
+  background: var(--background-dark);
+  border-bottom: 1px solid var(--border-dark);
+  flex-shrink: 0;
+}
+
+.pipeline-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0 0 8px 0;
+  letter-spacing: 0.5px;
+}
+
+.pipeline-instruction {
+  color: var(--secondary-color);
+  font-size: 14px;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Container de Scroll Horizontal */
+.pipeline-scroll-container {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y:unset;
+  padding: 20px 30px;
+  background: var(--background-dark);
+  position: relative;
+}
+
+/* Wrapper das Colunas */
+.pipeline-columns-wrapper {
+  display: inline-flex;
+  gap: 20px;
+  min-width: 100%;
+  height: auto;
+  padding-bottom: 20px;
+  align-items: flex-start;
+}
+
+/* Coluna Individual */
+.pipeline-column {
+  min-width: 300px;
+  width: 300px;
+  background: var(--surface-dark);
+  border-radius: 12px;
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: fit-content;
+}
+
+/* Cores alternadas para as colunas */
+.pipeline-column-1 {
+  background: #0f172a;
+}
+
+.pipeline-column-2 {
+  background: #1a1f3a;
+}
+
+.pipeline-column-3 {
+  background: #0f172a;
+}
+
+.pipeline-column-4 {
+  background: #1a1f3a;
+}
+
+.pipeline-column-5 {
+  background: #0f172a;
+}
+
+.pipeline-column-6 {
+  background: #1a1f3a;
+}
+
+/* Cabeçalho da Coluna */
+.pipeline-column-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--hover-dark);
+  border-radius: 12px 12px 0 0;
+}
+
+.pipeline-column-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.pipeline-column-count {
+  background: var(--primary-color);
+  color: var(--text-light);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+  margin-left: auto;
+}
+
+/* Corpo da Coluna (Vazio) */
+.pipeline-column-body {
+  padding: 16px;
+  min-height: 200px;
+  flex: 1;
+  /* Vazio - sem conteúdo */
+}
+
+/* Rodapé Fixo */
+.pipeline-footer {
+  padding: 30px;
+  background: var(--background-dark);
+  border-top: 1px solid var(--border-dark);
+  flex-shrink: 0;
+  width: 95%;
+}
+
+.pipeline-footer-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0 0 20px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Wrapper dos Cartões de Resumo (para destacar) */
+.pipeline-summary-wrapper {
+  background: var(--surface-dark);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Container dos Cartões de Resumo */
+.pipeline-summary-cards {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Cartão de Resumo Individual */
+.pipeline-summary-card {
+  flex: 1;
+  background: var(--hover-dark);
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  min-width: 0;
+}
+
+.pipeline-summary-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.pipeline-summary-card h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary-color);
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pipeline-summary-count {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* Barra de Rolagem Customizada */
+.pipeline-scroll-container::-webkit-scrollbar {
+  height: 12px;
+}
+
+.pipeline-scroll-container::-webkit-scrollbar-track {
+  background: var(--surface-dark);
+  border-radius: 6px;
+}
+
+.pipeline-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.pipeline-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* Firefox scrollbar */
+.pipeline-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-dark) var(--surface-dark);
 }

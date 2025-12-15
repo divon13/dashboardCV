@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- JS -->
+  <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/dashboard.js" defer></script>
+</head>
+<body>
+    
+ <div class="sidebar">
+    <img src="midia/logo.png" alt="" class="logo-sidebar">
+    <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+    <a class="nav-item" href="Candidatos.html"><i class="fa-solid fa-users"></i>Candidatos</a>
+    <a class="nav-item" href="vagas.html"><i class="fa-solid fa-briefcase"></i>Vagas</a>
+    <a class="nav-item" href="Pipeline.html"><i class="fa-solid fa-chart-column"></i>Fluxo</a>
+  </div>
+
+  <div class="main pipeline-main">
+    <!-- Cabeçalho Fixo -->
+    <div class="pipeline-header">
+      <h1>Pipeline de Recrutamento</h1>
+      <p class="pipeline-instruction">Arraste e solte os candidatos entre as etapas do processo seletivo.</p>
+    </div>
+
+    <!-- Área Central com Scroll Horizontal -->
+    <div class="pipeline-scroll-container">
+      <div class="pipeline-columns-wrapper">
+        <div class="pipeline-column pipeline-column-1">
+          <div class="pipeline-column-header">
+            <h3>Aplicado</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+
+        <div class="pipeline-column pipeline-column-2">
+          <div class="pipeline-column-header">
+            <h3>Triagem</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+
+        <div class="pipeline-column pipeline-column-3">
+          <div class="pipeline-column-header">
+            <h3>Entrevista técnica</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+
+        <div class="pipeline-column pipeline-column-4">
+          <div class="pipeline-column-header">
+            <h3>Adequação à cultura</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+
+        <div class="pipeline-column pipeline-column-5">
+          <div class="pipeline-column-header">
+            <h3>Oferta enviada</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+
+        <div class="pipeline-column pipeline-column-6">
+          <div class="pipeline-column-header">
+            <h3>Contratado</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé Fixo com Resumo -->
+    <div class="pipeline-footer">
+      <div class="pipeline-summary-wrapper">
+              <h2 class="pipeline-footer-title">Resumo do Pipeline</h2>
+        <div class="pipeline-summary-cards">
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+            <h4>Aplicado</h4>
+          </div>
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+            <h4>Triagem</h4>
+          </div>
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+            <h4>Entrevista técnica</h4>
+          </div>
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+             <h4>Adequação à cultura</h4>
+          </div>
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+            <h4>Oferta enviada</h4>
+          </div>
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+                        <h4>Contratado</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
