@@ -541,19 +541,17 @@ table tbody tr td[colspan="5"] {
 .logo-sidebar {
     width: 50px;             /* tamanho padrão de logo */
     height: auto;            /* mantém proporção */
-    display: block;
-
-    position: static;
-    top: 20px;               /* distância do topo */
-    left: 50%;               /* centraliza horizontalmente */
-    transform: translateX(-50%) scale(1);
+    display: block;          /* permite centralizar com margin */
+    margin: 0 auto 20px;     /* centraliza horizontalmente e afasta um pouco de baixo */
+    position: static;        /* não precisa de posicionamento absoluto/fixo */
+    transform: scale(1);     /* escala normal */
     transition: transform 0.3s ease;   /* transição suave na entrada e saída */
 }
 
 
 
 .logo-sidebar:hover {
-    transform: translateX(-50%) scale(1.05);
+    transform: scale(1.05);
 }
 
 /* Seção de Entrevistas */
