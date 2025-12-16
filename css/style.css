@@ -162,34 +162,39 @@ body {
   text-align: center;
 }
 
+
+/* Sidebar nav-item estilo pill */
 .nav-item {
-  padding: 12px 20px;
+  padding: 12px 24px;
   cursor: pointer;
-  margin: 4px 0;
-  transition: background-color 0.3s, color 0.3s;
+  margin: 5px 8px;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
   font-size: 15px;
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: white ;
+  color: var(--text-light);
+  border-radius: 8px;
+  background: transparent;
+  font-weight: 500;
+  box-shadow: none;
 }
 .nav-item i {
   margin-right: 8px;
 }
 
-/* Item de navegação em Hover */
+/* Hover: leve destaque */
 .nav-item:hover {
-  background: var(--hover-dark); 
+  background: var(--hover-dark);
   color: var(--primary-color);
 }
 
-/* Item de navegação Ativo (Ex: Início) */
-.nav-item:first-child { 
-    background: var(--primary-color);
-    color: var(--background-dark); /* Texto escuro sobre o azul */
-    border-radius: 0 20px 20px 0;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+/* Ativo: pill azul destacado */
+.nav-item.active {
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 4px 16px 0 rgba(37,99,235,0.10);
 }
 
 /* Cards de Métricas */
