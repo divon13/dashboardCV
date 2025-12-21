@@ -42,7 +42,7 @@ function formatarData(dataISO) {
 // ============================================
 
 /**
- * Carrega e exibe a lista de candidatos na tabela
+ * Carrega e exibe a lista de candidatos em cards
  */
 async function carregarUsuarios() {
   const { data, error } = await supabaseClient
@@ -54,24 +54,267 @@ async function carregarUsuarios() {
     return;
   }
 
-  const tbody = document.querySelector("#candidatesTable tbody");
-  if (!tbody) {
-    console.error("Tabela não encontrada: #candidatesTable tbody");
+  const container = document.getElementById("candidatesCardsContainer");
+  if (!container) {
+    console.error("Container de cards não encontrado: #candidatesCardsContainer");
     return;
   }
   
-  tbody.innerHTML = "";
+  container.innerHTML = "";
 
-  data.forEach(candidato => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${candidato.nome}</td>
-      <td>${candidato.email}</td>
-      <td>${candidato.Endereco}</td>
-      <td>${candidato.nota}</td>
-      <td>${candidato.vaga_sugerida}</td>
-    `;
-    tbody.appendChild(tr);
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--secondary-color); padding:40px;">Nenhum candidato encontrado.</p>';
+    return;
+  }
+
+  // Carregar informações de vagas para todos os candidatos
+  for (const candidato of data) {
+    let vagaData = null;
+    // Se vaga_sugerida for um número/ID, buscar dados da vaga
+    if (candidato.vaga_sugerida && candidato.vaga_sugerida.toString().trim() !== '' && !isNaN(candidato.vaga_sugerida)) {
+      const { data: vaga, error: vagaError } = await supabaseClient
+        .from("Vagas")
+        .select("Titulo, data_abertura")
+        .eq("id", parseInt(candidato.vaga_sugerida))
+        .single();
+      
+      if (!vagaError && vaga) {
+        vagaData = vaga;
+      }
+    }
+    
+    const card = criarCardCandidato(candidato, vagaData);
+    container.appendChild(card);
+  }
+}
+
+/**
+ * Cria um card HTML para um candidato
+ * @param {Object} candidato - Objeto com os dados do candidato
+ * @param {Object|null} vagaData - Dados da vaga relacionada (Titulo, data_abertura)
+ * @returns {HTMLElement} Elemento div com o card do candidato
+ */
+function criarCardCandidato(candidato, vagaData) {
+  const card = document.createElement('div');
+  card.className = 'card-candidato';
+  
+  // Processar capacidades
+  let capacidades = [];
+  if (candidato.Capacidades) {
+    if (typeof candidato.Capacidades === 'string') {
+      try {
+        capacidades = JSON.parse(candidato.Capacidades);
+      } catch (e) {
+        capacidades = [];
+      }
+    } else if (Array.isArray(candidato.Capacidades)) {
+      capacidades = candidato.Capacidades;
+    }
+  }
+  
+  const capacidadesPills = capacidades.slice(0, 3).map(cap => 
+    `<span class="capacidade-pill">${cap}</span>`
+  ).join('');
+  const capacidadesRestantes = capacidades.length > 3 ? capacidades.length - 3 : 0;
+  const maisCapacidades = capacidadesRestantes > 0 ? `<span class="capacidade-pill capacidade-pill-more">+${capacidadesRestantes} mais</span>` : '';
+  
+  // Nome da vaga
+  const nomeVaga = vagaData ? vagaData.Titulo : (candidato.vaga_sugerida || 'Não especificada');
+  
+  // Calcular porcentagem da nota (assumindo escala 0-100)
+  const nota = parseFloat(candidato.nota) || 0;
+  const porcentagemNota = nota > 100 ? 100 : (nota < 0 ? 0 : nota);
+  const circunferencia = 2 * Math.PI * 40; // raio 40
+  const offset = circunferencia - (porcentagemNota / 100) * circunferencia;
+  
+  // Criar HTML do círculo de nota
+  const scoreCircle = `
+    <div class="candidato-score-wrapper">
+      <svg class="candidato-score-circle" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" class="score-circle-bg"></circle>
+        <circle cx="50" cy="50" r="40" class="score-circle-progress" 
+                stroke-dasharray="${circunferencia}" 
+                stroke-dashoffset="${offset}"></circle>
+      </svg>
+      <div class="score-text">${nota.toFixed(1)}</div>
+    </div>
+  `;
+
+  card.innerHTML = `
+    <div class="candidato-header">
+      <div class="candidato-header-left">
+        <div class="candidato-nome">${candidato.nome || 'Nome não informado'}</div>
+        <div class="candidato-vaga">${nomeVaga}</div>
+      </div>
+      <div class="candidato-header-right">
+        ${scoreCircle}
+      </div>
+    </div>
+    <div class="candidato-info">
+      <div class="candidato-info-item">
+        <i class="fa-solid fa-location-dot"></i>
+        <span>${candidato.Endereco || 'Não informado'}</span>
+      </div>
+      <div class="candidato-info-item">
+        <i class="fa-solid fa-envelope"></i>
+        <span>${candidato.email || 'Não informado'}</span>
+      </div>
+      <div class="candidato-info-item">
+        <i class="fa-solid fa-phone"></i>
+        <span>${candidato.telefone || 'Não informado'}</span>
+      </div>
+      <div class="candidato-info-item">
+        <i class="fa-solid fa-briefcase"></i>
+        <span>${candidato.Experiencias ? (isNaN(candidato.Experiencias) ? candidato.Experiencias : candidato.Experiencias + ' anos de experiência') : 'Não informado'}</span>
+      </div>
+      <div class="candidato-info-item">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <span>${candidato.formacao_academica || 'Não informado'}</span>
+      </div>
+    </div>
+    <div class="candidato-capacidades">
+      ${capacidadesPills}
+      ${maisCapacidades}
+    </div>
+    <div class="candidato-actions">
+      <button class="btn-detalhes" data-id="${candidato.id}">Mostrar detalhes</button>
+    </div>
+  `;
+
+  // Adicionar event listener ao botão
+  const btnDetalhes = card.querySelector('.btn-detalhes');
+  if (btnDetalhes) {
+    btnDetalhes.onclick = function() {
+      abrirModalDetalhes(candidato, vagaData);
+    };
+  }
+
+  return card;
+}
+
+/**
+ * Abre o modal de detalhes do candidato
+ * @param {Object} candidato - Objeto com os dados do candidato
+ * @param {Object|null} vagaData - Dados da vaga relacionada
+ */
+function abrirModalDetalhes(candidato, vagaData) {
+  const modal = document.getElementById('candidatoDetalhesModal');
+  if (!modal) return;
+
+  // Preencher informações principais
+  document.getElementById('modal-descricao-IA').textContent = candidato.descricao_IA || 'Não disponível';
+  document.getElementById('modal-registro').textContent = candidato.registro ? formatarData(candidato.registro) : 'Não informado';
+  document.getElementById('modal-nome').textContent = candidato.nome || 'Não informado';
+  document.getElementById('modal-email').textContent = candidato.email || 'Não informado';
+  document.getElementById('modal-telefone').textContent = candidato.telefone || 'Não informado';
+  const experiencias = candidato.Experiencias;
+  const experienciasText = experiencias ? (isNaN(experiencias) ? experiencias : `${experiencias} anos`) : 'Não informado';
+  document.getElementById('modal-experiencias').textContent = experienciasText;
+  document.getElementById('modal-formacao').textContent = candidato.formacao_academica || 'Não informado';
+  const notaModal = parseFloat(candidato.nota);
+  document.getElementById('modal-nota').textContent = !isNaN(notaModal) ? notaModal.toFixed(1) : 'N/A';
+  document.getElementById('modal-endereco').textContent = candidato.Endereco || 'Não informado';
+
+  // Preencher capacidades
+  const capacidadesContainer = document.getElementById('modal-capacidades-todas');
+  if (capacidadesContainer) {
+    let capacidades = [];
+    if (candidato.Capacidades) {
+      if (typeof candidato.Capacidades === 'string') {
+        try {
+          capacidades = JSON.parse(candidato.Capacidades);
+        } catch (e) {
+          capacidades = [];
+        }
+      } else if (Array.isArray(candidato.Capacidades)) {
+        capacidades = candidato.Capacidades;
+      }
+    }
+    
+    if (capacidades.length > 0) {
+      capacidadesContainer.innerHTML = capacidades.map(cap => 
+        `<span class="capacidade-pill capacidade-pill-full">${cap}</span>`
+      ).join('');
+    } else {
+      capacidadesContainer.innerHTML = '<span style="color: var(--secondary-color);">Nenhuma capacidade informada</span>';
+    }
+  }
+
+  // Preencher informações da vaga
+  const nomeVaga = vagaData ? vagaData.Titulo : (candidato.vaga_sugerida || 'Não especificada');
+  const dataAbertura = vagaData && vagaData.data_abertura ? formatarData(vagaData.data_abertura) : 'Não disponível';
+  document.getElementById('modal-vaga-nome').textContent = nomeVaga;
+  document.getElementById('modal-vaga-data-abertura').textContent = dataAbertura;
+
+  // Configurar botão de download do currículo
+  const btnDownload = document.getElementById('btnDownloadCurriculo');
+  if (btnDownload) {
+    if (candidato.url_curriculo) {
+      btnDownload.onclick = function() {
+        window.open(candidato.url_curriculo, '_blank');
+      };
+      btnDownload.disabled = false;
+      btnDownload.style.opacity = '1';
+    } else {
+      btnDownload.disabled = true;
+      btnDownload.style.opacity = '0.5';
+      btnDownload.onclick = null;
+    }
+  }
+
+  // Resetar painel expansível
+  const descricaoContent = document.getElementById('descricaoIAContent');
+  const descricaoChevron = document.getElementById('descricaoIAChevron');
+  if (descricaoContent) {
+    descricaoContent.style.display = 'none';
+  }
+  if (descricaoChevron) {
+    descricaoChevron.style.transform = 'rotate(0deg)';
+  }
+
+  modal.style.display = 'flex';
+}
+
+/**
+ * Configura os event handlers do modal de candidato
+ */
+function configurarModalCandidato() {
+  const modal = document.getElementById('candidatoDetalhesModal');
+  const btnFechar = document.getElementById('fecharModalCandidato');
+  const descricaoHeader = document.getElementById('descricaoIAHeader');
+  const descricaoContent = document.getElementById('descricaoIAContent');
+  const descricaoChevron = document.getElementById('descricaoIAChevron');
+
+  // Fechar modal
+  if (btnFechar) {
+    btnFechar.onclick = function() {
+      if (modal) modal.style.display = 'none';
+    };
+  }
+
+  // Painel expansível da descrição IA
+  if (descricaoHeader && descricaoContent && descricaoChevron) {
+    descricaoHeader.onclick = function() {
+      const isHidden = descricaoContent.style.display === 'none' || !descricaoContent.style.display;
+      descricaoContent.style.display = isHidden ? 'block' : 'none';
+      descricaoChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    };
+  }
+
+  // Fechar modal ao clicar fora
+  if (modal) {
+    window.addEventListener('click', function(event) {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+
+  // Fechar modal com ESC
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
+      modal.style.display = 'none';
+    }
   });
 }
 
@@ -566,6 +809,7 @@ if (vagaForm) {
 // Aguarda o DOM estar pronto antes de inicializar
 document.addEventListener('DOMContentLoaded', function() {
   configurarModais();
+  configurarModalCandidato();
   
   // Carrega os dados iniciais
   carregarUsuarios();

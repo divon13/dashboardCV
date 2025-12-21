@@ -37,20 +37,93 @@
       </div>
     </div>
 
-    <table id="candidatesTable">
-      <thead>
-        <tr>
-            <th><strong>Nome</strong></th>
-            <th><strong>Email</strong></th>
-            <th><strong>Endereço</strong></th>
-            <th><strong>Nota Final</strong></th>
-            <th><strong>Vagas Sugerida</strong></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="4" style="text-align:center; color:#777; padding:20px;">Nenhum candidato carregado</td></tr>
-      </tbody>
-    </table>
+    <div id="candidatesCardsContainer" class="cards-candidatos">
+      <!-- Cards serão inseridos aqui via JavaScript -->
+    </div>
+
+    <!-- Modal de Detalhes do Candidato -->
+    <div id="candidatoDetalhesModal" class="modal modal-candidato" style="display:none;">
+      <div class="modal-content modal-candidato-content">
+        <div class="modal-header">
+          <h2>Detalhes do Candidato</h2>
+          <span class="close" id="fecharModalCandidato">&times;</span>
+        </div>
+        
+        <div class="modal-candidato-body">
+          <!-- Parte Superior - Informações principais -->
+          <div class="modal-candidato-top">
+            <!-- Painel Expansível para Descrição IA -->
+            <div class="expandable-panel">
+              <div class="expandable-panel-header" id="descricaoIAHeader">
+                <h3>Descrição feita pela IA</h3>
+                <i class="fa-solid fa-chevron-down" id="descricaoIAChevron"></i>
+              </div>
+              <div class="expandable-panel-content" id="descricaoIAContent" style="display:none;">
+                <p id="modal-descricao-IA"></p>
+              </div>
+            </div>
+
+            <!-- Informações do candidato -->
+            <div class="modal-candidato-info-grid">
+              <div class="modal-candidato-section">
+                <label>Data de Registro:</label>
+                <p id="modal-registro"></p>
+              </div>
+              <div class="modal-candidato-section">
+                <label>Nome:</label>
+                <p id="modal-nome"></p>
+              </div>
+              <div class="modal-candidato-section">
+                <label>Email:</label>
+                <p id="modal-email"></p>
+              </div>
+              <div class="modal-candidato-section">
+                <label>Telefone:</label>
+                <p id="modal-telefone"></p>
+              </div>
+              <div class="modal-candidato-section">
+                <label>Experiências:</label>
+                <p id="modal-experiencias"></p>
+              </div>
+              <div class="modal-candidato-section">
+                <label>Formação Acadêmica:</label>
+                <p id="modal-formacao"></p>
+              </div>
+              <div class="modal-candidato-section modal-candidato-section-score">
+                <label>Nota da IA:</label>
+                <p id="modal-nota" class="modal-nota-display"></p>
+              </div>
+              <div class="modal-candidato-section">
+                <label>Endereço:</label>
+                <p id="modal-endereco"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parte do Meio - Capacidades e Vaga -->
+          <div class="modal-candidato-middle">
+            <div class="capacidades-section">
+              <h3>Capacidades</h3>
+              <div class="capacidades-list" id="modal-capacidades-todas"></div>
+            </div>
+            <div class="vaga-info-section">
+              <h3>Vaga</h3>
+              <div class="vaga-info-content">
+                <p><strong>Nome:</strong> <span id="modal-vaga-nome"></span></p>
+                <p><strong>Data de Abertura:</strong> <span id="modal-vaga-data-abertura"></span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parte Inferior - Botão de Download -->
+          <div class="modal-candidato-bottom">
+            <button id="btnDownloadCurriculo" class="btn-download-curriculo">
+              <i class="fa-solid fa-download"></i> Baixar Currículo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </body>
