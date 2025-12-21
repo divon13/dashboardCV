@@ -15,7 +15,7 @@ function formatarData(dataISO) {
   if (!dataISO) return '';
   const data = new Date(dataISO);
   if (isNaN(data.getTime())) return dataISO;
-  
+
   // Converte para o fuso horário de Angola (Africa/Luanda - UTC+1)
   const formatter = new Intl.DateTimeFormat('pt-AO', {
     timeZone: 'Africa/Luanda',
@@ -26,14 +26,14 @@ function formatarData(dataISO) {
     minute: '2-digit',
     hour12: false
   });
-  
+
   const partes = formatter.formatToParts(data);
   const dia = partes.find(p => p.type === 'day').value;
   const mes = partes.find(p => p.type === 'month').value;
   const ano = partes.find(p => p.type === 'year').value;
   const hora = partes.find(p => p.type === 'hour').value;
   const min = partes.find(p => p.type === 'minute').value;
-  
+
   return `${dia}/${mes}/${ano} (${hora}:${min})`;
 }
 
@@ -59,7 +59,7 @@ async function carregarUsuarios() {
     console.error("Container de cards não encontrado: #candidatesCardsContainer");
     return;
   }
-  
+
   container.innerHTML = "";
 
   if (!data || data.length === 0) {
@@ -77,12 +77,12 @@ async function carregarUsuarios() {
         .select("Titulo, data_abertura")
         .eq("id", parseInt(candidato.vaga_sugerida))
         .single();
-      
+
       if (!vagaError && vaga) {
         vagaData = vaga;
       }
     }
-    
+
     const card = criarCardCandidato(candidato, vagaData);
     container.appendChild(card);
   }
@@ -97,7 +97,7 @@ async function carregarUsuarios() {
 function criarCardCandidato(candidato, vagaData) {
   const card = document.createElement('div');
   card.className = 'card-candidato';
-  
+
   // Processar capacidades
   let capacidades = [];
   if (candidato.Capacidades) {
@@ -111,22 +111,36 @@ function criarCardCandidato(candidato, vagaData) {
       capacidades = candidato.Capacidades;
     }
   }
-  
-  const capacidadesPills = capacidades.slice(0, 3).map(cap => 
+
+  const capacidadesPills = capacidades.slice(0, 3).map(cap =>
     `<span class="capacidade-pill">${cap}</span>`
   ).join('');
   const capacidadesRestantes = capacidades.length > 3 ? capacidades.length - 3 : 0;
   const maisCapacidades = capacidadesRestantes > 0 ? `<span class="capacidade-pill capacidade-pill-more">+${capacidadesRestantes} mais</span>` : '';
-  
+
   // Nome da vaga
   const nomeVaga = vagaData ? vagaData.Titulo : (candidato.vaga_sugerida || 'Não especificada');
-  
+
   // Calcular porcentagem da nota (assumindo escala 0-100)
   const nota = parseFloat(candidato.nota) || 0;
   const porcentagemNota = nota > 100 ? 100 : (nota < 0 ? 0 : nota);
   const circunferencia = 2 * Math.PI * 40; // raio 40
   const offset = circunferencia - (porcentagemNota / 100) * circunferencia;
-  
+
+  // Processar experiência e formação
+  let experienciaTexto = '';
+  if (candidato.Experiencias) {
+    if (isNaN(candidato.Experiencias)) {
+      experienciaTexto = candidato.Experiencias;
+    } else {
+      experienciaTexto = candidato.Experiencias + ' anos de experiência';
+    }
+  }
+  const formacaoTexto = candidato.formacao_academica || '';
+  const experienciaFormacao = experienciaTexto && formacaoTexto
+    ? `${experienciaTexto} • ${formacaoTexto}`
+    : (experienciaTexto || formacaoTexto || 'Não informado');
+
   // Criar HTML do círculo de nota
   const scoreCircle = `
     <div class="candidato-score-wrapper">
@@ -136,7 +150,7 @@ function criarCardCandidato(candidato, vagaData) {
                 stroke-dasharray="${circunferencia}" 
                 stroke-dashoffset="${offset}"></circle>
       </svg>
-      <div class="score-text">${nota.toFixed(1)}</div>
+      <div class="score-text">${nota.toFixed(0)}%</div>
     </div>
   `;
 
@@ -150,41 +164,39 @@ function criarCardCandidato(candidato, vagaData) {
         ${scoreCircle}
       </div>
     </div>
-    <div class="candidato-info">
-      <div class="candidato-info-item">
+    <div class="candidato-contato">
+      <div class="candidato-contato-item">
         <i class="fa-solid fa-location-dot"></i>
         <span>${candidato.Endereco || 'Não informado'}</span>
       </div>
-      <div class="candidato-info-item">
+      <div class="candidato-contato-item">
         <i class="fa-solid fa-envelope"></i>
         <span>${candidato.email || 'Não informado'}</span>
       </div>
-      <div class="candidato-info-item">
+      <div class="candidato-contato-item">
         <i class="fa-solid fa-phone"></i>
         <span>${candidato.telefone || 'Não informado'}</span>
       </div>
-      <div class="candidato-info-item">
-        <i class="fa-solid fa-briefcase"></i>
-        <span>${candidato.Experiencias ? (isNaN(candidato.Experiencias) ? candidato.Experiencias : candidato.Experiencias + ' anos de experiência') : 'Não informado'}</span>
-      </div>
-      <div class="candidato-info-item">
-        <i class="fa-solid fa-graduation-cap"></i>
-        <span>${candidato.formacao_academica || 'Não informado'}</span>
-      </div>
+    </div>
+    <div class="candidato-experiencia-formacao">
+      ${experienciaFormacao}
     </div>
     <div class="candidato-capacidades">
       ${capacidadesPills}
       ${maisCapacidades}
     </div>
     <div class="candidato-actions">
-      <button class="btn-detalhes" data-id="${candidato.id}">Mostrar detalhes</button>
+      <button class="btn-ver-perfil" data-id="${candidato.id}">
+        <i class="fa-solid fa-external-link"></i>
+        Ver Perfil
+      </button>
     </div>
   `;
 
   // Adicionar event listener ao botão
-  const btnDetalhes = card.querySelector('.btn-detalhes');
-  if (btnDetalhes) {
-    btnDetalhes.onclick = function() {
+  const btnVerPerfil = card.querySelector('.btn-ver-perfil');
+  if (btnVerPerfil) {
+    btnVerPerfil.onclick = function () {
       abrirModalDetalhes(candidato, vagaData);
     };
   }
@@ -230,9 +242,9 @@ function abrirModalDetalhes(candidato, vagaData) {
         capacidades = candidato.Capacidades;
       }
     }
-    
+
     if (capacidades.length > 0) {
-      capacidadesContainer.innerHTML = capacidades.map(cap => 
+      capacidadesContainer.innerHTML = capacidades.map(cap =>
         `<span class="capacidade-pill capacidade-pill-full">${cap}</span>`
       ).join('');
     } else {
@@ -250,7 +262,7 @@ function abrirModalDetalhes(candidato, vagaData) {
   const btnDownload = document.getElementById('btnDownloadCurriculo');
   if (btnDownload) {
     if (candidato.url_curriculo) {
-      btnDownload.onclick = function() {
+      btnDownload.onclick = function () {
         window.open(candidato.url_curriculo, '_blank');
       };
       btnDownload.disabled = false;
@@ -287,14 +299,14 @@ function configurarModalCandidato() {
 
   // Fechar modal
   if (btnFechar) {
-    btnFechar.onclick = function() {
+    btnFechar.onclick = function () {
       if (modal) modal.style.display = 'none';
     };
   }
 
   // Painel expansível da descrição IA
   if (descricaoHeader && descricaoContent && descricaoChevron) {
-    descricaoHeader.onclick = function() {
+    descricaoHeader.onclick = function () {
       const isHidden = descricaoContent.style.display === 'none' || !descricaoContent.style.display;
       descricaoContent.style.display = isHidden ? 'block' : 'none';
       descricaoChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
@@ -303,7 +315,7 @@ function configurarModalCandidato() {
 
   // Fechar modal ao clicar fora
   if (modal) {
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
       if (event.target === modal) {
         modal.style.display = 'none';
       }
@@ -311,7 +323,7 @@ function configurarModalCandidato() {
   }
 
   // Fechar modal com ESC
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
       modal.style.display = 'none';
     }
@@ -325,12 +337,12 @@ async function carregarCandidatos() {
   const { count, error } = await supabaseClient
     .from("candidatos")
     .select("*", { count: "exact" });
-  
+
   if (error) {
     console.error("Erro ao carregar contagem de candidatos:", error);
     return;
   }
-  
+
   const totalCandidatos = count || 0;
   const candidateCountElement = document.querySelector(".card:first-child p");
   if (candidateCountElement) {
@@ -358,7 +370,7 @@ async function carregarVagas() {
     console.error('Container de vagas não encontrado: #vagasContainer');
     return;
   }
-  
+
   container.innerHTML = '';
 
   // Renderiza os cards de vagas
@@ -399,17 +411,17 @@ async function carregarVagas() {
 function configurarEventosVagas(container, data) {
   // Botão Editar
   container.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.onclick = function() {
+    btn.onclick = function () {
       const id = this.getAttribute('data-id');
       const vaga = data.find(v => v.id == id);
       if (!vaga) return;
-      
+
       document.getElementById('vagaId').value = vaga.id;
       document.getElementById('titulo').value = vaga.Titulo || '';
       document.getElementById('descricao').value = vaga.Descricao || '';
       document.getElementById('requisitos').value = vaga.Requisitos || '';
-      document.getElementById('dataEncerramento').value = vaga.data_encerramento 
-        ? vaga.data_encerramento.substring(0, 10) 
+      document.getElementById('dataEncerramento').value = vaga.data_encerramento
+        ? vaga.data_encerramento.substring(0, 10)
         : '';
       document.getElementById('vagaModal').style.display = 'flex';
     };
@@ -417,15 +429,15 @@ function configurarEventosVagas(container, data) {
 
   // Botão Excluir
   container.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.onclick = function() {
+    btn.onclick = function () {
       const id = this.getAttribute('data-id');
       const vaga = data.find(v => v.id == id);
       if (!vaga) return;
-      
+
       const confirmModal = document.getElementById('confirmDeleteModal');
       const deleteTitulo = document.getElementById('deleteVagaTitulo');
       const confirmarBtn = document.getElementById('confirmarDeleteBtn');
-      
+
       if (deleteTitulo) {
         deleteTitulo.textContent = vaga.Titulo ? `Vaga: ${vaga.Titulo}` : '';
       }
@@ -440,11 +452,11 @@ function configurarEventosVagas(container, data) {
 
   // Botão Ver Detalhes
   container.querySelectorAll('.view-btn').forEach(btn => {
-    btn.onclick = function() {
+    btn.onclick = function () {
       const id = this.getAttribute('data-id');
       const vaga = data.find(v => v.id == id);
       if (!vaga) return;
-      
+
       preencherModalDetalhes(vaga);
       const detalhesModal = document.getElementById('vagaDetalhesModal');
       if (detalhesModal) {
@@ -473,13 +485,13 @@ function preencherModalDetalhes(vaga) {
   if (elementos.requisitos) elementos.requisitos.textContent = vaga.Requisitos || '';
   if (elementos.status) elementos.status.textContent = vaga.status_vagas || '';
   if (elementos.abertura) {
-    elementos.abertura.textContent = vaga.data_abertura 
-      ? formatarData(vaga.data_abertura) 
+    elementos.abertura.textContent = vaga.data_abertura
+      ? formatarData(vaga.data_abertura)
       : '';
   }
   if (elementos.encerramento) {
-    elementos.encerramento.textContent = vaga.data_encerramento 
-      ? formatarData(vaga.data_encerramento) 
+    elementos.encerramento.textContent = vaga.data_encerramento
+      ? formatarData(vaga.data_encerramento)
       : '';
   }
 }
@@ -497,7 +509,7 @@ async function carregarVagasAbertas() {
     console.error("Erro ao carregar contagem de vagas abertas:", error);
     return;
   }
-  
+
   const totalVagasAbertas = count || 0;
   const vagasAbertasCountElement = document.querySelector(".card:nth-child(3) p");
   if (vagasAbertasCountElement) {
@@ -569,8 +581,8 @@ function criarCardEntrevista(entrevista) {
   const status = entrevista.Status || 'Agendada';
   const statusClass = status.toLowerCase().replace(/\s+/g, '-');
   const observacoes = entrevista.Observações || entrevista.Observacoes || '';
-  const observacoesHTML = observacoes 
-    ? `<div class="entrevista-observacoes">${observacoes}</div>` 
+  const observacoesHTML = observacoes
+    ? `<div class="entrevista-observacoes">${observacoes}</div>`
     : '';
 
   card.innerHTML = `
@@ -600,13 +612,13 @@ function criarCardEntrevista(entrevista) {
  */
 function extrairNomeVaga(entrevista) {
   if (!entrevista.Vagas) return 'Vaga não encontrada';
-  
+
   if (Array.isArray(entrevista.Vagas) && entrevista.Vagas.length > 0) {
     return entrevista.Vagas[0].Titulo || 'Vaga não encontrada';
   } else if (entrevista.Vagas.Titulo) {
     return entrevista.Vagas.Titulo;
   }
-  
+
   return 'Vaga não encontrada';
 }
 
@@ -617,13 +629,13 @@ function extrairNomeVaga(entrevista) {
  */
 function extrairNomeCandidato(entrevista) {
   if (!entrevista.candidatos) return 'Candidato não encontrado';
-  
+
   if (Array.isArray(entrevista.candidatos) && entrevista.candidatos.length > 0) {
     return entrevista.candidatos[0].nome || 'Candidato não encontrado';
   } else if (entrevista.candidatos.nome) {
     return entrevista.candidatos.nome;
   }
-  
+
   return 'Candidato não encontrado';
 }
 
@@ -651,7 +663,7 @@ function configurarModais() {
 
   // Modal de criação/edição de vaga
   if (elementos.btnAbrirModal && elementos.vagaModal) {
-    elementos.btnAbrirModal.onclick = function() {
+    elementos.btnAbrirModal.onclick = function () {
       document.getElementById('vagaForm').reset();
       document.getElementById('vagaId').value = '';
       elementos.vagaModal.style.display = 'flex';
@@ -659,13 +671,13 @@ function configurarModais() {
   }
 
   if (elementos.btnFecharModal && elementos.vagaModal) {
-    elementos.btnFecharModal.onclick = function() {
+    elementos.btnFecharModal.onclick = function () {
       elementos.vagaModal.style.display = 'none';
     };
   }
 
   if (elementos.btnCancelar && elementos.vagaModal) {
-    elementos.btnCancelar.onclick = function(e) {
+    elementos.btnCancelar.onclick = function (e) {
       e.preventDefault();
       elementos.vagaModal.style.display = 'none';
     };
@@ -673,52 +685,52 @@ function configurarModais() {
 
   // Modal de confirmação de exclusão
   if (elementos.fecharConfirmDelete && elementos.confirmDeleteModal) {
-    elementos.fecharConfirmDelete.onclick = function() {
+    elementos.fecharConfirmDelete.onclick = function () {
       elementos.confirmDeleteModal.style.display = 'none';
     };
   }
 
   if (elementos.cancelarDeleteBtn && elementos.confirmDeleteModal) {
-    elementos.cancelarDeleteBtn.onclick = function() {
+    elementos.cancelarDeleteBtn.onclick = function () {
       elementos.confirmDeleteModal.style.display = 'none';
     };
   }
 
   if (elementos.confirmarDeleteBtn && elementos.confirmDeleteModal) {
-    elementos.confirmarDeleteBtn.onclick = async function() {
+    elementos.confirmarDeleteBtn.onclick = async function () {
       const id = this.getAttribute('data-id');
       if (!id) return;
-      
+
       const { error } = await supabaseClient
         .from('Vagas')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         alert('Erro ao apagar vaga: ' + error.message);
       } else {
         carregarVagas();
       }
-      
+
       elementos.confirmDeleteModal.style.display = 'none';
     };
   }
 
   // Modal de detalhes
   if (elementos.fecharDetalhes && elementos.detalhesModal) {
-    elementos.fecharDetalhes.onclick = function() {
+    elementos.fecharDetalhes.onclick = function () {
       elementos.detalhesModal.style.display = 'none';
     };
   }
 
   if (elementos.fecharDetalhesBtn && elementos.detalhesModal) {
-    elementos.fecharDetalhesBtn.onclick = function() {
+    elementos.fecharDetalhesBtn.onclick = function () {
       elementos.detalhesModal.style.display = 'none';
     };
   }
 
   // Fecha modais ao clicar fora do conteúdo
-  window.onclick = function(event) {
+  window.onclick = function (event) {
     if (event.target === elementos.vagaModal) {
       elementos.vagaModal.style.display = 'none';
     }
@@ -731,7 +743,7 @@ function configurarModais() {
   };
 
   // Fecha modais com tecla ESC
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       if (elementos.vagaModal && elementos.vagaModal.style.display === 'flex') {
         elementos.vagaModal.style.display = 'none';
@@ -802,19 +814,225 @@ if (vagaForm) {
   });
 }
 
+
 // ============================================
-// SEÇÃO 5: INICIALIZAÇÃO
+// SEÇÃO 5: PIPELINE DE RECRUTAMENTO
 // ============================================
 
-// Aguarda o DOM estar pronto antes de inicializar
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * Carrega o pipeline de candidatos
+ */
+async function carregarPipeline() {
+  const mapStatusToColumn = {
+    'aplicado': 1,
+    'triagem': 2,
+    'entrevista técnica': 3,
+    'adequação à cultura': 4,
+    'oferta enviada': 5,
+    'contratado': 6
+  };
+
+  const { data: candidatos, error } = await supabaseClient
+    .from("candidatos")
+    .select("*");
+
+  if (error) {
+    console.error("Erro ao buscar candidatos:", error);
+    return;
+  }
+
+  const { data: vagas } = await supabaseClient
+    .from("Vagas")
+    .select("id, Titulo");
+
+  const mapaVagas = {};
+  if (vagas) vagas.forEach(v => mapaVagas[v.id] = v.Titulo);
+
+  // Reset UI
+  for (let i = 1; i <= 6; i++) {
+    const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
+    if (colBody) colBody.innerHTML = '';
+    const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
+    if (colCount) colCount.textContent = '0';
+  }
+  document.querySelectorAll('.pipeline-summary-count').forEach(el => el.textContent = '0');
+
+  const contadores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+  for (const candidato of candidatos) {
+    let status = candidato.status ? candidato.status.toLowerCase().trim() : 'aplicado';
+    if (!mapStatusToColumn[status]) status = 'aplicado';
+
+    const colIndex = mapStatusToColumn[status];
+    const colBody = document.querySelector(`.pipeline-column-${colIndex} .pipeline-column-body`);
+
+    if (colBody) {
+      const nomeVaga = candidato.vaga_sugerida && mapaVagas[candidato.vaga_sugerida]
+        ? mapaVagas[candidato.vaga_sugerida]
+        : (candidato.vaga_sugerida || 'Geral');
+
+      const card = criarCardPipeline(candidato, nomeVaga);
+      colBody.appendChild(card);
+      contadores[colIndex]++;
+    }
+  }
+
+  // Update counts
+  for (let i = 1; i <= 6; i++) {
+    const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
+    if (colCount) colCount.textContent = contadores[i];
+
+    const summaryCounts = document.querySelectorAll('.pipeline-summary-count');
+    if (summaryCounts[i - 1]) summaryCounts[i - 1].textContent = contadores[i];
+  }
+
+  configurarDragAndDrop();
+}
+
+function criarCardPipeline(candidato, nomeVaga) {
+  const card = document.createElement('div');
+  card.className = 'pipeline-card';
+  card.draggable = true;
+  card.dataset.id = candidato.id;
+  card.dataset.status = candidato.status || 'Aplicado';
+
+  let skills = [];
+  try {
+    if (Array.isArray(candidato.Capacidades)) skills = candidato.Capacidades;
+    else if (candidato.Capacidades) skills = JSON.parse(candidato.Capacidades);
+  } catch (e) { skills = []; }
+
+  const topSkills = skills.slice(0, 3).map(s => `<span class="skill-tag">${s}</span>`).join('');
+
+  const nota = parseFloat(candidato.nota) || 0;
+  const matchScore = nota > 100 ? 100 : (nota < 0 ? 0 : nota);
+
+  card.innerHTML = `
+    <div class="pipeline-card-header">
+      <div class="pipeline-card-menu" style="cursor: grab;"><i class="fa-solid fa-grip-vertical fa-rotate-90"></i></div>
+      <div class="pipeline-card-name">${candidato.nome || 'Sem Nome'}</div>
+    </div>
+    
+    <div class="pipeline-match-score">
+      <div class="match-score-label">
+        <span>Match Score</span>
+        <span class="match-score-value">${Math.round(matchScore)}%</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" style="width: ${matchScore}%"></div>
+      </div>
+    </div>
+
+    <div class="pipeline-applied-for">
+      Candidatou-se a: <strong>${nomeVaga}</strong>
+    </div>
+
+    <div class="pipeline-card-skills">
+      ${topSkills}
+    </div>
+  `;
+
+  card.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/plain', candidato.id);
+    e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+    setTimeout(() => { card.style.display = 'none'; }, 0);
+  });
+
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    card.style.display = 'block';
+    document.querySelectorAll('.pipeline-column-body').forEach(c => c.classList.remove('drag-over'));
+  });
+
+  return card;
+}
+
+function configurarDragAndDrop() {
+  const columns = document.querySelectorAll('.pipeline-column-body');
+
+  columns.forEach(column => {
+    column.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      column.classList.add('drag-over');
+    });
+
+    column.addEventListener('dragleave', () => {
+      column.classList.remove('drag-over');
+    });
+
+    column.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      column.classList.remove('drag-over');
+
+      const cardId = e.dataTransfer.getData('text/plain');
+      const card = document.querySelector(`.pipeline-card[data-id="${cardId}"]`);
+
+      if (card) {
+        const parentColumn = column.parentElement;
+        const novoStatusTitulo = parentColumn.querySelector('h3').textContent.trim();
+
+        card.style.display = 'block';
+        column.appendChild(card);
+
+        await atualizarStatusCandidato(cardId, novoStatusTitulo);
+        recalcularContadores();
+      }
+    });
+  });
+}
+
+async function atualizarStatusCandidato(id, novoStatus) {
+  const { error } = await supabaseClient
+    .from('candidatos')
+    .update({ status: novoStatus })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Erro ao atualizar status:', error);
+    alert('Erro ao mover candidato.');
+    carregarPipeline();
+  }
+}
+
+function recalcularContadores() {
+  for (let i = 1; i <= 6; i++) {
+    const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
+    const count = colBody ? colBody.children.length : 0;
+
+    const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
+    if (colCount) colCount.textContent = count;
+
+    const summaryCounts = document.querySelectorAll('.pipeline-summary-count');
+    if (summaryCounts[i - 1]) summaryCounts[i - 1].textContent = count;
+  }
+}
+
+// ============================================
+// SEÇÃO 6: INICIALIZAÇÃO
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function () {
   configurarModais();
-  configurarModalCandidato();
-  
-  // Carrega os dados iniciais
-  carregarUsuarios();
-  carregarCandidatos();
-  carregarVagas();
-  carregarVagasAbertas();
-  carregarEntrevistas();
+  if (typeof configurarModalCandidato === 'function') configurarModalCandidato();
+
+  if (document.querySelector('.pipeline-main')) {
+    carregarPipeline();
+  }
+
+  // Carrega dados específicos da página, se os containers existirem
+  if (document.getElementById('candidatesCardsContainer')) {
+    carregarUsuarios(); // Candidatos card view
+    carregarCandidatos(); // Contagem
+  }
+
+  if (document.getElementById('vagasContainer')) {
+    carregarVagas();
+    carregarVagasAbertas();
+  }
+
+  if (document.getElementById('entrevistasContainer')) {
+    carregarEntrevistas();
+  }
 });
