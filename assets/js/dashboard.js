@@ -7,6 +7,17 @@
 // ============================================
 
 /**
+ * Retorna a cor baseada na pontuação
+ * @param {number} nota - Pontuação de 0 a 100
+ * @returns {string} Cor em formato hex
+ */
+function getCorPorPontuacao(nota) {
+  if (nota >= 67) return '#28a745'; // Verde para alta
+  if (nota >= 34) return '#ffc107'; // Amarelo para média
+  return '#dc3545'; // Vermelho para baixa
+}
+
+/**
  * Formata uma data ISO para o formato angolano com hora (fuso horário UTC+1)
  * @param {string} dataISO - Data no formato ISO
  * @returns {string} Data formatada (DD/MM/AAAA (HH:MM))
@@ -126,6 +137,7 @@ function criarCardCandidato(candidato, vagaData) {
   const porcentagemNota = nota > 100 ? 100 : (nota < 0 ? 0 : nota);
   const circunferencia = 2 * Math.PI * 40; // raio 40
   const offset = circunferencia - (porcentagemNota / 100) * circunferencia;
+  const corCirculo = getCorPorPontuacao(porcentagemNota);
 
   // Processar experiência e formação
   let experienciaTexto = '';
@@ -148,7 +160,8 @@ function criarCardCandidato(candidato, vagaData) {
         <circle cx="50" cy="50" r="40" class="score-circle-bg"></circle>
         <circle cx="50" cy="50" r="40" class="score-circle-progress" 
                 stroke-dasharray="${circunferencia}" 
-                stroke-dashoffset="${offset}"></circle>
+                stroke-dashoffset="${offset}"
+                style="stroke: ${corCirculo};"></circle>
       </svg>
       <div class="score-text">${nota.toFixed(0)}%</div>
     </div>
@@ -392,8 +405,8 @@ async function carregarVagas() {
         </div>
       </div>
       <div class="card-bottom">
-        <span>🗓️ ${vaga.data_encerramento ? formatarData(vaga.data_encerramento) : ''}</span>
-        <span>👤 ${candidatosCount} candidatos</span>
+        <span><i class="fa-solid fa-calendar"></i> ${vaga.data_encerramento ? formatarData(vaga.data_encerramento) : ''}</span>
+        <span><i class="fa-solid fa-users"></i> ${candidatosCount} candidatos</span>
       </div>
     `;
     container.appendChild(card);
@@ -906,20 +919,21 @@ function criarCardPipeline(candidato, nomeVaga) {
 
   const nota = parseFloat(candidato.nota) || 0;
   const matchScore = nota > 100 ? 100 : (nota < 0 ? 0 : nota);
+  const corBarra = getCorPorPontuacao(matchScore);
 
   card.innerHTML = `
     <div class="pipeline-card-header">
-      <div class="pipeline-card-menu" style="cursor: grab;"><i class="fa-solid fa-grip-vertical fa-rotate-90"></i></div>
+      <div class="pipeline-card-menu" style="cursor: grab;"><i class="fa-solid fa-grip-vertical"></i></div>
       <div class="pipeline-card-name">${candidato.nome || 'Sem Nome'}</div>
     </div>
     
     <div class="pipeline-match-score">
       <div class="match-score-label">
-        <span>Match Score</span>
-        <span class="match-score-value">${Math.round(matchScore)}%</span>
+        <span>Pontuação de Compatibilidade</span>
+        <span class="match-score-value" style="color: ${corBarra};">${Math.round(matchScore)}%</span>
       </div>
       <div class="progress-bar-container">
-        <div class="progress-bar-fill" style="width: ${matchScore}%"></div>
+        <div class="progress-bar-fill" style="width: ${matchScore}%; background: ${corBarra};"></div>
       </div>
     </div>
 
@@ -1030,6 +1044,12 @@ document.addEventListener('DOMContentLoaded', function () {
   if (document.getElementById('vagasContainer')) {
     carregarVagas();
     carregarVagasAbertas();
+  }
+
+  // Carrega métricas do dashboard principal (index.html)
+  if (document.querySelector('.cards') && !document.getElementById('candidatesCardsContainer') && !document.getElementById('vagasContainer')) {
+    carregarCandidatos(); // Contagem total de candidatos
+    carregarVagasAbertas(); // Contagem de vagas abertas
   }
 
   if (document.getElementById('entrevistasContainer')) {
