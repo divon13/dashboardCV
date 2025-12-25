@@ -81,17 +81,22 @@ async function carregarUsuarios() {
   // Carregar informações de vagas para todos os candidatos
   for (const candidato of data) {
     let vagaData = null;
-    // Se vaga_sugerida for um número/ID, buscar dados da vaga
-    if (candidato.vaga_sugerida && candidato.vaga_sugerida.toString().trim() !== '' && !isNaN(candidato.vaga_sugerida)) {
+    console.log('Candidato:', candidato.nome, 'vaga_sugerida:', candidato.vaga_sugerida, 'tipo:', typeof candidato.vaga_sugerida);
+    // Se vaga_sugerida for uma string não vazia, buscar dados da vaga pelo título
+    if (candidato.vaga_sugerida && candidato.vaga_sugerida.toString().trim() !== '') {
+      console.log('Buscando vaga com Título:', candidato.vaga_sugerida);
       const { data: vaga, error: vagaError } = await supabaseClient
         .from("Vagas")
         .select("Titulo, data_abertura")
-        .eq("id", parseInt(candidato.vaga_sugerida))
+        .eq("Titulo", candidato.vaga_sugerida)
         .single();
 
+      console.log('Resultado da query vaga:', vaga, 'erro:', vagaError);
       if (!vagaError && vaga) {
         vagaData = vaga;
       }
+    } else {
+      console.log('vaga_sugerida inválida ou ausente');
     }
 
     const card = criarCardCandidato(candidato, vagaData);

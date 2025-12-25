@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./css/style.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- JS -->
   <script src="assets/js/supabaseClient.js" defer></script>
   <script src="assets/js/dashboard.js" defer></script>
   <title>Dashboard RH</title>
 </head>
+
 <body>
 
   <div class="sidebar">
@@ -28,8 +30,8 @@
       <div class="card">
         <h3>Total de Candidatos</h3>
         <p><svg viewBox="25 25 50 50" class="container">
-  <circle cx="50" cy="50" r="20" class="loader"></circle>
-</svg></p>
+            <circle cx="50" cy="50" r="20" class="loader"></circle>
+          </svg></p>
       </div>
       <div class="card">
         <h3>Taxa de Contratação</h3>
@@ -48,7 +50,7 @@
           <h2>Detalhes do Candidato</h2>
           <span class="close" id="fecharModalCandidato">&times;</span>
         </div>
-        
+
         <div class="modal-candidato-body">
           <!-- Parte Superior - Informações principais -->
           <div class="modal-candidato-top">
@@ -118,7 +120,7 @@
           <!-- Parte Inferior - Botão de Download -->
           <div class="modal-candidato-bottom">
             <button id="btnDownloadCurriculo" class="btn-download-curriculo">
-              <i class="fa-solid fa-download"></i> Baixar Currículo
+              <i class="fa-solid fa-download"></i> Visualizar Currículo
             </button>
           </div>
         </div>
@@ -127,4 +129,5 @@
   </div>
 
 </body>
+
 </html>
