@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- JS -->
+  <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/dashboard.js" defer></script>
+</head>
+
+<body>
+
+  <div class="sidebar">
+    <img src="midia/logo.png" alt="" class="logo-sidebar">
+    <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+    <a class="nav-item" href="Candidatos.html"><i class="fa-solid fa-users"></i>Candidatos</a>
+    <a class="nav-item" href="vagas.html"><i class="fa-solid fa-briefcase"></i>Vagas</a>
+    <a class="nav-item" href="Pipeline.html"><i class="fa-solid fa-chart-column"></i>Fluxo</a>
+    <a class="nav-item active" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
+  </div>
+
+  <div class="main main-entrevistas">
+    <!-- Header -->
+    <header class="page-header">
+      <div class="header-content">
+        <h1>Entrevistas</h1>
+        <p class="subtitle">Gerencie todas as suas entrevistas agendadas</p>
+      </div>
+      <button class="btn-primary" id="btnNovoAgendamento">
+        <i class="fa-solid fa-plus"></i> Agendar Entrevista
+      </button>
+    </header>
+
+    <!-- Stats Row -->
+    <div class="stats-grid">
+      <div class="stat-card" style="border-left: 4px solid #6366f1;"> <!-- Indigo -->
+        <div class="stat-header">
+          <span class="dot" style="background: #6366f1;"></span>
+          <span class="stat-label">Hoje</span>
+        </div>
+        <div class="stat-value" id="statHoje">0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #3b82f6;"> <!-- Blue -->
+        <div class="stat-header">
+          <span class="dot" style="background: #3b82f6;"></span>
+          <span class="stat-label">Esta Semana</span>
+        </div>
+        <div class="stat-value" id="statSemana">0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #22c55e;"> <!-- Green -->
+        <div class="stat-header">
+          <span class="dot" style="background: #22c55e;"></span>
+          <span class="stat-label">Presenciais</span>
+        </div>
+        <div class="stat-value" id="statPresenciais">0</div>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid #eab308;"> <!-- Yellow -->
+        <div class="stat-header">
+          <span class="dot" style="background: #eab308;"></span>
+          <span class="stat-label">Pendentes</span>
+        </div>
+        <div class="stat-value" id="statPendentes">0</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <div class="filters-group">
+        <div class="filter-wrapper">
+          <i class="fa-solid fa-filter"></i>
+          <span>Filtros:</span>
+        </div>
+        <select class="filter-select" id="filterType">
+          <option value="all">Todos os tipos</option>
+          <option value="presencial">🏢 Presencial</option>
+          <option value="video">📹 Vídeo</option>
+          <option value="telefone">📞 Telefone</option>
+        </select>
+        <select class="filter-select" id="filterStatus">
+          <option value="all">Todos os status</option>
+          <option value="agendada">Agendada</option>
+          <option value="concluida">Concluída</option>
+        </select>
+        <button class="btn-text" id="btnClearFilters">Limpar</button>
+      </div>
+
+      <div class="view-toggles">
+        <button class="toggle-btn active" id="viewCalendar"><i class="fa-regular fa-calendar"></i> Calendário</button>
+        <button class="toggle-btn" id="viewList"><i class="fa-solid fa-list"></i> Lista</button>
+      </div>
+    </div>
+
+    <!-- Calendar Layout -->
+    <div class="calendar-layout">
+      <!-- Calendar Component -->
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <h2 id="currentMonthDisplay">Janeiro 2024</h2>
+          <div class="calendar-nav">
+            <button class="nav-btn" id="prevMonth"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="nav-btn today-btn" id="goToday">Hoje</button>
+            <button class="nav-btn" id="nextMonth"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="calendar-grid">
+          <div class="weekday">Dom</div>
+          <div class="weekday">Seg</div>
+          <div class="weekday">Ter</div>
+          <div class="weekday">Qua</div>
+          <div class="weekday">Qui</div>
+          <div class="weekday">Sex</div>
+          <div class="weekday">Sáb</div>
+
+          <!-- Days will be injected here via JS -->
+          <div id="calendarDaysGrid" class="days-grid"></div>
+        </div>
+      </div>
+
+      <!-- Side Panel -->
+      <div class="day-details-panel">
+        <h3 id="selectedDateDisplay">25 de Janeiro</h3>
+
+        <div class="day-events-list" id="dayEventsList">
+          <!-- Events will be injected here -->
+          <div class="empty-state-small">Nenhuma entrevista para este dia</div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End Main -->
+
+  <!-- Modal Agendamento (Hidden by default) -->
+  <div id="agendamentoModal" class="modal">
+    <div class="modal-content-vaga">
+      <div class="modal-header">
+        <h2>Agendar Entrevista</h2>
+        <span class="close" id="closeAgendamentoModal">&times;</span>
+      </div>
+      <form id="agendamentoForm" class="vaga-form-v2">
+        <input type="hidden" id="agendamentoId">
+
+        <div class="form-group-v2">
+          <label>Candidato</label>
+          <select id="agCandidato" required class="filter-select" style="width:100%"></select>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Vaga</label>
+          <select id="agVaga" required class="filter-select" style="width:100%"></select>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Tipo de Entrevista</label>
+          <select id="agTipo" required class="filter-select" style="width:100%">
+            <option value="Presencial">🏢 Presencial</option>
+            <option value="Online">📹 Vídeo</option>
+            <option value="Telefone">📞 Telefone</option>
+          </select>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Data e Hora</label>
+          <input type="datetime-local" id="agDataHora" required>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Entrevistador</label>
+          <input type="text" id="agEntrevistador" placeholder="Nome do entrevistador">
+        </div>
+
+        <div class="form-group-v2">
+          <label>Observações</label>
+          <textarea id="agObs" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="cancelAgendamento">Cancelar</button>
+          <button type="submit" class="btn-submit">Agendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>
+
+</html>

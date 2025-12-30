@@ -1061,3 +1061,365 @@ document.addEventListener('DOMContentLoaded', function () {
     carregarEntrevistas();
   }
 });
+
+// ============================================
+// REDESIGN ENTREVISTAS (CALENDAR LOGIC)
+// ============================================
+
+let currentDate = new Date();
+let selectedDate = new Date();
+let interviewsCache = []; // Store fetched interviews
+
+async function initCalendarPage() {
+  console.log('Iniciando página de entrevistas...');
+
+  // Initial Render
+  renderCalendar(currentDate);
+  updateStatsPlaceholder(); // Fetch stats
+
+  // Event Listeners
+  document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
+  document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+  document.getElementById('goToday').addEventListener('click', () => {
+    currentDate = new Date();
+    selectedDate = new Date();
+    renderCalendar(currentDate);
+    fetchMonthInterviews(currentDate);
+  });
+
+  // Filters (Placeholder for now)
+  document.getElementById('btnClearFilters').addEventListener('click', () => {
+    document.getElementById('filterType').value = 'all';
+    document.getElementById('filterStatus').value = 'all';
+    renderSidePanel(selectedDate); // Re-render with cleared filters
+  });
+
+  document.getElementById('filterType').addEventListener('change', () => renderSidePanel(selectedDate));
+  document.getElementById('filterStatus').addEventListener('change', () => renderSidePanel(selectedDate));
+
+  // Toggle Views (Placeholder visual only for now)
+  document.getElementById('viewCalendar').addEventListener('click', (e) => setActiveView(e.target, 'calendar'));
+  document.getElementById('viewList').addEventListener('click', (e) => setActiveView(e.target, 'list'));
+
+  // Initial Fetch
+  await fetchMonthInterviews(currentDate);
+
+  // Modal Logic
+  setupAgendamentoModal();
+}
+
+function setupAgendamentoModal() {
+  const modal = document.getElementById('agendamentoModal');
+  const btnOpen = document.getElementById('btnNovoAgendamento');
+  const btnClose = document.getElementById('closeAgendamentoModal');
+  const btnCancel = document.getElementById('cancelAgendamento');
+  const form = document.getElementById('agendamentoForm');
+
+  if (btnOpen) {
+    btnOpen.addEventListener('click', async () => {
+      modal.style.display = 'flex';
+      await populateModalSelects();
+    });
+  }
+
+  const closeModal = () => { modal.style.display = 'none'; form.reset(); };
+  if (btnClose) btnClose.addEventListener('click', closeModal);
+  if (btnCancel) btnCancel.addEventListener('click', closeModal);
+
+  // Close on click outside
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await handleAgendamentoSubmit(form);
+      closeModal();
+      fetchMonthInterviews(currentDate); // Refresh calendar
+    });
+  }
+}
+
+async function populateModalSelects() {
+  // No changes needed here, modal/CSS logic handled.
+  const candSelect = document.getElementById('agCandidato');
+  const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome');
+  if (candidates && candSelect) {
+    candSelect.innerHTML = '<option value="">Selecione um candidato...</option>';
+    candidates.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; // storing ID, assuming schema uses relation by ID
+      opt.textContent = c.nome;
+      candSelect.appendChild(opt);
+    });
+  }
+
+  // Populate Vagas
+  const vagaSelect = document.getElementById('agVaga');
+  const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
+  if (vagas && vagaSelect) {
+    vagaSelect.innerHTML = '<option value="">Selecione uma vaga...</option>';
+    vagas.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.id;
+      opt.textContent = v.Titulo;
+      vagaSelect.appendChild(opt);
+    });
+  }
+}
+
+async function handleAgendamentoSubmit(form) {
+  const candidatoId = document.getElementById('agCandidato').value;
+  const vagaId = document.getElementById('agVaga').value;
+  const tipo = document.getElementById('agTipo').value;
+  const dataHora = document.getElementById('agDataHora').value;
+  const entrevistador = document.getElementById('agEntrevistador').value;
+  const obs = document.getElementById('agObs').value;
+
+  const { error } = await supabaseClient.from('Entrevistas').insert([{
+    CandidatoID: candidatoId, // Ensure your schema matches these FK names
+    VagaID: vagaId,
+    Data: dataHora,
+    Entrevistador: entrevistador,
+    Observações: obs,
+    Status: 'Agendada',
+    Tipo: tipo
+  }]);
+
+  if (error) {
+    console.error('Error saving interview:', error);
+    alert('Erro ao agendar entrevista: ' + error.message);
+  } else {
+    alert('Entrevista agendada com sucesso!');
+  }
+}
+
+function setActiveView(btn, view) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  // Handle icon click vs button click
+  const target = btn.closest('.toggle-btn');
+  if (target) target.classList.add('active');
+
+  if (view === 'list') {
+    alert('Visualização em lista em desenvolvimento. Voltando ao calendário.');
+    document.getElementById('viewCalendar').click();
+  }
+}
+
+function changeMonth(delta) {
+  currentDate.setMonth(currentDate.getMonth() + delta);
+  renderCalendar(currentDate);
+  fetchMonthInterviews(currentDate);
+}
+
+function renderCalendar(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  // Update Header
+  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  document.getElementById('currentMonthDisplay').textContent = `${monthNames[month]} ${year}`;
+
+  const daysGrid = document.getElementById('calendarDaysGrid');
+  daysGrid.innerHTML = '';
+
+  // Logic to generate days
+  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 (Sun) - 6 (Sat)
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  // Prev Month Days
+  for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+    const day = daysInPrevMonth - i;
+    const dayCell = createDayCell(day, true, false);
+    daysGrid.appendChild(dayCell);
+  }
+
+  // Current Month Days
+  for (let i = 1; i <= daysInMonth; i++) {
+    const isToday = i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+    const isSelected = i === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
+    const dayCell = createDayCell(i, false, isToday, isSelected, new Date(year, month, i));
+    daysGrid.appendChild(dayCell);
+  }
+
+  // Next Month Days (fill row)
+  const totalCells = daysGrid.children.length;
+  const remainingCells = 42 - totalCells; // 6 rows * 7
+  // If we want fewer rows when possible, we can check 35
+  const rowsNeeded = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
+  const totalSlots = rowsNeeded * 7;
+  const remainingParams = totalSlots - totalCells; // Just fill the row
+
+  for (let i = 1; i <= remainingParams; i++) {
+    const dayCell = createDayCell(i, true, false);
+    daysGrid.appendChild(dayCell);
+  }
+
+  // Add Event Dots (if data exists)
+  updateCalendarDots();
+}
+
+function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj = null) {
+  const el = document.createElement('div');
+  el.className = `day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`;
+
+  if (!isOtherMonth && dateObj) {
+    el.onclick = () => {
+      selectedDate = dateObj;
+      document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      renderSidePanel(selectedDate);
+    };
+    el.setAttribute('data-date', dateObj.toISOString().split('T')[0]); // YYYY-MM-DD
+  }
+
+  el.innerHTML = `
+    <div class="day-number">${day}</div>
+    <div class="day-events-dots"></div>
+  `;
+  return el;
+}
+
+async function fetchMonthInterviews(date) {
+  // Fetch a broad range (e.g. current month +/- 1 month to be safe or just filter client side if few)
+  // For simplicity, fetching all interviews for now (or a reasonable limit) since supabase filter by month needs specific query
+
+  const startStr = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+  const endStr = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
+
+  // We actually need data for dots, so getting everything >= start of month is good, 
+  // but to populate dots correctly across month navigation we might just fetch globally or per month interaction.
+  // Let's fetch all future interviews and some past for simplicity, or just all.
+
+  const { data, error } = await supabaseClient
+    .from("Entrevistas")
+    .select(`
+      *,
+      Vagas(Titulo),
+      candidatos(nome)
+    `)
+    // .gte('Data', startStr) // Let's fetch all to handle browsing past months too if needed
+    .order('Data', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching interviews', error);
+    return;
+  }
+
+  interviewsCache = data || [];
+  updateCalendarDots();
+  renderSidePanel(selectedDate);
+  updateStatsCounters();
+}
+
+function updateCalendarDots() {
+  // Clear existing
+  document.querySelectorAll('.day-events-dots').forEach(d => d.innerHTML = '');
+
+  interviewsCache.forEach(interview => {
+    if (!interview.Data) return;
+    const dateKey = interview.Data.split('T')[0];
+    const cell = document.querySelector(`.day-cell[data-date="${dateKey}"]`);
+
+    if (cell) {
+      const dotsContainer = cell.querySelector('.day-events-dots');
+      if (dotsContainer.children.length < 3) { // Limit dots
+        const dot = document.createElement('div');
+        dot.className = `event-dot ${interview.Tipo === 'Online' ? 'online' : 'presencial'}`;
+        dotsContainer.appendChild(dot);
+      }
+    }
+  });
+}
+
+function renderSidePanel(date) {
+  const dateKey = date.toISOString().split('T')[0];
+  const displayDate = date.toLocaleDateString('pt-AO', { day: 'numeric', month: 'long' });
+  document.getElementById('selectedDateDisplay').textContent = displayDate;
+
+  const listContainer = document.getElementById('dayEventsList');
+  listContainer.innerHTML = '';
+
+  const dayInterviews = interviewsCache.filter(i => i.Data && i.Data.startsWith(dateKey));
+
+  // Client-side filtering
+  const typeFilter = document.getElementById('filterType').value;
+  const statusFilter = document.getElementById('filterStatus').value;
+
+  const filtered = dayInterviews.filter(i => {
+    if (typeFilter !== 'all' && i.Tipo && i.Tipo.toLowerCase() !== typeFilter) return false;
+    if (statusFilter !== 'all' && i.Status && i.Status.toLowerCase() !== statusFilter) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    listContainer.innerHTML = `<div class="empty-state-small">Nenhuma entrevista encontrada</div>`;
+    return;
+  }
+
+  filtered.forEach(i => {
+    const time = i.Data.split('T')[1].substring(0, 5); // HH:MM
+    const nomeCandidato = i.candidatos ? i.candidatos.nome : 'Candidato desconhecido';
+    const nomeVaga = i.Vagas ? i.Vagas.Titulo : 'Vaga não informada';
+
+    const card = document.createElement('div');
+    card.className = 'side-event-card';
+    card.innerHTML = `
+           <div class="event-icon-box">
+             <i class="fa-solid ${i.Tipo === 'Online' ? 'fa-video' : 'fa-building'}"></i>
+           </div>
+           <div class="event-info">
+             <div class="event-title">${nomeCandidato}</div>
+             <div class="event-time">${time} - ${nomeVaga}</div>
+             <div class="event-status-badge">${i.Status}</div>
+           </div>
+        `;
+    listContainer.appendChild(card);
+  });
+}
+
+function updateStatsCounters() {
+  // Mock logic or real calc based on cache
+  const today = new Date().toISOString().split('T')[0];
+
+  const countToday = interviewsCache.filter(i => i.Data && i.Data.startsWith(today)).length;
+  const countPending = interviewsCache.filter(i => i.Status === 'Agendada').length; // Check exact status string
+  const countPresencial = interviewsCache.filter(i => i.Tipo === 'Presencial').length;
+
+  // Week calc is a bit more complex, skip for MVP or do simple approximation
+
+  animateValue("statHoje", 0, countToday, 1000);
+  animateValue("statPendentes", 0, countPending, 1000);
+  animateValue("statPresenciais", 0, countPresencial, 1000);
+  // statSemana placeholder
+  document.getElementById('statSemana').textContent = "-";
+}
+
+function updateStatsPlaceholder() {
+  // Just to ensure not empty 0 if logic fails
+}
+
+function animateValue(id, start, end, duration) {
+  if (start === end) return;
+  const range = end - start;
+  let current = start;
+  const increment = end > start ? 1 : -1;
+  const stepTime = Math.abs(Math.floor(duration / range));
+  const obj = document.getElementById(id);
+  if (!obj) return;
+
+  const timer = setInterval(function () {
+    current += increment;
+    obj.innerHTML = current;
+    if (current == end) {
+      clearInterval(timer);
+    }
+  }, stepTime);
+}
+
+// Helper to auto-init if on page
+if (document.querySelector('.main-entrevistas')) {
+  initCalendarPage();
+}
