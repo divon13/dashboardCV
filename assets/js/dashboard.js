@@ -548,7 +548,8 @@ async function carregarEntrevistas() {
     .select(`
       *,
       Vagas(Titulo),
-      candidatos(nome)
+      candidatos(nome),
+      Entrevistador(Nome)
     `)
     .gte('Data', hojeISO)
     .order('Data', { ascending: true })
@@ -615,7 +616,7 @@ function criarCardEntrevista(entrevista) {
     </div>
     <div class="card-bottom">
       <span><i class="fa-solid fa-calendar-week"></i> ${dataFormatada}</span>
-      <span><i class="fa-solid fa-user"></i> ${entrevista.Entrevistador || 'Não definido'}</span>
+      <span><i class="fa-solid fa-user"></i> ${entrevista.Entrevistador ? entrevista.Entrevistador.Nome : 'Não definido'}</span>
     </div>
     ${observacoesHTML}
   `;
@@ -1167,6 +1168,20 @@ async function populateModalSelects() {
       vagaSelect.appendChild(opt);
     });
   }
+
+  // Populate Entrevistadores
+  const entrevistadorSelect = document.getElementById('agEntrevistador');
+  const { data: entrevistadores, error: entrevistadorError } = await supabaseClient.from('Entrevistador').select('id, Nome');
+  console.log('Entrevistadores data:', entrevistadores, 'error:', entrevistadorError);
+  if (entrevistadores && entrevistadorSelect) {
+    entrevistadorSelect.innerHTML = '<option value="">Selecione um entrevistador...</option>';
+    entrevistadores.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = e.Nome;
+      entrevistadorSelect.appendChild(opt);
+    });
+  }
 }
 
 async function handleAgendamentoSubmit(form) {
@@ -1174,17 +1189,27 @@ async function handleAgendamentoSubmit(form) {
   const vagaId = document.getElementById('agVaga').value;
   const tipo = document.getElementById('agTipo').value;
   const dataHora = document.getElementById('agDataHora').value;
-  const entrevistador = document.getElementById('agEntrevistador').value;
+  const entrevistadorId = document.getElementById('agEntrevistador').value;
   const obs = document.getElementById('agObs').value;
 
+  console.log('Inserindo entrevista:', {
+    "Candidato_ID": candidatoId,
+    "Vagas_ID": vagaId,
+    "Data": dataHora,
+    "Entrevistador": entrevistadorId,
+    "Observacoes": obs,
+    "status": 'Agendada',
+    "Tipo de entrevista": tipo
+  });
+
   const { error } = await supabaseClient.from('Entrevistas').insert([{
-    CandidatoID: candidatoId, // Ensure your schema matches these FK names
-    VagaID: vagaId,
-    Data: dataHora,
-    Entrevistador: entrevistador,
-    Observações: obs,
-    Status: 'Agendada',
-    Tipo: tipo
+    "Candidato_ID": candidatoId,
+    "Vagas_ID": vagaId,
+    "Data": dataHora,
+    "Entrevistador": entrevistadorId,  // ID do entrevistador
+    "Observacoes": obs,
+    "status": 'Agendada',
+    "Tipo de entrevista": tipo
   }]);
 
   if (error) {
@@ -1327,7 +1352,7 @@ function updateCalendarDots() {
       const dotsContainer = cell.querySelector('.day-events-dots');
       if (dotsContainer.children.length < 3) { // Limit dots
         const dot = document.createElement('div');
-        dot.className = `event-dot ${interview.Tipo === 'Online' ? 'online' : 'presencial'}`;
+        dot.className = `event-dot ${interview["Tipo de entrevista"] === 'Online' ? 'online' : 'presencial'}`;
         dotsContainer.appendChild(dot);
       }
     }
@@ -1349,8 +1374,8 @@ function renderSidePanel(date) {
   const statusFilter = document.getElementById('filterStatus').value;
 
   const filtered = dayInterviews.filter(i => {
-    if (typeFilter !== 'all' && i.Tipo && i.Tipo.toLowerCase() !== typeFilter) return false;
-    if (statusFilter !== 'all' && i.Status && i.Status.toLowerCase() !== statusFilter) return false;
+    if (typeFilter !== 'all' && i["Tipo de entrevista"] && i["Tipo de entrevista"].toLowerCase() !== typeFilter) return false;
+    if (statusFilter !== 'all' && i.status && i.status.toLowerCase() !== statusFilter) return false;
     return true;
   });
 
@@ -1368,12 +1393,12 @@ function renderSidePanel(date) {
     card.className = 'side-event-card';
     card.innerHTML = `
            <div class="event-icon-box">
-             <i class="fa-solid ${i.Tipo === 'Online' ? 'fa-video' : 'fa-building'}"></i>
+             <i class="fa-solid ${i["Tipo de entrevista"] === 'Online' ? 'fa-video' : 'fa-building'}"></i>
            </div>
            <div class="event-info">
              <div class="event-title">${nomeCandidato}</div>
              <div class="event-time">${time} - ${nomeVaga}</div>
-             <div class="event-status-badge">${i.Status}</div>
+             <div class="event-status-badge">${i.status}</div>
            </div>
         `;
     listContainer.appendChild(card);
