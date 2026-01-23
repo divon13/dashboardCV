@@ -18,6 +18,7 @@
   <script src="assets/js/pipeline.js" defer></script>
   <script src="assets/js/dashboard.js" defer></script>
 </head>
+
 <body>
   <div class="sidebar">
     <img src="midia/logo.png" alt="" class="logo-sidebar">
@@ -150,12 +151,22 @@
 
         <div class="form-group-v2">
           <label>Candidato</label>
-          <select id="agCandidato" required class="filter-select" style="width:100%"></select>
+          <div class="searchable-dropdown" id="dropdownCandidato">
+            <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select"
+              autocomplete="off" style="width: 100%;">
+            <input type="hidden" id="agCandidato">
+            <div class="dropdown-options" id="optionsCandidato"></div>
+          </div>
         </div>
 
         <div class="form-group-v2">
           <label>Vaga</label>
-          <select id="agVaga" required class="filter-select" style="width:100%"></select>
+          <div class="searchable-dropdown" id="dropdownVaga">
+            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select" autocomplete="off"
+              style="width: 100%;">
+            <input type="hidden" id="agVaga">
+            <div class="dropdown-options" id="optionsVaga"></div>
+          </div>
         </div>
 
         <div class="form-group-v2">
@@ -169,7 +180,10 @@
 
         <div class="form-group-v2">
           <label>Data e Hora</label>
-          <input type="datetime-local" id="agDataHora" required style="background-color: #0f172a;padding: 10px 12px; border: 1px solid #334155; border-radius: 8px; font-size: 14px; font-family: inherit; transition: all 0.3s ease; width: 100%; box-sizing: border-box;" onfocus="this.style.borderColor='#334155'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.1)';" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
+          <input type="datetime-local" id="agDataHora" required
+            style="background-color: #0f172a;padding: 10px 12px; border: 1px solid #334155; border-radius: 8px; font-size: 14px; font-family: inherit; transition: all 0.3s ease; width: 100%; box-sizing: border-box;"
+            onfocus="this.style.borderColor='#334155'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.1)';"
+            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
         </div>
 
         <div class="form-group-v2">

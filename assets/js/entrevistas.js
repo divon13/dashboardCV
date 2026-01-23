@@ -205,40 +205,33 @@ function setupAgendamentoModal() {
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await handleAgendamentoSubmit(form);
-            closeModal();
-            fetchMonthInterviews(currentDate); // Refresh calendar
+            const success = await handleAgendamentoSubmit(form);
+            if (success) {
+                closeModal();
+                fetchMonthInterviews(currentDate); // Refresh calendar
+            }
         });
     }
 }
 
 async function populateModalSelects() {
-    const candSelect = document.getElementById('agCandidato');
+    // Candidates - Searchable
     const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome');
-    if (candidates && candSelect) {
-        candSelect.innerHTML = '<option value="">Selecione um candidato...</option>';
-        candidates.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.nome;
-            candSelect.appendChild(opt);
-        });
+    if (candidates) {
+        setupSearchableDropdown('searchCandidato', 'optionsCandidato', 'agCandidato',
+            candidates.map(c => ({ id: c.id, label: c.nome }))
+        );
     }
 
-    // Populate Vagas
-    const vagaSelect = document.getElementById('agVaga');
+    // Vagas - Searchable
     const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
-    if (vagas && vagaSelect) {
-        vagaSelect.innerHTML = '<option value="">Selecione uma vaga...</option>';
-        vagas.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v.id;
-            opt.textContent = v.Titulo;
-            vagaSelect.appendChild(opt);
-        });
+    if (vagas) {
+        setupSearchableDropdown('searchVaga', 'optionsVaga', 'agVaga',
+            vagas.map(v => ({ id: v.id, label: v.Titulo }))
+        );
     }
 
-    // Populate Entrevistadores
+    // Entrevistadores - Standard Select
     const entrevistadorSelect = document.getElementById('agEntrevistador');
     const { data: entrevistadores } = await supabaseClient.from('Entrevistador').select('id, Nome');
     if (entrevistadores && entrevistadorSelect) {
@@ -252,6 +245,73 @@ async function populateModalSelects() {
     }
 }
 
+/**
+ * Configures a searchable dropdown
+ */
+function setupSearchableDropdown(inputId, containerId, hiddenId, items) {
+    const input = document.getElementById(inputId);
+    const container = document.getElementById(containerId);
+    const hidden = document.getElementById(hiddenId);
+
+    if (!input || !container || !hidden) return;
+
+    // Helper to render
+    const renderOptions = (filterText = '') => {
+        container.innerHTML = '';
+        const filtered = items.filter(i => i.label.toLowerCase().includes(filterText.toLowerCase()));
+
+        if (filtered.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'dropdown-option';
+            div.textContent = 'Nenhum resultado encontrado';
+            div.style.color = 'var(--text-muted)';
+            div.style.fontStyle = 'italic';
+            div.style.cursor = 'default';
+            container.appendChild(div);
+            return;
+        }
+
+        filtered.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'dropdown-option';
+            div.textContent = item.label;
+            div.onclick = (e) => {
+                e.stopPropagation(); // Prevent bubbling
+                input.value = item.label;
+                hidden.value = item.id;
+                container.classList.remove('active');
+            };
+            container.appendChild(div);
+        });
+    };
+
+    // Initial populate (hidden)
+    renderOptions();
+
+    // Event Listeners
+    input.onfocus = () => {
+        renderOptions(input.value);
+        container.classList.add('active');
+    };
+
+    input.oninput = (e) => {
+        renderOptions(e.target.value);
+        // Clear hidden ID if user changes text, enforcing selection
+        // Unless exact match? Safer to clear.
+        // hidden.value = ''; 
+        container.classList.add('active');
+    };
+
+    // Click outside handling to close dropdown
+    // This is a bit aggressive if added multiple times, but safe enough for this context
+    // Ideally we put this on window once, but for simplicity:
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !container.contains(e.target)) {
+            container.classList.remove('active');
+        }
+    });
+}
+
 async function handleAgendamentoSubmit(form) {
     const candidatoId = document.getElementById('agCandidato').value;
     const vagaId = document.getElementById('agVaga').value;
@@ -259,6 +319,15 @@ async function handleAgendamentoSubmit(form) {
     const dataHora = document.getElementById('agDataHora').value;
     const entrevistadorId = document.getElementById('agEntrevistador').value;
     const obs = document.getElementById('agObs').value;
+
+    if (!candidatoId) {
+        alert('Por favor, selecione um candidato da lista.');
+        return;
+    }
+    if (!vagaId) {
+        alert('Por favor, selecione uma vaga da lista.');
+        return;
+    }
 
     const { error } = await supabaseClient.from('Entrevistas').insert([{
         "Candidato_ID": candidatoId,
@@ -273,8 +342,21 @@ async function handleAgendamentoSubmit(form) {
     if (error) {
         console.error('Error saving interview:', error);
         alert('Erro ao agendar entrevista: ' + error.message);
+        return false;
     } else {
+        // Atualizar status do candidato para "Entrevista técnica"
+        const { error: updateError } = await supabaseClient
+            .from('candidatos')
+            .update({ status: 'Entrevista técnica' })
+            .eq('id', candidatoId);
+
+        if (updateError) {
+            console.error('Erro ao atualizar status do candidato:', updateError);
+        }
+
         alert('Entrevista agendada com sucesso!');
+        window.dispatchEvent(new CustomEvent('interview-scheduled', { detail: { candidatoId } }));
+        return true;
     }
 }
 
@@ -513,6 +595,10 @@ function animateValue(id, start, end, duration) {
 }
 
 // Auto-init for new Interviews Page
-if (document.querySelector('.main-entrevistas')) {
-    document.addEventListener('DOMContentLoaded', initCalendarPage);
-}
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('.main-entrevistas')) {
+        initCalendarPage();
+    }
+    // Always setup modal (for other pages like Pipeline)
+    setupAgendamentoModal();
+});

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- JS -->
   <script src="assets/js/supabaseClient.js" defer></script>
@@ -17,9 +18,10 @@
   <script src="assets/js/pipeline.js" defer></script>
   <script src="assets/js/dashboard.js" defer></script>
 </head>
+
 <body>
-    
- <div class="sidebar">
+
+  <div class="sidebar">
     <img src="midia/logo.png" alt="" class="logo-sidebar">
     <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
     <a class="nav-item" href="Candidatos.html"><i class="fa-solid fa-users"></i>Candidatos</a>
@@ -103,7 +105,7 @@
     <!-- Rodapé Fixo com Resumo -->
     <div class="pipeline-footer">
       <div class="pipeline-summary-wrapper">
-              <h2 class="pipeline-footer-title">Resumo do Pipeline</h2>
+        <h2 class="pipeline-footer-title">Resumo do Pipeline</h2>
         <div class="pipeline-summary-cards">
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
@@ -119,7 +121,7 @@
           </div>
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
-             <h4>Adequação à cultura</h4>
+            <h4>Adequação à cultura</h4>
           </div>
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
@@ -127,12 +129,78 @@
           </div>
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
-                        <h4>Contratado</h4>
+            <h4>Contratado</h4>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Modal Agendamento (Hidden by default) -->
+  <div id="agendamentoModal" class="modal">
+    <div class="modal-content-vaga">
+      <div class="modal-header">
+        <h2>Agendar Entrevista</h2>
+        <span class="close" id="closeAgendamentoModal">&times;</span>
+      </div>
+      <form id="agendamentoForm" class="vaga-form-v2">
+        <input type="hidden" id="agendamentoId">
+
+        <div class="form-group-v2">
+          <label>Candidato</label>
+          <div class="searchable-dropdown" id="dropdownCandidato">
+            <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select"
+              autocomplete="off" style="width: 100%;">
+            <input type="hidden" id="agCandidato">
+            <div class="dropdown-options" id="optionsCandidato"></div>
+          </div>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Vaga</label>
+          <div class="searchable-dropdown" id="dropdownVaga">
+            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select" autocomplete="off"
+              style="width: 100%;">
+            <input type="hidden" id="agVaga">
+            <div class="dropdown-options" id="optionsVaga"></div>
+          </div>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Tipo de Entrevista</label>
+          <select id="agTipo" required class="filter-select" style="width:100%">
+            <option value="Presencial">Presencial</option>
+            <option value="Online">Vídeo</option>
+            <option value="Telefone">Telefone</option>
+          </select>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Data e Hora</label>
+          <input type="datetime-local" id="agDataHora" required
+            style="background-color: #0f172a;padding: 10px 12px; border: 1px solid #334155; border-radius: 8px; font-size: 14px; font-family: inherit; transition: all 0.3s ease; width: 100%; box-sizing: border-box;"
+            onfocus="this.style.borderColor='#334155'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.1)';"
+            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
+        </div>
+
+        <div class="form-group-v2">
+          <label>Entrevistador</label>
+          <select id="agEntrevistador" required class="filter-select" style="width:100%"></select>
+        </div>
+
+        <div class="form-group-v2">
+          <label>Observações</label>
+          <textarea id="agObs" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="cancelAgendamento">Cancelar</button>
+          <button type="submit" class="btn-submit">Agendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
+
 </html>

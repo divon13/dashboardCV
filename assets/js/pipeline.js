@@ -3,12 +3,12 @@
  */
 async function carregarPipeline() {
     const mapStatusToColumn = {
-        'aplicado': 1,
-        'triagem': 2,
-        'entrevista técnica': 3,
-        'adequação à cultura': 4,
-        'oferta enviada': 5,
-        'contratado': 6
+        'Aplicado': 1,
+        'Triagem': 2,
+        'Entrevista técnica': 3,
+        'Adequação à cultura': 4,
+        'Oferta enviada': 5,
+        'Contratado': 6
     };
 
     const { data: candidatos, error } = await supabaseClient
@@ -39,8 +39,8 @@ async function carregarPipeline() {
     const contadores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
 
     for (const candidato of candidatos) {
-        let status = candidato.status ? candidato.status.toLowerCase().trim() : 'aplicado';
-        if (!mapStatusToColumn[status]) status = 'aplicado';
+        let status = candidato.status ? candidato.status.toLowerCase().trim() : 'Aplicado';
+        if (!mapStatusToColumn[status]) status = 'Aplicado';
 
         const colIndex = mapStatusToColumn[status];
         const colBody = document.querySelector(`.pipeline-column-${colIndex} .pipeline-column-body`);
@@ -156,8 +156,91 @@ function configurarDragAndDrop() {
                 card.style.display = 'block';
                 column.appendChild(card);
 
-                await atualizarStatusCandidato(cardId, novoStatusTitulo);
-                recalcularContadores();
+                // VICE VERSA: Se moveu para Entrevista técnica, abrir modal de agendamento 
+                // E SÓ DEPOIS confirmar a mudança. Se cancelar, reverter.
+                if (novoStatusTitulo === 'Entrevista técnica') {
+                    // Visually move first
+                    column.appendChild(card);
+                    recalcularContadores();
+
+                    const modal = document.getElementById('agendamentoModal');
+                    if (modal) {
+                        modal.style.display = 'flex';
+
+                        // Populate selects
+                        if (typeof populateModalSelects === 'function') {
+                            await populateModalSelects();
+                        }
+
+                        // Pre-fill candidate
+                        const candidateName = card.querySelector('.pipeline-card-name').textContent;
+                        const input = document.getElementById('searchCandidato');
+                        const hidden = document.getElementById('agCandidato');
+
+                        if (input && hidden) {
+                            input.value = candidateName;
+                            hidden.value = cardId;
+                            input.dispatchEvent(new Event('input')); // Trigger filters if needed
+                        }
+
+                        // REVERT LOGIC
+                        const btnClose = document.getElementById('closeAgendamentoModal');
+                        const btnCancel = document.getElementById('cancelAgendamento');
+                        const originalParent = document.querySelector(`.pipeline-column-body[data-original-parent="${cardId}"]`) || document.querySelector(`.pipeline-card[data-id="${cardId}"]`)?.parentElement;
+                        // Note: we can't easily grab originalParent here unless we saved it before appendChild.
+                        // However, we can simply infer "revert" means go back to where it was? 
+                        // Actually, 'card' is already in 'column'. 'originalParent' is lost unless we grabbed it.
+                        // Wait, we can't grab it here easily because we already did appendChild above.
+                        // BUT, we have 'card.dataset.status' which holds the OLD status (we haven't updated it locally or DB yet).
+                        // So we can find the old column based on card.dataset.status.
+
+                        const oldStatus = card.dataset.status;
+                        const mapStatusToColumn = {
+                            'Aplicado': 1, 'Triagem': 2, 'Entrevista técnica': 3,
+                            'Adequação à cultura': 4, 'Oferta enviada': 5, 'Contratado': 6
+                        };
+                        const oldColIndex = mapStatusToColumn[oldStatus] || 1;
+                        const revertTarget = document.querySelector(`.pipeline-column-${oldColIndex} .pipeline-column-body`);
+
+                        // Cleanup function
+                        const cleanup = () => {
+                            window.removeEventListener('interview-scheduled', onSuccess);
+                            if (btnClose) btnClose.removeEventListener('click', onRevert);
+                            if (btnCancel) btnCancel.removeEventListener('click', onRevert);
+                            window.removeEventListener('click', onOutside);
+                        };
+
+                        const onSuccess = () => {
+                            // Interview booked! Status is updated in DB by entrevistas.js.
+                            // We just need to update local card dataset
+                            card.dataset.status = 'Entrevista técnica';
+                            cleanup();
+                        };
+
+                        const onRevert = () => {
+                            // Move card back
+                            if (revertTarget) {
+                                revertTarget.appendChild(card);
+                                recalcularContadores();
+                            }
+                            cleanup();
+                        };
+
+                        const onOutside = (e) => {
+                            if (e.target === modal) onRevert();
+                        }
+
+                        // Attach listeners
+                        window.addEventListener('interview-scheduled', onSuccess);
+                        if (btnClose) btnClose.addEventListener('click', onRevert);
+                        if (btnCancel) btnCancel.addEventListener('click', onRevert);
+                        window.addEventListener('click', onOutside);
+                    }
+                } else {
+                    // Normal flow for other columns
+                    await atualizarStatusCandidato(cardId, novoStatusTitulo);
+                    recalcularContadores();
+                }
             }
         });
     });
