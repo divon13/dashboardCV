@@ -929,6 +929,7 @@ table tbody tr td[colspan="5"] {
   border-top: 1px solid var(--border-dark);
   flex-shrink: 0;
   width: 95%;
+  margin: 0 auto;
 }
 
 .pipeline-footer-title {
@@ -1479,6 +1480,11 @@ table tbody tr td[colspan="5"] {
   position: relative;
   user-select: none;
   /* Prevent text selection during drag */
+}
+
+/* Fix for overlapping menu */
+.pipeline-card.active-card {
+  z-index: 100;
 }
 
 .pipeline-card:hover {
@@ -2577,4 +2583,106 @@ table tbody tr td[colspan="5"] {
 .dropdown-option.selected {
   background: var(--primary-color);
   color: #fff;
+}
+
+/* Kebab Menu Styles */
+.kebab-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.kebab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.kebab-btn:hover,
+.kebab-btn.active {
+  background-color: var(--hover-dark);
+  color: var(--text-light);
+  border-color: var(--border-dark);
+}
+
+.kebab-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background-color: var(--surface-dark);
+  min-width: 180px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  z-index: 1000;
+  border: 1px solid var(--border-dark);
+  overflow: hidden;
+  flex-direction: column;
+  padding: 6px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kebab-dropdown.show {
+  display: flex;
+}
+
+.dropdown-item {
+  background: transparent;
+  border: none;
+  color: var(--secondary-color);
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.dropdown-item:hover {
+  background-color: var(--hover-dark);
+  color: var(--text-light);
+}
+
+.dropdown-item i {
+  width: 18px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.dropdown-item.delete-btn {
+  color: var(--error-color);
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  /* Separator for delete */
+}
+
+.dropdown-item.delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
 }

@@ -22,7 +22,7 @@
 
 <body>
 
- <div class="sidebar">
+  <div class="sidebar">
     <img src="midia/logo.png" alt="" class="logo-sidebar">
     <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
     <a class="nav-item active" href="Candidatos.html"><i class="fa-solid fa-users"></i>Candidatos</a>
@@ -129,6 +129,26 @@
               <i class="fa-solid fa-download"></i> Visualizar Currículo
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Confirmação de Rejeição -->
+    <div id="confirmRejeicaoModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-header"
+          style="display: block; text-align: center; border:none; padding-bottom:0; padding-top: 0; background: transparent;">
+          <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: var(--error-color);"></i>
+        </div>
+        <div class="modal-body">
+          <h3 style="margin: 10px 0;">Rejeitar Candidato?</h3>
+          <p>O candidato será removido da lista. Esta ação não apaga o registro do banco de dados.</p>
+          <input type="hidden" id="idCandidatoRejeicao">
+        </div>
+        <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+          <button type="button" class="btn-cancel" id="cancelarRejeicao">Cancelar</button>
+          <button type="button" class="btn-submit" id="confirmarRejeicao"
+            style="background-color: var(--error-color);">Confirmar</button>
         </div>
       </div>
     </div>

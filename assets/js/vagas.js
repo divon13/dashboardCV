@@ -34,9 +34,14 @@ async function carregarVagas() {
           <div class="chip-status">${vaga.status_vagas || 'aberto'}</div>
         </div>
         <div class="card-actions">
-          <button class="btn-link view-btn" data-id="${vaga.id}">Ver detalhes</button>
-          <button class="btn-link edit-btn" data-id="${vaga.id}">Editar</button>
-          <button class="btn-link delete-btn" data-id="${vaga.id}">Apagar</button>
+           <div class="kebab-menu-container">
+             <button class="kebab-btn" data-id="${vaga.id}"><i class="fa-solid fa-ellipsis"></i></button>
+             <div id="menu-${vaga.id}" class="kebab-dropdown">
+               <button class="dropdown-item view-btn" data-id="${vaga.id}"><i class="fa-regular fa-eye"></i> Ver Detalhes</button>
+               <button class="dropdown-item edit-btn" data-id="${vaga.id}"><i class="fa-regular fa-pen-to-square"></i> Editar</button>
+               <button class="dropdown-item delete-btn" data-id="${vaga.id}"><i class="fa-regular fa-trash-can"></i> Eliminar</button>
+             </div>
+           </div>
         </div>
       </div>
       <div class="card-bottom">
@@ -57,6 +62,38 @@ async function carregarVagas() {
  * @param {Array} data - Array com os dados das vagas
  */
 function configurarEventosVagas(container, data) {
+    // Configura menu Kebab
+    container.querySelectorAll('.kebab-btn').forEach(btn => {
+        btn.onclick = function (e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            const menu = document.getElementById(`menu-${id}`);
+
+            // Fecha outros menus
+            document.querySelectorAll('.kebab-dropdown').forEach(m => {
+                if (m.id !== `menu-${id}`) m.classList.remove('show');
+            });
+            document.querySelectorAll('.kebab-btn').forEach(b => {
+                if (b !== this) b.classList.remove('active');
+            });
+
+            // Toggle menu atual
+            if (menu) menu.classList.toggle('show');
+            this.classList.toggle('active');
+        };
+    });
+
+    // Fecha menu ao clicar em uma opção
+    container.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.kebab-dropdown').forEach(m => {
+                m.classList.remove('show');
+            });
+            document.querySelectorAll('.kebab-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+        });
+    });
     // Botão Editar
     container.querySelectorAll('.edit-btn').forEach(btn => {
         btn.onclick = function () {
@@ -219,4 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Fecha menus ao clicar fora
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.kebab-menu-container')) {
+            document.querySelectorAll('.kebab-dropdown').forEach(m => {
+                m.classList.remove('show');
+            });
+            document.querySelectorAll('.kebab-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+        }
+    });
 });

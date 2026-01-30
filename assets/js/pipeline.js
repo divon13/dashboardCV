@@ -22,10 +22,37 @@ async function carregarPipeline() {
 
     const { data: vagas } = await supabaseClient
         .from("Vagas")
-        .select("id, Titulo");
+        .select("id, Titulo, data_abertura");
 
     const mapaVagas = {};
-    if (vagas) vagas.forEach(v => mapaVagas[v.id] = v.Titulo);
+    const mapaVagasPorTitulo = {};
+    const filtroSelect = document.getElementById('filtroVaga');
+
+    // Preserva seleção atual
+    const filtroAtual = filtroSelect ? filtroSelect.value : 'todos';
+
+    if (vagas) {
+        vagas.forEach(v => {
+            mapaVagas[v.id] = v.Titulo;
+            mapaVagasPorTitulo[v.Titulo] = v;
+        });
+
+        // Popula o select se ele existir e estiver vazio (exceto 'todos')
+        if (filtroSelect && filtroSelect.options.length <= 1) {
+            vagas.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.Titulo; // Use Título as value to match candidate data
+                option.textContent = v.Titulo;
+                filtroSelect.appendChild(option);
+            });
+
+            // Re-aplica listeners quando mudar
+            filtroSelect.onchange = carregarPipeline;
+        }
+    }
+
+    // Restaura seleção se possível
+    if (filtroSelect) filtroSelect.value = filtroAtual;
 
     // Reset UI
     for (let i = 1; i <= 6; i++) {
@@ -37,8 +64,21 @@ async function carregarPipeline() {
     document.querySelectorAll('.pipeline-summary-count').forEach(el => el.textContent = '0');
 
     const contadores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    let countRejeitados = 0;
 
     for (const candidato of candidatos) {
+        // Filtragem por vaga
+        // Se filtro != todos, e candidato.vaga_sugerida != id, skip
+        if (filtroAtual !== 'todos' && String(candidato.vaga_sugerida) !== String(filtroAtual)) {
+            continue;
+        }
+
+        // Skip rejected candidates
+        if (candidato.status === 'Rejeitado') {
+            countRejeitados++;
+            continue;
+        }
+
         let status = candidato.status ? candidato.status.toLowerCase().trim() : 'Aplicado';
         if (!mapStatusToColumn[status]) status = 'Aplicado';
 
@@ -46,11 +86,11 @@ async function carregarPipeline() {
         const colBody = document.querySelector(`.pipeline-column-${colIndex} .pipeline-column-body`);
 
         if (colBody) {
-            const nomeVaga = candidato.vaga_sugerida && mapaVagas[candidato.vaga_sugerida]
-                ? mapaVagas[candidato.vaga_sugerida]
-                : (candidato.vaga_sugerida || 'Geral');
+            const vagaObj = candidato.vaga_sugerida ? mapaVagasPorTitulo[candidato.vaga_sugerida] : null;
 
-            const card = criarCardPipeline(candidato, nomeVaga);
+            const nomeVaga = vagaObj ? vagaObj.Titulo : (candidato.vaga_sugerida || 'Geral');
+
+            const card = criarCardPipeline(candidato, nomeVaga, vagaObj);
             colBody.appendChild(card);
             contadores[colIndex]++;
         }
@@ -65,10 +105,19 @@ async function carregarPipeline() {
         if (summaryCounts[i - 1]) summaryCounts[i - 1].textContent = contadores[i];
     }
 
+    // Update Rejected count
+    const rejectedCountEl = document.getElementById('count-rejeitados');
+    if (rejectedCountEl) rejectedCountEl.textContent = countRejeitados;
+
     configurarDragAndDrop();
 }
 
-function criarCardPipeline(candidato, nomeVaga) {
+// Recarrega pipeline quando uma entrevista é agendada com sucesso
+window.addEventListener('interview-scheduled', () => {
+    carregarPipeline();
+});
+
+function criarCardPipeline(candidato, nomeVaga, vagaObj) {
     const card = document.createElement('div');
     card.className = 'pipeline-card';
     card.draggable = true;
@@ -88,9 +137,19 @@ function criarCardPipeline(candidato, nomeVaga) {
     const corBarra = getCorPorPontuacao(matchScore);
 
     card.innerHTML = `
-    <div class="pipeline-card-header">
-      <div class="pipeline-card-menu" style="cursor: grab;"><i class="fa-solid fa-grip-vertical"></i></div>
-      <div class="pipeline-card-name">${candidato.nome || 'Sem Nome'}</div>
+    <div class="pipeline-card-header" style="justify-content: space-between;">
+      <div style="display:flex; align-items:center;">
+          <div class="pipeline-card-menu" style="cursor: grab; margin-right:8px;"><i class="fa-solid fa-grip-vertical"></i></div>
+          <div class="pipeline-card-name">${candidato.nome || 'Sem Nome'}</div>
+      </div>
+      <div class="kebab-menu-container">
+        <button type="button" class="kebab-btn" data-id="${candidato.id}"><i class="fa-solid fa-ellipsis"></i></button>
+        <div id="pipeline-menu-${candidato.id}" class="kebab-dropdown">
+            <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-regular fa-eye"></i> Ver Perfil</button>
+            <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-regular fa-calendar-plus"></i> Agendar Entrevista</button>
+            <button class="dropdown-item delete-btn" data-id="${candidato.id}"><i class="fa-regular fa-circle-xmark"></i> Rejeitar</button>
+        </div>
+      </div>
     </div>
     
     <div class="pipeline-match-score">
@@ -111,6 +170,93 @@ function criarCardPipeline(candidato, nomeVaga) {
       ${topSkills}
     </div>
   `;
+
+    // Configura evento do menu kebab
+    const kebabBtn = card.querySelector('.kebab-btn');
+    const dropdown = card.querySelector('.kebab-dropdown');
+
+    if (kebabBtn && dropdown) {
+        kebabBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Impede drag start
+            e.preventDefault();
+
+            // Fecha outros menus abertos
+            document.querySelectorAll('.kebab-dropdown.show').forEach(m => {
+                if (m !== dropdown) {
+                    m.classList.remove('show');
+                    // Remove active-card do pai se existir
+                    const parentCard = m.closest('.pipeline-card');
+                    if (parentCard) parentCard.classList.remove('active-card');
+                }
+            });
+            document.querySelectorAll('.kebab-btn.active').forEach(b => {
+                if (b !== kebabBtn) b.classList.remove('active');
+            });
+
+            dropdown.classList.toggle('show');
+            kebabBtn.classList.toggle('active');
+
+            // Toggle z-index fix no card pai
+            card.classList.toggle('active-card');
+        });
+    }
+
+    // Impede que clicks no dropdown iniciem drag
+    if (dropdown) {
+        dropdown.addEventListener('mousedown', (e) => e.stopPropagation());
+        dropdown.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Impede propagação para o card
+
+                // Fecha menu
+                dropdown.classList.remove('show');
+                kebabBtn.classList.remove('active');
+                card.classList.remove('active-card');
+
+                const actionText = btn.textContent.trim();
+
+                if (actionText.includes('Ver Perfil')) {
+                    if (typeof abrirModalDetalhes === 'function') {
+                        abrirModalDetalhes(candidato, vagaObj);
+                    }
+                } else if (actionText.includes('Agendar Entrevista')) {
+                    const modal = document.getElementById('agendamentoModal');
+                    if (modal) {
+                        modal.style.display = 'flex';
+                        if (typeof populateModalSelects === 'function') {
+                            await populateModalSelects();
+                        }
+
+                        // Preencher candidato
+                        const input = document.getElementById('searchCandidato');
+                        const hidden = document.getElementById('agCandidato');
+                        if (input && hidden) {
+                            input.value = candidato.nome || '';
+                            hidden.value = candidato.id;
+                        }
+
+                        // Preencher vaga se existir
+                        if (vagaObj) {
+                            const inputV = document.getElementById('searchVaga');
+                            const hiddenV = document.getElementById('agVaga');
+                            if (inputV && hiddenV) {
+                                inputV.value = vagaObj.Titulo || '';
+                                hiddenV.value = vagaObj.id || '';
+                            }
+                        }
+                    }
+                } else if (actionText.includes('Rejeitar')) {
+                    // Abre modal de confirmação
+                    const modal = document.getElementById('confirmRejeicaoModal');
+                    const inputId = document.getElementById('idCandidatoRejeicao');
+                    if (modal && inputId) {
+                        inputId.value = candidato.id;
+                        modal.style.display = 'flex';
+                    }
+                }
+            });
+        });
+    }
 
     card.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', candidato.id);
@@ -269,5 +415,62 @@ function recalcularContadores() {
 
         const summaryCounts = document.querySelectorAll('.pipeline-summary-count');
         if (summaryCounts[i - 1]) summaryCounts[i - 1].textContent = count;
+    }
+}
+
+// Fechar menus ao clicar fora
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.kebab-menu-container')) {
+        document.querySelectorAll('.kebab-dropdown.show').forEach(m => {
+            m.classList.remove('show');
+            const parentCard = m.closest('.pipeline-card');
+            if (parentCard) parentCard.classList.remove('active-card');
+        });
+        document.querySelectorAll('.kebab-btn.active').forEach(b => b.classList.remove('active'));
+    }
+});
+
+// Setup modal de rejeição
+document.addEventListener('DOMContentLoaded', () => {
+    const modalRejeicao = document.getElementById('confirmRejeicaoModal');
+    const btnCancel = document.getElementById('cancelarRejeicao');
+    const btnConfirm = document.getElementById('confirmarRejeicao');
+
+    if (btnCancel && modalRejeicao) {
+        btnCancel.addEventListener('click', () => {
+            modalRejeicao.style.display = 'none';
+        });
+    }
+
+    if (btnConfirm && modalRejeicao) {
+        btnConfirm.addEventListener('click', async () => {
+            const idCandidato = document.getElementById('idCandidatoRejeicao').value;
+            if (idCandidato) {
+                await rejeitarCandidato(idCandidato);
+                modalRejeicao.style.display = 'none';
+            }
+        });
+    }
+
+    // Fechar ao clicar fora
+    window.addEventListener('click', (e) => {
+        if (e.target === modalRejeicao) {
+            modalRejeicao.style.display = 'none';
+        }
+    });
+});
+
+async function rejeitarCandidato(id) {
+    const { error } = await supabaseClient
+        .from('candidatos')
+        .update({ status: 'Rejeitado' })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Erro ao rejeitar candidato:', error);
+        alert('Erro ao rejeitar candidato.');
+    } else {
+        // Recarrega o pipeline
+        carregarPipeline();
     }
 }

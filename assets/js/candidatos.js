@@ -26,6 +26,9 @@ async function carregarUsuarios() {
 
     // Carregar informações de vagas para todos os candidatos
     for (const candidato of data) {
+        // Pula candidatos rejeitados se quiser que eles sumam ao rejeitar
+        if (candidato.status === 'Rejeitado') continue;
+
         let vagaData = null;
 
         // Se vaga_sugerida for uma string não vazia, buscar dados da vaga pelo título
@@ -145,19 +148,49 @@ function criarCardCandidato(candidato, vagaData) {
       ${capacidadesPills}
       ${maisCapacidades}
     </div>
-    <div class="candidato-actions">
+    <div class="candidato-actions" style="display: flex; gap: 10px;">
       <button class="btn-ver-perfil" data-id="${candidato.id}">
         <i class="fa-solid fa-external-link"></i>
         Ver Perfil
       </button>
+      <button class="btn-rejeitar" data-id="${candidato.id}" style="
+          background-color: var(--surface-dark);
+          color: var(--error-color);
+          border: 1px solid var(--error-color);
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.3s ease;
+      " onmouseover="this.style.backgroundColor='var(--error-color)'; this.style.color='white'"
+        onmouseout="this.style.backgroundColor='var(--surface-dark)'; this.style.color='var(--error-color)'">
+        <i class="fa-solid fa-xmark"></i>
+        Rejeitar
+      </button>
     </div>
   `;
 
-    // Adicionar event listener ao botão
+    // Adicionar event listener ao botão ver perfil
     const btnVerPerfil = card.querySelector('.btn-ver-perfil');
     if (btnVerPerfil) {
         btnVerPerfil.onclick = function () {
             abrirModalDetalhes(candidato, vagaData);
+        };
+    }
+
+    // Adicionar event listener ao botão rejeitar
+    const btnRejeitar = card.querySelector('.btn-rejeitar');
+    if (btnRejeitar) {
+        btnRejeitar.onclick = function () {
+            const modal = document.getElementById('confirmRejeicaoModal');
+            const inputId = document.getElementById('idCandidatoRejeicao');
+            if (modal && inputId) {
+                inputId.value = candidato.id;
+                modal.style.display = 'flex';
+            }
         };
     }
 
@@ -288,6 +321,56 @@ function configurarModalCandidato() {
             modal.style.display = 'none';
         }
     });
+
+    // Setup modal de rejeição (Lista Candidatos)
+    const modalRejeicao = document.getElementById('confirmRejeicaoModal');
+    const btnCancel = document.getElementById('cancelarRejeicao');
+    const btnConfirm = document.getElementById('confirmarRejeicao');
+
+    if (btnCancel && modalRejeicao) {
+        btnCancel.addEventListener('click', () => {
+            modalRejeicao.style.display = 'none';
+        });
+    }
+
+    if (btnConfirm && modalRejeicao) {
+        // Remover listeners antigos para evitar duplicidade (clonagem simples)
+        const newBtn = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(newBtn, btnConfirm);
+
+        newBtn.addEventListener('click', async () => {
+            const idCandidato = document.getElementById('idCandidatoRejeicao').value;
+            if (idCandidato) {
+                await rejeitarCandidatoLista(idCandidato);
+                modalRejeicao.style.display = 'none';
+            }
+        });
+    }
+
+    if (modalRejeicao) {
+        window.addEventListener('click', (e) => {
+            if (e.target === modalRejeicao) {
+                modalRejeicao.style.display = 'none';
+            }
+        });
+    }
+}
+
+async function rejeitarCandidatoLista(id) {
+    const { error } = await supabaseClient
+        .from('candidatos')
+        .update({ status: 'Rejeitado' })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Erro ao rejeitar candidato:', error);
+        alert('Erro ao rejeitar candidato.');
+    } else {
+        // Recarrega a lista
+        await carregarUsuarios();
+        // Atualiza contadores
+        await carregarCandidatos();
+    }
 }
 
 /**
