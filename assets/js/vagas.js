@@ -197,7 +197,7 @@ async function carregarVagasAbertas() {
 
     const totalVagasAbertas = count || 0;
     // Ajuste se necessário para seletor mais específico
-    const vagasAbertasCountElement = document.querySelector(".card:nth-child(3) p");
+    const vagasAbertasCountElement = document.getElementById("vagas-abertas-val") || document.querySelector(".card:nth-child(2) p");
     if (vagasAbertasCountElement) {
         vagasAbertasCountElement.textContent = totalVagasAbertas;
     }

@@ -34,14 +34,29 @@
   <div class="main">
     <div class="cards">
       <div class="card">
-        <h3>Total de Candidatos</h3>
-        <p><svg viewBox="25 25 50 50" class="container">
+        <div class="card-header">
+          <h3>Total de Candidatos</h3>
+          <i class="fa-solid fa-people-group"></i>
+        </div>
+        <p id="total-candidatos-val">
+          <svg viewBox="25 25 50 50" class="container">
             <circle cx="50" cy="50" r="20" class="loader"></circle>
-          </svg></p>
+          </svg>
+        </p>
       </div>
       <div class="card">
-        <h3>Taxa de Contratação</h3>
-        <p>0%</p>
+        <div class="card-header">
+          <h3>Qualificados (+80%)</h3>
+          <i class="fa-solid fa-star"></i>
+        </div>
+        <p id="qualificados-val">0</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Aguardando Triagem</h3>
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <p id="aguardando-val">0</p>
       </div>
     </div>
 

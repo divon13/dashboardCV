@@ -377,19 +377,31 @@ async function rejeitarCandidatoLista(id) {
  * Carrega a contagem total de candidatos para o card de métricas
  */
 async function carregarCandidatos() {
-    const { count, error } = await supabaseClient
+    const { data: candidatos, error } = await supabaseClient
         .from("candidatos")
-        .select("*", { count: "exact" });
+        .select("id, nota, status");
 
     if (error) {
-        console.error("Erro ao carregar contagem de candidatos:", error);
+        console.error("Erro ao carregar métricas de candidatos:", error);
         return;
     }
 
-    const totalCandidatos = count || 0;
-    // Ajuste para selector mais específico se necessário
+    const total = candidatos.length;
+    const qualificados = candidatos.filter(c => (parseFloat(c.nota) || 0) >= 80).length;
+    const aguardando = candidatos.filter(c => !c.status || c.status === 'Aplicado').length;
+
+    // Atualiza o primeiro card (compatível com a Home)
     const candidateCountElement = document.querySelector(".card:first-child p");
     if (candidateCountElement) {
-        candidateCountElement.textContent = totalCandidatos;
+        candidateCountElement.textContent = total;
     }
+
+    // Atualiza cards específicos da página de Candidatos (por ID)
+    const totalEl = document.getElementById("total-candidatos-val");
+    const qualificadosEl = document.getElementById("qualificados-val");
+    const aguardandoEl = document.getElementById("aguardando-val");
+
+    if (totalEl) totalEl.textContent = total;
+    if (qualificadosEl) qualificadosEl.textContent = qualificados;
+    if (aguardandoEl) aguardandoEl.textContent = aguardando;
 }

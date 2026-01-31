@@ -27,9 +27,16 @@ async function carregarEntrevistas() {
         return;
     }
 
+    // Atualiza o contador de entrevistas para HOJE no dashboard (index.html)
+    const countHojeEl = document.getElementById("entrevistas-hoje-val");
+    if (countHojeEl) {
+        const hojeISO = new Date().toISOString().split('T')[0];
+        const numHoje = data ? data.filter(e => e.Data && e.Data.startsWith(hojeISO)).length : 0;
+        countHojeEl.textContent = numHoje;
+    }
+
     const container = document.getElementById('entrevistasContainer');
     if (!container) {
-        // Pode não ser erro se estiver em outra página
         return;
     }
 
