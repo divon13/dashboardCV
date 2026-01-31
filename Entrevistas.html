@@ -100,7 +100,7 @@
     </div>
 
     <!-- Calendar Layout -->
-    <div class="calendar-layout">
+    <div class="calendar-layout" id="calendarViewContainer">
       <!-- Calendar Component -->
       <div class="calendar-container">
         <div class="calendar-header">
@@ -128,13 +128,25 @@
 
       <!-- Side Panel -->
       <div class="day-details-panel">
-        <h3 id="selectedDateDisplay">25 de Janeiro</h3>
+        <div class="day-details-header"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 id="selectedDateDisplay" style="margin: 0;">25 de Janeiro</h3>
+          <button class="btn-icon-only" id="btnOpenListFromSide" title="Ver em lista"
+            style="background: var(--hover-dark); border: 1px solid var(--border-dark); color: var(--text-light); padding: 8px; border-radius: 6px; cursor: pointer;">
+            <i class="fa-solid fa-up-right-from-square"></i>
+          </button>
+        </div>
 
         <div class="day-events-list" id="dayEventsList">
           <!-- Events will be injected here -->
           <div class="empty-state-small">Nenhuma entrevista para este dia</div>
         </div>
       </div>
+    </div>
+
+    <!-- List Layout (Hidden by default) -->
+    <div class="list-layout-grid" id="listViewContainer" style="display: none;">
+      <!-- Cards will be injected here -->
     </div>
 
   </div> <!-- End Main -->

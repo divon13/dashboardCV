@@ -10,9 +10,9 @@ async function carregarEntrevistas() {
         .from("Entrevistas")
         .select(`
       *,
-      Vagas(Titulo),
-      candidatos(nome),
-      Entrevistador(Nome)
+      Vagas(id, Titulo),
+      candidatos(id, nome),
+      Entrevistador(id, Nome)
     `)
         .gte('Data', hojeISO)
         .order('Data', { ascending: true })
@@ -182,6 +182,12 @@ async function initCalendarPage() {
     // Initial Fetch
     await fetchMonthInterviews(currentDate);
 
+    // Side panel list button
+    const btnOpenListFromSide = document.getElementById('btnOpenListFromSide');
+    if (btnOpenListFromSide) {
+        btnOpenListFromSide.addEventListener('click', () => setActiveView(null, 'list'));
+    }
+
     // Modal Logic
     setupAgendamentoModal();
 }
@@ -195,6 +201,8 @@ function setupAgendamentoModal() {
 
     if (btnOpen) {
         btnOpen.addEventListener('click', async () => {
+            if (form) form.reset();
+            document.getElementById('agendamentoId').value = '';
             modal.style.display = 'flex';
             await populateModalSelects();
         });
@@ -226,7 +234,8 @@ async function populateModalSelects() {
     const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome');
     if (candidates) {
         setupSearchableDropdown('searchCandidato', 'optionsCandidato', 'agCandidato',
-            candidates.map(c => ({ id: c.id, label: c.nome }))
+            candidates.map(c => ({ id: c.id, label: c.nome })),
+            true // Allow keeping existing value
         );
     }
 
@@ -234,7 +243,8 @@ async function populateModalSelects() {
     const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
     if (vagas) {
         setupSearchableDropdown('searchVaga', 'optionsVaga', 'agVaga',
-            vagas.map(v => ({ id: v.id, label: v.Titulo }))
+            vagas.map(v => ({ id: v.id, label: v.Titulo })),
+            true // Allow keeping existing value
         );
     }
 
@@ -255,12 +265,15 @@ async function populateModalSelects() {
 /**
  * Configures a searchable dropdown
  */
-function setupSearchableDropdown(inputId, containerId, hiddenId, items) {
+function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExisting = false) {
     const input = document.getElementById(inputId);
     const container = document.getElementById(containerId);
     const hidden = document.getElementById(hiddenId);
 
     if (!input || !container || !hidden) return;
+
+    // IMPORTANT: Only clear if not editing or keepExisting is false
+    if (!keepExisting) hidden.value = '';
 
     // Helper to render
     const renderOptions = (filterText = '') => {
@@ -324,7 +337,8 @@ async function handleAgendamentoSubmit(form) {
     const vagaId = document.getElementById('agVaga').value;
     const tipo = document.getElementById('agTipo').value;
     const dataHora = document.getElementById('agDataHora').value;
-    const entrevistadorId = document.getElementById('agEntrevistador').value;
+    const formDataEntrevistador = document.getElementById('agEntrevistador').value;
+    const entrevistadorId = formDataEntrevistador ? parseInt(formDataEntrevistador) : null;
     const obs = document.getElementById('agObs').value;
 
     if (!candidatoId) {
@@ -336,47 +350,300 @@ async function handleAgendamentoSubmit(form) {
         return;
     }
 
-    const { error } = await supabaseClient.from('Entrevistas').insert([{
-        "Candidato_ID": candidatoId,
-        "Vagas_ID": vagaId,
+    const interviewId = document.getElementById('agendamentoId').value;
+
+    const dataToSave = {
+        "Candidato_ID": candidatoId ? parseInt(candidatoId) : null,
+        "Vagas_ID": vagaId ? parseInt(vagaId) : null,
         "Data": dataHora,
-        "Entrevistador": entrevistadorId,
+        "Entrevistador": formDataEntrevistador ? parseInt(formDataEntrevistador) : null,
         "Observacoes": obs,
         "status": 'Agendada',
         "Tipo de entrevista": tipo
-    }]);
+    };
 
-    if (error) {
-        console.error('Error saving interview:', error);
-        alert('Erro ao agendar entrevista: ' + error.message);
+    if (!dataToSave.Candidato_ID || isNaN(dataToSave.Candidato_ID)) {
+        alert('Erro: Por favor, selecione um candidato válido da lista.');
+        return false;
+    }
+    if (!dataToSave.Vagas_ID || isNaN(dataToSave.Vagas_ID)) {
+        alert('Erro: Por favor, selecione uma vaga válida da lista.');
+        return false;
+    }
+
+    let result;
+    if (interviewId) {
+        // Update existing
+        result = await supabaseClient.from('Entrevistas').update(dataToSave).eq('id', interviewId);
+    } else {
+        // Create new
+        result = await supabaseClient.from('Entrevistas').insert([dataToSave]);
+    }
+
+    if (result.error) {
+        console.error('Error saving interview:', result.error);
+        alert('Erro ao salvar entrevista: ' + result.error.message);
         return false;
     } else {
-        // Atualizar status do candidato para "Entrevista técnica"
-        const { error: updateError } = await supabaseClient
-            .from('candidatos')
-            .update({ status: 'Entrevista técnica' })
-            .eq('id', candidatoId);
+        // Only update status to "Entrevista técnica" if it's a new appointment
+        if (!interviewId) {
+            const { error: updateError } = await supabaseClient
+                .from('candidatos')
+                .update({ status: 'Entrevista técnica' })
+                .eq('id', candidatoId);
 
-        if (updateError) {
-            console.error('Erro ao atualizar status do candidato:', updateError);
+            if (updateError) {
+                console.error('Erro ao atualizar status do candidato:', updateError);
+            }
         }
 
-        alert('Entrevista agendada com sucesso!');
+        alert(interviewId ? 'Entrevista atualizada com sucesso!' : 'Entrevista agendada com sucesso!');
         window.dispatchEvent(new CustomEvent('interview-scheduled', { detail: { candidatoId } }));
         return true;
     }
 }
 
 function setActiveView(btn, view) {
-    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-    // Handle icon click vs button click
-    const target = btn.closest('.toggle-btn');
-    if (target) target.classList.add('active');
+    const calendarView = document.getElementById('calendarViewContainer');
+    const listView = document.getElementById('listViewContainer');
+    const calendarToggle = document.getElementById('viewCalendar');
+    const listToggle = document.getElementById('viewList');
 
-    if (view === 'list') {
-        alert('Visualização em lista em desenvolvimento. Voltando ao calendário.');
-        const viewCalendar = document.getElementById('viewCalendar');
-        if (viewCalendar) viewCalendar.click();
+    if (!calendarView || !listView || !calendarToggle || !listToggle) return;
+
+    // Toggle active classes on buttons
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    if (view === 'calendar') {
+        calendarToggle.classList.add('active');
+        calendarView.style.display = 'grid';
+        listView.style.display = 'none';
+        renderCalendar(currentDate); // Refresh calendar
+    } else {
+        listToggle.classList.add('active');
+        calendarView.style.display = 'none';
+        listView.style.display = 'grid';
+        renderListView();
+    }
+}
+
+/**
+ * Renders all interviews in a grid of cards
+ */
+async function renderListView() {
+    const listContainer = document.getElementById('listViewContainer');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    if (interviewsCache.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">Nenhuma entrevista encontrada</div>';
+        return;
+    }
+
+    interviewsCache.forEach(interview => {
+        const card = createInterviewListCard(interview);
+        listContainer.appendChild(card);
+    });
+}
+
+/**
+ * Creates a redesigned card for the list view based on USER request
+ */
+function createInterviewListCard(i) {
+    const card = document.createElement('div');
+    card.className = 'interview-list-card';
+
+    // Data extraction with array handling support
+    const candidateObj = Array.isArray(i.candidatos) ? i.candidatos[0] : i.candidatos;
+    const candName = candidateObj ? candidateObj.nome : 'Candidato Desconhecido';
+    const score = candidateObj && candidateObj.nota != null ? Math.round(candidateObj.nota) : '--';
+
+    const vagaObj = Array.isArray(i.Vagas) ? i.Vagas[0] : i.Vagas;
+    const vagaName = vagaObj ? vagaObj.Titulo : 'Vaga não informada';
+
+    const interviewerObj = Array.isArray(i.Entrevistador) ? i.Entrevistador[0] : i.Entrevistador;
+    const interviewerName = interviewerObj ? interviewerObj.Nome : 'Não definido';
+
+    const type = i["Tipo de entrevista"] || 'Presencial';
+    let typeIcon = 'fa-building';
+    if (type.toLowerCase().includes('video') || type.toLowerCase().includes('online')) typeIcon = 'fa-video';
+    if (type.toLowerCase().includes('telefone')) typeIcon = 'fa-phone';
+
+    const status = i.status || 'Agendada';
+    const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+    const dateStr = i.Data ? formatarData(i.Data) : 'Sem data';
+    const timeStr = i.Data ? i.Data.split('T')[1].substring(0, 5) : '--:--';
+
+    card.innerHTML = `
+        <div class="ilc-header">
+            <div class="ilc-status-icon ${statusClass}">
+                <i class="fa-solid ${typeIcon}"></i>
+            </div>
+            <div class="ilc-status-text">
+                <span class="ilc-status">${status}</span>
+                <span class="ilc-type">${type}</span>
+            </div>
+            <div class="kebab-menu-container">
+                <button class="kebab-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                <div class="kebab-dropdown">
+                    ${status === 'Agendada' ? `<button class="dropdown-item btn-confirmar"><i class="fa-solid fa-check"></i> Confirmar</button>` : ''}
+                    ${status === 'Confirmada' ? `<button class="dropdown-item btn-confirmar"><i class="fa-solid fa-check-double"></i> Concluir</button>` : ''}
+                    <button class="dropdown-item btn-editar"><i class="fa-solid fa-pen"></i> Editar</button>
+                    <button class="dropdown-item delete-btn btn-eliminar"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ilc-candidate">
+            <div class="ilc-cand-info">
+                <h4>${candName}</h4>
+                <span>${vagaName}</span>
+            </div>
+            <div class="ilc-score">${score}%</div>
+        </div>
+
+        <div class="ilc-details">
+            <div class="ilc-detail-item">
+                <i class="fa-regular fa-calendar"></i>
+                <span>${dateStr}</span>
+                <i class="fa-regular fa-clock" style="margin-left:8px;"></i>
+                <span>${timeStr}</span>
+            </div>
+            <div class="ilc-detail-item">
+                <i class="fa-solid fa-user-group"></i>
+                <span>${interviewerName}</span>
+            </div>
+        </div>
+
+        <div class="ilc-observations">
+            ${i.Observações || i.Observacoes || 'Sem observações adicionais'}
+        </div>
+    `;
+
+    // Dropdown toggle logic
+    const kebab = card.querySelector('.kebab-btn');
+    const dropdown = card.querySelector('.kebab-dropdown');
+    if (kebab && dropdown) {
+        kebab.onclick = (e) => {
+            e.stopPropagation();
+            // Close all other dropdowns
+            document.querySelectorAll('.kebab-dropdown.show').forEach(d => {
+                if (d !== dropdown) d.classList.remove('show');
+            });
+            dropdown.classList.toggle('show');
+            kebab.classList.toggle('active');
+        };
+    }
+
+    // Action buttons logic
+    const btnConfirmar = card.querySelector('.btn-confirmar');
+    const btnEditar = card.querySelector('.btn-editar');
+    const btnReagendar = card.querySelector('.btn-reagendar');
+    const btnEliminar = card.querySelector('.btn-eliminar');
+
+    if (btnConfirmar) btnConfirmar.onclick = () => confirmInterview(i.id, status);
+    if (btnEditar) btnEditar.onclick = () => editInterview(i);
+    if (btnEliminar) btnEliminar.onclick = () => deleteInterview(i.id);
+
+    return card;
+}
+
+/**
+ * Updates interview status: Agendada -> Confirmada -> Concluída
+ */
+async function confirmInterview(id, currentStatus) {
+    let newStatus = 'Confirmada';
+    let message = 'Deseja marcar esta entrevista como Confirmada?';
+
+    if (currentStatus === 'Confirmada') {
+        newStatus = 'Concluída';
+        message = 'Deseja marcar esta entrevista como Concluída?';
+    }
+
+    if (!confirm(message)) return;
+
+    const { error } = await supabaseClient
+        .from('Entrevistas')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+    if (error) {
+        alert('Erro ao atualizar status: ' + error.message);
+    } else {
+        fetchMonthInterviews(currentDate);
+    }
+}
+
+/**
+ * Opens modal pre-filled with interview data
+ */
+async function editInterview(i) {
+    const modal = document.getElementById('agendamentoModal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    document.getElementById('agendamentoId').value = i.id;
+
+    // Wait for dropdowns to be ready
+    await populateModalSelects();
+
+    // Fill data
+    const candidateObj = Array.isArray(i.candidatos) ? i.candidatos[0] : i.candidatos;
+    const vagaObj = Array.isArray(i.Vagas) ? i.Vagas[0] : i.Vagas;
+
+    if (candidateObj) {
+        document.getElementById('searchCandidato').value = candidateObj.nome;
+        document.getElementById('agCandidato').value = candidateObj.id;
+    }
+    if (vagaObj) {
+        document.getElementById('searchVaga').value = vagaObj.Titulo;
+        document.getElementById('agVaga').value = vagaObj.id;
+    }
+
+    document.getElementById('agTipo').value = i["Tipo de entrevista"] || 'Presencial';
+
+    if (i.Data) {
+        // Format ISO string to datetime-local compatible format (YYYY-MM-DDTHH:MM)
+        const date = new Date(i.Data);
+        const iso = date.toLocaleString('sv-SE', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).replace(' ', 'T').substring(0, 16);
+        document.getElementById('agDataHora').value = iso;
+    }
+
+    // Correctly find the interviewer ID for the select input
+    let interviewerId = '';
+    if (i.Entrevistador_ID) {
+        interviewerId = i.Entrevistador_ID;
+    } else if (i.Entrevistador) {
+        // If it's the full object from join
+        interviewerId = i.Entrevistador.id || i.Entrevistador;
+    }
+
+    document.getElementById('agEntrevistador').value = interviewerId;
+    document.getElementById('agObs').value = i.Observação || i.Observacoes || '';
+}
+
+/**
+ * Deletes an interview
+ */
+async function deleteInterview(id) {
+    if (!confirm('Tem certeza que deseja eliminar esta entrevista? Esta ação não pode ser desfeita.')) return;
+
+    const { error } = await supabaseClient
+        .from('Entrevistas')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        alert('Erro ao eliminar entrevista: ' + error.message);
+    } else {
+        alert('Entrevista eliminada com sucesso.');
+        fetchMonthInterviews(currentDate);
     }
 }
 
@@ -463,8 +730,9 @@ async function fetchMonthInterviews(date) {
         .from("Entrevistas")
         .select(`
       *,
-      Vagas(Titulo),
-      candidatos(nome)
+      Vagas(id, Titulo),
+      candidatos(id, nome, nota),
+      Entrevistador(id, Nome)
     `)
         .order('Data', { ascending: true });
 
@@ -477,6 +745,12 @@ async function fetchMonthInterviews(date) {
     updateCalendarDots();
     renderSidePanel(selectedDate);
     updateStatsCounters();
+
+    // If we are in list view, refresh it too
+    const listToggle = document.getElementById('viewList');
+    if (listToggle && listToggle.classList.contains('active')) {
+        renderListView();
+    }
 }
 
 function updateCalendarDots() {
