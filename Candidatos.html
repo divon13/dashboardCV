@@ -1,4 +1,23 @@
 <!DOCTYPE html>
+<!--
+  Candidatos.html — Página de Gestão de Candidatos
+  ─────────────────────────────────────────────────────────────
+  Exibe todos os candidatos em formato de cards e permite:
+    - Ver métricas: total, qualificados (+80%), aguardando triagem
+    - Ver o perfil completo de cada candidato (modal de detalhes)
+    - Rejeitar candidatos (modal de confirmação)
+
+  Elementos dinâmicos (preenchidos pelo JavaScript):
+    - #total-candidatos-val → carregarCandidatos() em candidatos.js
+    - #qualificados-val     → carregarCandidatos() em candidatos.js
+    - #aguardando-val       → carregarCandidatos() em candidatos.js
+    - #candidatesCardsContainer → carregarUsuarios() em candidatos.js
+
+  Modais presentes nesta página:
+    1. #candidatoDetalhesModal → Detalhes completos do candidato
+    2. #confirmRejeicaoModal   → Confirmação de rejeição
+  ─────────────────────────────────────────────────────────────
+-->
 <html lang="pt">
 
 <head>
@@ -8,10 +27,11 @@
   <title>Candidatos - Dashboard RH</title>
   <link rel="stylesheet" href="./css/style.css">
 
+  <!-- Supabase SDK e ícones Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <!-- JS -->
+  <!-- Scripts JS (ordem importante: supabaseClient primeiro, dashboard.js por último) -->
   <script src="assets/js/supabaseClient.js" defer></script>
   <script src="assets/js/utils.js" defer></script>
   <script src="assets/js/candidatos.js" defer></script>
@@ -24,6 +44,7 @@
 
 <body>
 
+  <!-- ── Sidebar de Navegação ──────────────────────────────────────────── -->
   <div class="sidebar">
     <img src="midia/logo.png" alt="" class="logo-sidebar">
     <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
@@ -33,8 +54,12 @@
     <a class="nav-item" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
   </div>
 
+  <!-- ── Conteúdo Principal ────────────────────────────────────────────── -->
   <div class="main">
+
+    <!-- Cards de Métricas de Candidatos -->
     <div class="cards">
+      <!-- Card: Total de candidatos na base de dados -->
       <div class="card">
         <div class="card-header">
           <h3>Total de Candidatos</h3>
@@ -46,6 +71,7 @@
           </svg>
         </p>
       </div>
+      <!-- Card: Candidatos com nota >= 80% (bem qualificados) -->
       <div class="card">
         <div class="card-header">
           <h3>Qualificados (+80%)</h3>
@@ -53,6 +79,7 @@
         </div>
         <p id="qualificados-val">0</p>
       </div>
+      <!-- Card: Candidatos sem status ou com status "Aplicado" (ainda não triados) -->
       <div class="card">
         <div class="card-header">
           <h3>Aguardando Triagem</h3>
@@ -62,33 +89,42 @@
       </div>
     </div>
 
+    <!-- Container dos Cards de Candidatos -->
+    <!-- Preenchido dinamicamente por carregarUsuarios() em candidatos.js -->
     <div id="candidatesCardsContainer" class="cards-candidatos">
       <!-- Cards serão inseridos aqui via JavaScript -->
     </div>
 
-    <!-- Modal de Detalhes do Candidato -->
+    <!-- ── Modal de Detalhes do Candidato ─────────────────────────────── -->
+    <!-- Aberto ao clicar em "Ver Perfil" num card de candidato.           -->
+    <!-- Preenchido por abrirModalDetalhes() em candidatos.js              -->
     <div id="candidatoDetalhesModal" class="modal modal-candidato" style="display:none;">
       <div class="modal-content modal-candidato-content">
+        <!-- Cabeçalho do modal com título e botão de fechar -->
         <div class="modal-header">
           <h2>Detalhes do Candidato</h2>
           <span class="close" id="fecharModalCandidato">&times;</span>
         </div>
 
         <div class="modal-candidato-body">
-          <!-- Parte Superior - Informações principais -->
+          <!-- Parte Superior: Descrição da IA + Grid de informações pessoais -->
           <div class="modal-candidato-top">
-            <!-- Painel Expansível para Descrição IA -->
+
+            <!-- Painel expansível: clique no cabeçalho para mostrar/ocultar a descrição -->
+            <!-- O ícone chevron roda 180° quando o painel está aberto -->
             <div class="expandable-panel">
               <div class="expandable-panel-header" id="descricaoIAHeader">
                 <h3>Descrição feita pela IA</h3>
                 <i class="fa-solid fa-chevron-down" id="descricaoIAChevron"></i>
               </div>
+              <!-- Conteúdo oculto por defeito; mostrado ao clicar no cabeçalho -->
               <div class="expandable-panel-content" id="descricaoIAContent" style="display:none;">
                 <p id="modal-descricao-IA"></p>
               </div>
             </div>
 
-            <!-- Informações do candidato -->
+            <!-- Grid 2 colunas com informações pessoais do candidato -->
+            <!-- Todos os <p> são preenchidos por abrirModalDetalhes() -->
             <div class="modal-candidato-info-grid">
               <div class="modal-candidato-section">
                 <label>Data de Registro:</label>
@@ -114,6 +150,7 @@
                 <label>Formação Acadêmica:</label>
                 <p id="modal-formacao"></p>
               </div>
+              <!-- Nota ocupa as 2 colunas (grid-column: span 2) -->
               <div class="modal-candidato-section modal-candidato-section-score">
                 <label>Nota da IA:</label>
                 <p id="modal-nota" class="modal-nota-display"></p>
@@ -125,12 +162,14 @@
             </div>
           </div>
 
-          <!-- Parte do Meio - Capacidades e Vaga -->
+          <!-- Parte do Meio: Capacidades (todas) + Informações da Vaga -->
           <div class="modal-candidato-middle">
+            <!-- Lista completa de capacidades como pills -->
             <div class="capacidades-section">
               <h3>Capacidades</h3>
               <div class="capacidades-list" id="modal-capacidades-todas"></div>
             </div>
+            <!-- Informações da vaga associada ao candidato -->
             <div class="vaga-info-section">
               <h3>Vaga</h3>
               <div class="vaga-info-content">
@@ -140,7 +179,8 @@
             </div>
           </div>
 
-          <!-- Parte Inferior - Botão de Download -->
+          <!-- Parte Inferior: Botão para visualizar o currículo -->
+          <!-- Desativado (opacity 0.5) se o candidato não tiver URL de currículo -->
           <div class="modal-candidato-bottom">
             <button id="btnDownloadCurriculo" class="btn-download-curriculo">
               <i class="fa-solid fa-download"></i> Visualizar Currículo
@@ -150,9 +190,13 @@
       </div>
     </div>
 
-    <!-- Modal Confirmação de Rejeição -->
+    <!-- ── Modal de Confirmação de Rejeição ───────────────────────────── -->
+    <!-- Aberto ao clicar em "Rejeitar" num card de candidato.            -->
+    <!-- O ID do candidato é guardado em #idCandidatoRejeicao (hidden).  -->
+    <!-- Ao confirmar, rejeitarCandidatoLista() é chamado em candidatos.js -->
     <div id="confirmRejeicaoModal" class="modal" style="display:none;">
       <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <!-- Ícone de aviso -->
         <div class="modal-header"
           style="display: block; text-align: center; border:none; padding-bottom:0; padding-top: 0; background: transparent;">
           <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: var(--error-color);"></i>
@@ -160,6 +204,7 @@
         <div class="modal-body">
           <h3 style="margin: 10px 0;">Rejeitar Candidato?</h3>
           <p>O candidato será removido da lista. Esta ação não apaga o registro do banco de dados.</p>
+          <!-- Input hidden que guarda o ID do candidato a rejeitar -->
           <input type="hidden" id="idCandidatoRejeicao">
         </div>
         <div class="form-actions" style="justify-content: center; margin-top: 20px;">

@@ -1,5 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<!--
+  Pipeline.html — Página do Pipeline de Recrutamento (Kanban)
+  ─────────────────────────────────────────────────────────────
+  Quadro Kanban com 6 colunas representando as etapas do processo seletivo.
+  Os candidatos são exibidos como cards arrastáveis entre as colunas.
+
+  Colunas (em ordem, pipeline-column-1 a pipeline-column-6):
+    1. Aplicado           → Candidato candidatou-se
+    2. Triagem            → Em triagem inicial
+    3. Entrevista técnica → Entrevista agendada/realizada (abre modal ao soltar)
+    4. Adequação à cultura → Avaliação cultural
+    5. Oferta enviada     → Proposta enviada
+    6. Contratado         → Processo concluído com sucesso
+
+  Funcionalidades:
+    - Drag-and-drop entre colunas (HTML5 Drag API)
+    - Ao soltar na coluna "Entrevista técnica" → abre #agendamentoModal
+    - Filtro por vaga (#filtroVaga) no cabeçalho
+    - Menu kebab em cada card: Ver Perfil, Agendar Entrevista, Rejeitar
+    - Rodapé com resumo de contagens por etapa + rejeitados
+
+  Modais presentes:
+    1. #agendamentoModal       → Agendar/editar entrevista (partilhado com Entrevistas.html)
+    2. #candidatoDetalhesModal → Ver perfil do candidato (partilhado com Candidatos.html)
+    3. #confirmRejeicaoModal   → Confirmar rejeição do candidato
+
+  Elementos dinâmicos (preenchidos por carregarPipeline() em pipeline.js):
+    - .pipeline-column-body   → Cards dos candidatos por etapa
+    - .pipeline-column-count  → Contagem de candidatos por coluna
+    - .pipeline-summary-count → Contagem no rodapé
+    - #count-rejeitados       → Total de candidatos rejeitados
+  ─────────────────────────────────────────────────────────────
+-->
+<html lang="pt">
 
 <head>
   <meta charset="UTF-8">
@@ -7,10 +40,11 @@
   <link rel="icon" type="image/png" href="midia/logo.png">
   <title>Pipeline - Dashboard RH</title>
   <link rel="stylesheet" href="./css/style.css">
+  <!-- Supabase SDK e ícones Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <!-- JS -->
+  <!-- Scripts JS (ordem importante: supabaseClient primeiro, dashboard.js por último) -->
   <script src="assets/js/supabaseClient.js" defer></script>
   <script src="assets/js/utils.js" defer></script>
   <script src="assets/js/candidatos.js" defer></script>
@@ -22,6 +56,7 @@
 
 <body>
 
+  <!-- ── Sidebar de Navegação ──────────────────────────────────────────── -->
   <div class="sidebar">
     <img src="midia/logo.png" alt="" class="logo-sidebar">
     <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
@@ -31,37 +66,47 @@
     <a class="nav-item" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
   </div>
 
+  <!-- ── Layout Principal do Pipeline ─────────────────────────────────── -->
+  <!-- .pipeline-main usa flex-column para empilhar: header + scroll + footer -->
   <div class="main pipeline-main">
-    <!-- Cabeçalho Fixo -->
+
+    <!-- Cabeçalho Fixo com título e filtro por vaga -->
     <div class="pipeline-header" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
         <h1>Pipeline de Recrutamento</h1>
         <p class="pipeline-instruction">Arraste e solte os candidatos entre as etapas do processo seletivo.</p>
       </div>
+      <!-- Filtro por vaga: "Todas as Vagas" + opções preenchidas por carregarPipeline() -->
       <div class="filters-group">
         <div class="filter-wrapper">
           <i class="fa-solid fa-filter"></i> Filtros:
           <select id="filtroVaga" class="filter-select">
             <option value="todos">Todas as Vagas</option>
-            <!-- Opções seráo preenchidas via JS -->
+            <!-- Opções preenchidas dinamicamente por carregarPipeline() em pipeline.js -->
           </select>
         </div>
       </div>
     </div>
 
-    <!-- Área Central com Scroll Horizontal -->
+    <!-- ── Área de Scroll Horizontal com as Colunas Kanban ───────────── -->
+    <!-- Permite scroll horizontal quando as colunas excedem a largura do ecrã -->
     <div class="pipeline-scroll-container">
       <div class="pipeline-columns-wrapper">
+
+        <!-- Coluna 1: Aplicado — candidatos que acabaram de se candidatar -->
         <div class="pipeline-column pipeline-column-1">
           <div class="pipeline-column-header">
             <h3>Aplicado</h3>
+            <!-- Badge com a contagem de candidatos nesta coluna -->
             <span class="pipeline-column-count">0</span>
           </div>
+          <!-- Zona de drop: cards inseridos aqui por carregarPipeline() -->
           <div class="pipeline-column-body">
             <!-- Vazio - sem cards de candidatos -->
           </div>
         </div>
 
+        <!-- Coluna 2: Triagem — candidatos em triagem inicial -->
         <div class="pipeline-column pipeline-column-2">
           <div class="pipeline-column-header">
             <h3>Triagem</h3>
@@ -72,6 +117,7 @@
           </div>
         </div>
 
+        <!-- Coluna 3: Entrevista técnica — ao soltar aqui, abre o modal de agendamento -->
         <div class="pipeline-column pipeline-column-3">
           <div class="pipeline-column-header">
             <h3>Entrevista técnica</h3>
@@ -82,6 +128,7 @@
           </div>
         </div>
 
+        <!-- Coluna 4: Adequação à cultura — avaliação de fit cultural -->
         <div class="pipeline-column pipeline-column-4">
           <div class="pipeline-column-header">
             <h3>Adequação à cultura</h3>
@@ -92,6 +139,7 @@
           </div>
         </div>
 
+        <!-- Coluna 5: Oferta enviada — proposta de emprego enviada ao candidato -->
         <div class="pipeline-column pipeline-column-5">
           <div class="pipeline-column-header">
             <h3>Oferta enviada</h3>
@@ -102,6 +150,7 @@
           </div>
         </div>
 
+        <!-- Coluna 6: Contratado — candidato aceite e contratado -->
         <div class="pipeline-column pipeline-column-6">
           <div class="pipeline-column-header">
             <h3>Contratado</h3>
@@ -114,10 +163,13 @@
       </div>
     </div>
 
-    <!-- Rodapé Fixo com Resumo -->
+    <!-- ── Rodapé Fixo com Resumo do Pipeline ────────────────────────── -->
+    <!-- Mostra a contagem de candidatos em cada etapa + rejeitados.      -->
+    <!-- Os valores são atualizados por recalcularContadores() em pipeline.js -->
     <div class="pipeline-footer">
       <div class="pipeline-summary-wrapper">
         <h2 class="pipeline-footer-title">Resumo do Pipeline</h2>
+        <!-- .pipeline-summary-count são selecionados por índice (nth-child) em pipeline.js -->
         <div class="pipeline-summary-cards">
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
@@ -143,6 +195,7 @@
             <p class="pipeline-summary-count">0</p>
             <h4>Contratado</h4>
           </div>
+          <!-- Card especial para rejeitados (borda e fundo vermelhos) -->
           <div class="pipeline-summary-card"
             style="border: 1px solid var(--error-color); background: rgba(239, 68, 68, 0.1);">
             <p class="pipeline-summary-count" id="count-rejeitados" style="color: var(--error-color);">0</p>
@@ -153,7 +206,10 @@
     </div>
   </div>
 
-  <!-- Modal Agendamento (Hidden by default) -->
+  <!-- ── Modal de Agendamento de Entrevista ────────────────────────────── -->
+  <!-- Aberto automaticamente quando um candidato é arrastado para a coluna -->
+  <!-- "Entrevista técnica". Também pode ser aberto pelo menu kebab.        -->
+  <!-- Se o utilizador cancelar, o card reverte para a coluna anterior.     -->
   <div id="agendamentoModal" class="modal">
     <div class="modal-content-vaga">
       <div class="modal-header">
@@ -161,28 +217,33 @@
         <span class="close" id="closeAgendamentoModal">&times;</span>
       </div>
       <form id="agendamentoForm" class="vaga-form-v2">
+        <!-- ID da entrevista (oculto): vazio = nova; preenchido = edição -->
         <input type="hidden" id="agendamentoId">
 
+        <!-- Campo Candidato: dropdown pesquisável -->
+        <!-- Pré-preenchido com o candidato arrastado quando vem do drag-and-drop -->
         <div class="form-group-v2">
           <label>Candidato</label>
           <div class="searchable-dropdown" id="dropdownCandidato">
             <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select"
               autocomplete="off" style="width: 100%;">
-            <input type="hidden" id="agCandidato">
+            <input type="hidden" id="agCandidato"><!-- ID real do candidato selecionado -->
             <div class="dropdown-options" id="optionsCandidato"></div>
           </div>
         </div>
 
+        <!-- Campo Vaga: dropdown pesquisável -->
         <div class="form-group-v2">
           <label>Vaga</label>
           <div class="searchable-dropdown" id="dropdownVaga">
             <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select" autocomplete="off"
               style="width: 100%;">
-            <input type="hidden" id="agVaga">
+            <input type="hidden" id="agVaga"><!-- ID real da vaga selecionada -->
             <div class="dropdown-options" id="optionsVaga"></div>
           </div>
         </div>
 
+        <!-- Tipo de entrevista -->
         <div class="form-group-v2">
           <label>Tipo de Entrevista</label>
           <select id="agTipo" required class="filter-select" style="width:100%">
@@ -192,6 +253,7 @@
           </select>
         </div>
 
+        <!-- Data e hora da entrevista -->
         <div class="form-group-v2">
           <label>Data e Hora</label>
           <input type="datetime-local" id="agDataHora" required
@@ -200,11 +262,13 @@
             onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
         </div>
 
+        <!-- Entrevistador: select preenchido por populateModalSelects() -->
         <div class="form-group-v2">
           <label>Entrevistador</label>
           <select id="agEntrevistador" required class="filter-select" style="width:100%"></select>
         </div>
 
+        <!-- Observações opcionais -->
         <div class="form-group-v2">
           <label>Observações</label>
           <textarea id="agObs" rows="3"></textarea>
@@ -218,7 +282,10 @@
     </div>
   </div>
 
-  <!-- Modal de Detalhes do Candidato -->
+  <!-- ── Modal de Detalhes do Candidato ────────────────────────────────── -->
+  <!-- Aberto pelo botão "Ver Perfil" no menu kebab de um card do pipeline. -->
+  <!-- Partilhado com Candidatos.html (mesma estrutura e IDs).              -->
+  <!-- Preenchido por abrirModalDetalhes() em candidatos.js                 -->
   <div id="candidatoDetalhesModal" class="modal modal-candidato" style="display:none;">
     <div class="modal-content modal-candidato-content">
       <div class="modal-header">
@@ -227,9 +294,9 @@
       </div>
 
       <div class="modal-candidato-body">
-        <!-- Parte Superior - Informações principais -->
+        <!-- Parte Superior: Descrição IA + Grid de informações pessoais -->
         <div class="modal-candidato-top">
-          <!-- Painel Expansível para Descrição IA -->
+          <!-- Painel expansível com a descrição gerada pela IA -->
           <div class="expandable-panel">
             <div class="expandable-panel-header" id="descricaoIAHeader">
               <h3>Descrição feita pela IA</h3>
@@ -240,7 +307,7 @@
             </div>
           </div>
 
-          <!-- Informações do candidato -->
+          <!-- Grid 2 colunas com informações pessoais do candidato -->
           <div class="modal-candidato-info-grid">
             <div class="modal-candidato-section">
               <label>Data de Registro:</label>
@@ -277,7 +344,7 @@
           </div>
         </div>
 
-        <!-- Parte do Meio - Capacidades e Vaga -->
+        <!-- Parte do Meio: Capacidades e Vaga -->
         <div class="modal-candidato-middle">
           <div class="capacidades-section">
             <h3>Capacidades</h3>
@@ -292,7 +359,7 @@
           </div>
         </div>
 
-        <!-- Parte Inferior - Botão de Download -->
+        <!-- Parte Inferior: Botão de download do currículo -->
         <div class="modal-candidato-bottom">
           <button id="btnDownloadCurriculo" class="btn-download-curriculo">
             <i class="fa-solid fa-download"></i> Visualizar Currículo
@@ -302,9 +369,13 @@
     </div>
   </div>
 
-  <!-- Modal Confirmação de Rejeição -->
+  <!-- ── Modal de Confirmação de Rejeição ──────────────────────────────── -->
+  <!-- Aberto pelo botão "Rejeitar" no menu kebab de um card do pipeline.  -->
+  <!-- O ID do candidato é guardado em #idCandidatoRejeicao (hidden).      -->
+  <!-- Ao confirmar, rejeitarCandidato() em pipeline.js é chamado.         -->
   <div id="confirmRejeicaoModal" class="modal" style="display:none;">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <!-- Ícone de aviso -->
       <div class="modal-header"
         style="display: block; text-align: center; border:none; padding-bottom:0; padding-top: 0; background: transparent;">
         <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: var(--error-color);"></i>
@@ -312,6 +383,7 @@
       <div class="modal-body">
         <h3 style="margin: 10px 0;">Rejeitar Candidato?</h3>
         <p>O candidato será removido do pipeline. Esta ação não apaga o registro do banco de dados.</p>
+        <!-- Input hidden com o ID do candidato a rejeitar -->
         <input type="hidden" id="idCandidatoRejeicao">
       </div>
       <div class="form-actions" style="justify-content: center; margin-top: 20px;">
@@ -323,7 +395,9 @@
   </div>
 
   <script>
-    // Configurar modal de candidato ao carregar a página se a função existir
+    // Inicializa o modal de detalhes do candidato quando a página carrega.
+    // configurarModalCandidato() configura os eventos de fechar o modal
+    // (botão X, clique fora, tecla ESC) definidos em candidatos.js.
     document.addEventListener('DOMContentLoaded', () => {
       if (typeof configurarModalCandidato === 'function') {
         configurarModalCandidato();

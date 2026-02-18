@@ -1,3 +1,34 @@
+/*
+ * style.css
+ * ─────────────────────────────────────────────────────────────
+ * Folha de estilos principal do Dashboard de Recrutamento.
+ *
+ * Organização das secções (use Ctrl+F para navegar):
+ *   1. VARIÁVEIS DE CORES (Custom Properties / CSS Variables)
+ *   2. BASE E TIPOGRAFIA
+ *   3. ESTRUTURA PRINCIPAL (sidebar + main)
+ *   4. CARDS DE MÉTRICAS (dashboard home)
+ *   5. TABELA (legado)
+ *   6. VAGAS - Formulário e Cards
+ *   7. LOADER SVG (animação de carregamento)
+ *   8. ENTREVISTAS - Cards simples (dashboard home)
+ *   9. PIPELINE DE RECRUTAMENTO (Kanban)
+ *  10. CARDS DE CANDIDATOS
+ *  11. MODAL DE DETALHES DO CANDIDATO
+ *  12. PIPELINE CARD STYLES (cards arrastáveis)
+ *  13. MODAL REDESIGN - DARK THEME
+ *  14. ENTREVISTAS REDESIGN (calendário)
+ *  15. DROPDOWN PESQUISÁVEL
+ *  16. KEBAB MENU
+ *  17. INTERVIEW LIST VIEW & CARDS
+ *  18. RESPONSIVIDADE
+ *
+ * Tema: Dark Mode com paleta Slate (Tailwind CSS Slate)
+ * Fonte principal: Inter (Google Fonts)
+ * ─────────────────────────────────────────────────────────────
+ */
+
+/* Estilo do select dentro de formulários genéricos */
 .form-group select {
   background: var(--hover-dark);
   color: var(--text-light);
@@ -106,7 +137,12 @@
   color: var(--primary-color);
 }
 
-/* Variáveis de Cores para Tema Dark - Slate Palette */
+/* ============================================
+   1. VARIÁVEIS DE CORES (CSS Custom Properties)
+   Paleta Slate do Tailwind CSS adaptada para tema dark.
+   Todas as cores da aplicação são definidas aqui como
+   variáveis CSS para facilitar futuras alterações de tema.
+   ============================================ */
 :root {
   /* Primary Colors - Slate */
   --background-dark: #020617;
@@ -141,7 +177,11 @@
   /* purple-500 - Ações secundárias */
 }
 
-/* Base e Tipografia */
+/* ============================================
+   2. BASE E TIPOGRAFIA
+   Reset básico e estilos globais do body.
+   A fonte Inter é carregada via Google Fonts nos HTMLs.
+   ============================================ */
 * {
   box-sizing: border-box;
 }
@@ -155,7 +195,12 @@ body {
   min-height: 100vh;
 }
 
-/* Estrutura Principal */
+/* ============================================
+   3. ESTRUTURA PRINCIPAL
+   Layout de duas colunas: sidebar fixa à esquerda
+   e área de conteúdo principal (.main) à direita.
+   margin-left: 180px no .main compensa a sidebar fixa.
+   ============================================ */
 .main {
   flex: 1;
   padding: 30px;
@@ -223,7 +268,11 @@ body {
   box-shadow: 0 4px 16px 0 rgba(37, 99, 235, 0.10);
 }
 
-/* Cards de Métricas */
+/* ============================================
+   4. CARDS DE MÉTRICAS
+   Cards horizontais usados na dashboard home (index.html)
+   e na página de Candidatos para exibir contagens.
+   ============================================ */
 .cards {
   display: flex;
   gap: 30px;
@@ -277,7 +326,11 @@ body {
   margin: 0;
 }
 
-/* Tabela */
+/* ============================================
+   5. TABELA (legado)
+   Estilos para a tabela de candidatos (não usada atualmente,
+   substituída pelos cards de candidatos).
+   ============================================ */
 #candidatesTable {
   width: 100%;
   border-collapse: separate;
@@ -335,7 +388,13 @@ table tbody tr td[colspan="5"] {
   background-color: var(--surface-dark);
 }
 
-/* CRUD Vagas */
+/* ============================================
+   6. VAGAS - Formulário e Cards
+   Estilos para a página de Vagas (vagas.html):
+   - Botão "Adicionar Vaga" com efeito de expansão no hover
+   - Modal do formulário de criação/edição de vagas
+   - Cards de vagas com menu kebab
+   ============================================ */
 .main {
   flex: 1;
   padding: 30px;
@@ -583,6 +642,13 @@ table tbody tr td[colspan="5"] {
 }
 
 
+/* ============================================
+   7. LOADER SVG
+   Animação de carregamento circular usada nos cards
+   de métricas enquanto os dados são buscados no Supabase.
+   Usa stroke-dasharray animado para criar o efeito de
+   "arco girando" sem imagens externas.
+   ============================================ */
 .container {
   width: 30px;
   transform-origin: center;
@@ -644,6 +710,11 @@ table tbody tr td[colspan="5"] {
   transform: scale(1.05);
 }
 
+/* ============================================
+   8. ENTREVISTAS - Cards Simples (index.html)
+   Cards de entrevistas exibidos na secção
+   "Próximas Entrevistas" da dashboard home.
+   ============================================ */
 /* Seção de Entrevistas */
 .entrevistas-section {
   margin-top: 40px;
@@ -1021,6 +1092,14 @@ table tbody tr td[colspan="5"] {
    CARDS DE CANDIDATOS
    ============================================ */
 
+/* ============================================
+   10. CARDS DE CANDIDATOS
+   Grid de cards na página Candidatos.html.
+   Cada card tem: nome, vaga, círculo SVG de pontuação,
+   contactos, experiência, capacidades (pills) e botões.
+   O círculo de pontuação usa stroke-dashoffset para
+   criar o efeito de progresso circular.
+   ============================================ */
 /* Container de Cards */
 .cards-candidatos {
   display: grid;
@@ -1214,7 +1293,12 @@ table tbody tr td[colspan="5"] {
 }
 
 /* ============================================
-   MODAL DE DETALHES DO CANDIDATO
+   11. MODAL DE DETALHES DO CANDIDATO
+   Modal grande (#candidatoDetalhesModal) com:
+   - Painel expansível da descrição gerada pela IA
+   - Grid 2 colunas com informações pessoais
+   - Secção de capacidades e informações da vaga
+   - Botão de download do currículo
    ============================================ */
 
 .modal-candidato {
@@ -1465,7 +1549,14 @@ table tbody tr td[colspan="5"] {
 }
 
 /* ============================================
-   PIPELINE CARD STYLES
+   12. PIPELINE CARD STYLES
+   Cards arrastáveis do quadro Kanban (Pipeline.html).
+   Estados visuais:
+   - Normal: sombra suave, borda escura
+   - Hover: elevação e borda azul
+   - .dragging: opacidade 50%, borda tracejada azul
+   - .drag-over: fundo azul claro, borda tracejada
+   - .active-card: z-index elevado para o menu não ficar por baixo
    ============================================ */
 
 .pipeline-card {
@@ -1614,6 +1705,17 @@ table tbody tr td[colspan="5"] {
    NEW MODAL REDESIGN - DARK THEME
    ========================================= */
 
+/* ============================================
+   13. MODAL REDESIGN - DARK THEME
+   Redesenho completo do modal de detalhes do candidato
+   com layout de perfil profissional:
+   - Cabeçalho com avatar, nome e contactos
+   - Círculo de pontuação (match score)
+   - Grid de estatísticas (experiência, formação, etc.)
+   - Painel colapsável com resumo da IA
+   - 3 colunas: capacidades, formação, pipeline
+   - Animação de entrada (modalSlideIn)
+   ============================================ */
 /* Modal Overlay backdrop */
 .modal {
   background: rgba(2, 6, 23, 0.95) !important;
@@ -2080,6 +2182,15 @@ table tbody tr td[colspan="5"] {
    ENTREVISTAS REDESIGN (CALENDAR VIEW)
    ============================================ */
 
+/* ============================================
+   14. ENTREVISTAS REDESIGN (Calendário)
+   Página completa de Entrevistas (Entrevistas.html):
+   - 4 cards de estatísticas (Hoje, Semana, Presenciais, Agendadas)
+   - Barra de controlos (filtros + toggle de vista)
+   - Vista Calendário: grelha 7x5 com pontos de eventos
+   - Painel lateral: entrevistas do dia selecionado
+   - Vista Lista: grid de cards detalhados
+   ============================================ */
 /* Layout Principal */
 .main-entrevistas {
   display: flex;
@@ -2532,6 +2643,14 @@ table tbody tr td[colspan="5"] {
   }
 }
 
+/* ============================================
+   15. DROPDOWN PESQUISÁVEL
+   Componente de dropdown com pesquisa em tempo real.
+   Usado nos campos de Candidato e Vaga do modal
+   de agendamento de entrevistas.
+   O container de opções (.dropdown-options) é mostrado
+   com a classe .active quando o input está em foco.
+   ============================================ */
 /* Searchable Dropdown Styles */
 .searchable-dropdown {
   position: relative;
@@ -2585,6 +2704,16 @@ table tbody tr td[colspan="5"] {
   color: #fff;
 }
 
+/* ============================================
+   16. KEBAB MENU (⋮)
+   Menu dropdown de 3 pontos usado nos cards de
+   Vagas, Candidatos, Pipeline e Entrevistas.
+   - .kebab-btn: botão circular com ⋮
+   - .kebab-dropdown: painel de opções (oculto por defeito)
+   - .kebab-dropdown.show: painel visível
+   - .dropdown-item.delete-btn: item vermelho para ações destrutivas
+   Animação fadeIn ao abrir o menu.
+   ============================================ */
 /* Kebab Menu Styles */
 .kebab-menu-container {
   position: relative;
@@ -2688,7 +2817,16 @@ table tbody tr td[colspan="5"] {
 }
 
 /* ============================================
-   INTERVIEW LIST VIEW & REDESIGNED CARDS
+   17. INTERVIEW LIST VIEW & CARDS REDESENHADOS
+   Vista em lista da página de Entrevistas.
+   Grid de 2 colunas com cards detalhados (.interview-list-card).
+   Cada card tem:
+   - Cabeçalho com ícone de tipo + status + menu kebab
+   - Nome do candidato, vaga e pontuação
+   - Data, hora e entrevistador
+   - Observações em itálico
+   Variantes de cor do ícone por status:
+   Agendada=azul, Confirmada=roxo, Concluída=verde, Cancelada=vermelho
    ============================================ */
 
 .list-layout-grid {

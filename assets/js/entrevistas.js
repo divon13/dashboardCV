@@ -1,11 +1,65 @@
 /**
- * Carrega e exibe as próximas entrevistas agendadas
+ * entrevistas.js
+ * ─────────────────────────────────────────────────────────────
+ * Módulo responsável por toda a lógica de entrevistas do projeto.
+ *
+ * Este ficheiro serve DUAS páginas distintas:
+ *
+ *   1. index.html (Dashboard Principal)
+ *      → carregarEntrevistas(): carrega as próximas 7 entrevistas e
+ *        renderiza cards simples na secção "Próximas Entrevistas"
+ *
+ *   2. Entrevistas.html (Página completa de Entrevistas)
+ *      → initCalendarPage(): inicializa o calendário interativo,
+ *        painel lateral, filtros, vista em lista e modal de agendamento
+ *
+ * Funções principais:
+ *   - carregarEntrevistas()       → Cards simples para o dashboard (index.html)
+ *   - criarCardEntrevista()       → Cria o HTML de um card simples de entrevista
+ *   - initCalendarPage()          → Inicializa a página completa de entrevistas
+ *   - setupAgendamentoModal()     → Configura o modal de agendar/editar entrevista
+ *   - populateModalSelects()      → Preenche os dropdowns do modal com dados do BD
+ *   - setupSearchableDropdown()   → Cria um dropdown com pesquisa em tempo real
+ *   - handleAgendamentoSubmit()   → Processa o submit do formulário de agendamento
+ *   - renderCalendar()            → Renderiza a grelha do calendário mensal
+ *   - fetchMonthInterviews()      → Busca todas as entrevistas do BD e atualiza a cache
+ *   - renderSidePanel()           → Renderiza as entrevistas do dia selecionado
+ *   - renderListView()            → Renderiza todos os cards na vista em lista
+ *   - updateCalendarDots()        → Adiciona pontos coloridos nos dias com entrevistas
+ *   - updateStatsCounters()       → Atualiza os 4 contadores de estatísticas
+ *   - animateValue()              → Anima numericamente um contador de 0 até o valor
+ *   - confirmInterview()          → Avança o status: Agendada → Confirmada → Concluída
+ *   - editInterview()             → Abre o modal pré-preenchido para edição
+ *   - deleteInterview()           → Elimina uma entrevista da base de dados
+ *   - changeMonth()               → Navega para o mês anterior/seguinte no calendário
+ *
+ * Tabelas Supabase utilizadas:
+ *   - Entrevistas   → Dados das entrevistas (Data, Status, Tipo, Observacoes, etc.)
+ *   - candidatos    → JOIN para obter nome e nota do candidato
+ *   - Vagas         → JOIN para obter o título da vaga
+ *   - Entrevistador → JOIN para obter o nome do entrevistador
+ * ─────────────────────────────────────────────────────────────
+ */
+
+/**
+ * Carrega as próximas entrevistas agendadas e renderiza cards simples
+ * no container `#entrevistasContainer` da página inicial (index.html).
+ *
+ * Filtros aplicados:
+ *   - Data >= hoje (não mostra entrevistas passadas)
+ *   - Ordenadas por data crescente (a mais próxima primeiro)
+ *   - Limite de 7 entrevistas
+ *
+ * Também atualiza o contador "Entrevistas Hoje" (#entrevistas-hoje-val)
+ * se o elemento existir na página.
  */
 async function carregarEntrevistas() {
+    // Define "hoje" como o início do dia atual (meia-noite) para filtrar corretamente
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const hojeISO = hoje.toISOString().split('T')[0];
+    const hojeISO = hoje.toISOString().split('T')[0]; // Formato "YYYY-MM-DD"
 
+    // Busca entrevistas com JOIN nas tabelas relacionadas
     const { data, error } = await supabaseClient
         .from("Entrevistas")
         .select(`
@@ -14,9 +68,9 @@ async function carregarEntrevistas() {
       candidatos(id, nome),
       Entrevistador(id, Nome)
     `)
-        .gte('Data', hojeISO)
-        .order('Data', { ascending: true })
-        .limit(7);
+        .gte('Data', hojeISO)          // Apenas entrevistas de hoje em diante
+        .order('Data', { ascending: true }) // Mais próximas primeiro
+        .limit(7);                     // Máximo de 7 cards no dashboard
 
     if (error) {
         console.error("Erro ao carregar entrevistas:", error);
@@ -27,7 +81,8 @@ async function carregarEntrevistas() {
         return;
     }
 
-    // Atualiza o contador de entrevistas para HOJE no dashboard (index.html)
+    // ── Atualiza o contador "Entrevistas Hoje" no dashboard ───────────────
+    // Filtra as entrevistas que têm data igual a hoje
     const countHojeEl = document.getElementById("entrevistas-hoje-val");
     if (countHojeEl) {
         const hojeISO = new Date().toISOString().split('T')[0];
@@ -37,7 +92,7 @@ async function carregarEntrevistas() {
 
     const container = document.getElementById('entrevistasContainer');
     if (!container) {
-        return;
+        return; // Sai silenciosamente se não estiver na página correta
     }
 
     container.innerHTML = '';
@@ -47,7 +102,7 @@ async function carregarEntrevistas() {
         return;
     }
 
-    // Renderiza os cards de entrevistas
+    // Renderiza um card para cada entrevista
     data.forEach(entrevista => {
         const card = criarCardEntrevista(entrevista);
         container.appendChild(card);
@@ -55,20 +110,26 @@ async function carregarEntrevistas() {
 }
 
 /**
- * Cria um card HTML para uma entrevista
- * @param {Object} entrevista - Objeto com os dados da entrevista
- * @returns {HTMLElement} Elemento div com o card da entrevista
+ * Cria e retorna o elemento HTML de um card simples de entrevista.
+ * Usado apenas na página inicial (index.html) na secção "Próximas Entrevistas".
+ *
+ * O card exibe: candidato, vaga, data/hora, entrevistador, status e observações.
+ *
+ * @param {Object} entrevista - Objeto da entrevista com JOINs do Supabase
+ * @returns {HTMLElement} Elemento <div> com o card da entrevista
  */
 function criarCardEntrevista(entrevista) {
     const card = document.createElement('div');
     card.className = 'card-entrevista';
 
-    // Extrai nome da vaga e do candidato dos relacionamentos
+    // Extrai os nomes dos relacionamentos (podem vir como array ou objeto)
     const nomeVaga = extrairNomeVaga(entrevista);
     const nomeCandidato = extrairNomeCandidato(entrevista);
     const dataFormatada = entrevista.Data ? formatarData(entrevista.Data) : 'Data não definida';
     const status = entrevista.Status || 'Agendada';
-    const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+    const statusClass = status.toLowerCase().replace(/\s+/g, '-'); // Para classe CSS
+
+    // Observações são opcionais — só renderiza o bloco se existirem
     const observacoes = entrevista.Observações || entrevista.Observacoes || '';
     const observacoesHTML = observacoes
         ? `<div class="entrevista-observacoes">${observacoes}</div>`
@@ -95,13 +156,16 @@ function criarCardEntrevista(entrevista) {
 }
 
 /**
- * Extrai o nome da vaga do relacionamento Supabase
- * @param {Object} entrevista - Objeto da entrevista
- * @returns {string} Nome da vaga
+ * Extrai o nome da vaga de um objeto de entrevista retornado pelo Supabase.
+ * O Supabase pode retornar o JOIN como objeto ou como array (dependendo da relação).
+ *
+ * @param {Object} entrevista - Objeto da entrevista com JOIN da tabela Vagas
+ * @returns {string} Nome da vaga ou mensagem de fallback
  */
 function extrairNomeVaga(entrevista) {
     if (!entrevista.Vagas) return 'Vaga não encontrada';
 
+    // Supabase pode retornar como array (relação 1-para-muitos) ou objeto (1-para-1)
     if (Array.isArray(entrevista.Vagas) && entrevista.Vagas.length > 0) {
         return entrevista.Vagas[0].Titulo || 'Vaga não encontrada';
     } else if (entrevista.Vagas.Titulo) {
@@ -112,9 +176,11 @@ function extrairNomeVaga(entrevista) {
 }
 
 /**
- * Extrai o nome do candidato do relacionamento Supabase
- * @param {Object} entrevista - Objeto da entrevista
- * @returns {string} Nome do candidato
+ * Extrai o nome do candidato de um objeto de entrevista retornado pelo Supabase.
+ * Mesma lógica de `extrairNomeVaga` — trata array ou objeto.
+ *
+ * @param {Object} entrevista - Objeto da entrevista com JOIN da tabela candidatos
+ * @returns {string} Nome do candidato ou mensagem de fallback
  */
 function extrairNomeCandidato(entrevista) {
     if (!entrevista.candidatos) return 'Candidato não encontrado';
@@ -129,126 +195,181 @@ function extrairNomeCandidato(entrevista) {
 }
 
 // ============================================
-// REDESIGN ENTREVISTAS (CALENDAR LOGIC)
+// LÓGICA DA PÁGINA DE ENTREVISTAS (Entrevistas.html)
 // ============================================
 
-let currentDate = new Date();
-let selectedDate = new Date();
-let interviewsCache = []; // Store fetched interviews
+// ── Variáveis de estado do calendário ────────────────────────────────────────
+// Estas variáveis mantêm o estado global do calendário entre chamadas de função.
+let currentDate = new Date();    // Mês/ano atualmente visível no calendário
+let selectedDate = new Date();   // Dia atualmente selecionado (painel lateral)
+let interviewsCache = [];        // Cache local com todas as entrevistas carregadas do BD
 
+/**
+ * Inicializa a página completa de Entrevistas (Entrevistas.html).
+ *
+ * Responsável por:
+ *   1. Renderizar o calendário do mês atual
+ *   2. Inicializar os contadores de estatísticas
+ *   3. Configurar todos os event listeners (navegação, filtros, vistas)
+ *   4. Buscar as entrevistas do BD e popular o calendário
+ *   5. Configurar o modal de agendamento
+ *
+ * É chamada automaticamente no DOMContentLoaded se a página tiver
+ * a classe `.main-entrevistas` no elemento principal.
+ */
 async function initCalendarPage() {
     console.log('Iniciando página de entrevistas...');
 
-    // Initial Render
+    // Renderiza o calendário com o mês atual e inicializa os contadores a zero
     renderCalendar(currentDate);
-    updateStatsCounters(); // Initialize stats
+    updateStatsCounters();
 
-    // Event Listeners
+    // ── Navegação do calendário ───────────────────────────────────────────
+    // Botões de seta para navegar entre meses
     const prevMonth = document.getElementById('prevMonth');
-    if (prevMonth) prevMonth.addEventListener('click', () => changeMonth(-1));
+    if (prevMonth) prevMonth.addEventListener('click', () => changeMonth(-1)); // Mês anterior
 
     const nextMonth = document.getElementById('nextMonth');
-    if (nextMonth) nextMonth.addEventListener('click', () => changeMonth(1));
+    if (nextMonth) nextMonth.addEventListener('click', () => changeMonth(1));  // Próximo mês
 
+    // Botão "Hoje" → volta para o mês e dia atual
     const goToday = document.getElementById('goToday');
     if (goToday) goToday.addEventListener('click', () => {
         currentDate = new Date();
         selectedDate = new Date();
         renderCalendar(currentDate);
-        fetchMonthInterviews(currentDate);
+        fetchMonthInterviews(currentDate); // Recarrega as entrevistas
     });
 
-    // Filters
+    // ── Filtros ───────────────────────────────────────────────────────────
+    // Botão "Limpar" → reseta os selects de filtro e re-renderiza o painel lateral
     const btnClearFilters = document.getElementById('btnClearFilters');
     if (btnClearFilters) btnClearFilters.addEventListener('click', () => {
         document.getElementById('filterType').value = 'all';
         document.getElementById('filterStatus').value = 'all';
-        renderSidePanel(selectedDate); // Re-render with cleared filters
+        renderSidePanel(selectedDate); // Re-renderiza com filtros limpos
     });
 
+    // Filtro por tipo de entrevista → re-renderiza o painel ao mudar
     const filterType = document.getElementById('filterType');
     if (filterType) filterType.addEventListener('change', () => renderSidePanel(selectedDate));
 
+    // Filtro por status → re-renderiza o painel ao mudar
     const filterStatus = document.getElementById('filterStatus');
     if (filterStatus) filterStatus.addEventListener('change', () => renderSidePanel(selectedDate));
 
-    // Toggle Views (Placeholder visual only for now)
+    // ── Toggle de Vista (Calendário / Lista) ──────────────────────────────
     const viewCalendar = document.getElementById('viewCalendar');
     if (viewCalendar) viewCalendar.addEventListener('click', (e) => setActiveView(e.target, 'calendar'));
 
     const viewList = document.getElementById('viewList');
     if (viewList) viewList.addEventListener('click', (e) => setActiveView(e.target, 'list'));
 
-    // Initial Fetch
+    // ── Busca inicial das entrevistas ─────────────────────────────────────
+    // Carrega todas as entrevistas do BD, popula a cache e atualiza o calendário
     await fetchMonthInterviews(currentDate);
 
-    // Side panel list button
+    // Botão no painel lateral para mudar para a vista em lista
     const btnOpenListFromSide = document.getElementById('btnOpenListFromSide');
     if (btnOpenListFromSide) {
         btnOpenListFromSide.addEventListener('click', () => setActiveView(null, 'list'));
     }
 
-    // Modal Logic
+    // Configura o modal de agendamento de entrevistas
     setupAgendamentoModal();
 }
 
+/**
+ * Configura todos os event handlers do modal de agendamento de entrevistas
+ * (#agendamentoModal). Este modal é partilhado entre Entrevistas.html e Pipeline.html.
+ *
+ * Comportamentos configurados:
+ *   - Botão "Agendar Entrevista" → abre o modal e popula os dropdowns
+ *   - Botão "X" e "Cancelar" → fecham o modal e limpam o formulário
+ *   - Clique fora do modal → fecha o modal
+ *   - Submit do formulário → chama handleAgendamentoSubmit()
+ */
 function setupAgendamentoModal() {
     const modal = document.getElementById('agendamentoModal');
-    const btnOpen = document.getElementById('btnNovoAgendamento');
-    const btnClose = document.getElementById('closeAgendamentoModal');
-    const btnCancel = document.getElementById('cancelAgendamento');
+    const btnOpen = document.getElementById('btnNovoAgendamento'); // Botão "Agendar Entrevista"
+    const btnClose = document.getElementById('closeAgendamentoModal'); // Botão "X"
+    const btnCancel = document.getElementById('cancelAgendamento');    // Botão "Cancelar"
     const form = document.getElementById('agendamentoForm');
 
+    // Abre o modal e popula os dropdowns com dados do BD
     if (btnOpen) {
         btnOpen.addEventListener('click', async () => {
-            if (form) form.reset();
-            document.getElementById('agendamentoId').value = '';
+            if (form) form.reset(); // Limpa o formulário para nova entrevista
+            document.getElementById('agendamentoId').value = ''; // Garante modo de criação
             modal.style.display = 'flex';
-            await populateModalSelects();
+            await populateModalSelects(); // Carrega candidatos, vagas e entrevistadores
         });
     }
 
-    const closeModal = () => { if (modal) modal.style.display = 'none'; if (form) form.reset(); };
+    // Função auxiliar para fechar e limpar o modal
+    const closeModal = () => {
+        if (modal) modal.style.display = 'none';
+        if (form) form.reset();
+    };
+
     if (btnClose) btnClose.addEventListener('click', closeModal);
     if (btnCancel) btnCancel.addEventListener('click', closeModal);
 
-    // Close on click outside
+    // Fecha ao clicar no overlay (fora do conteúdo do modal)
     window.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
 
+    // Processa o submit do formulário
     if (form) {
         form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Impede reload da página
             const success = await handleAgendamentoSubmit(form);
             if (success) {
                 closeModal();
-                fetchMonthInterviews(currentDate); // Refresh calendar
+                fetchMonthInterviews(currentDate); // Atualiza o calendário após agendar
             }
         });
     }
 }
 
+/**
+ * Preenche os dropdowns do modal de agendamento com dados do Supabase.
+ *
+ * Dropdowns preenchidos:
+ *   - Candidato: dropdown pesquisável (#searchCandidato / #agCandidato)
+ *   - Vaga: dropdown pesquisável (#searchVaga / #agVaga)
+ *   - Entrevistador: select padrão (#agEntrevistador)
+ *
+ * Os dropdowns de candidato e vaga são "searchable" (com pesquisa em tempo real),
+ * enquanto o de entrevistador é um <select> HTML padrão.
+ */
 async function populateModalSelects() {
-    // Candidates - Searchable
+    // ── Candidatos (dropdown pesquisável) ─────────────────────────────────
     const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome');
     if (candidates) {
-        setupSearchableDropdown('searchCandidato', 'optionsCandidato', 'agCandidato',
-            candidates.map(c => ({ id: c.id, label: c.nome })),
-            true // Allow keeping existing value
+        setupSearchableDropdown(
+            'searchCandidato',   // ID do input de pesquisa
+            'optionsCandidato',  // ID do container de opções
+            'agCandidato',       // ID do input hidden (guarda o ID selecionado)
+            candidates.map(c => ({ id: c.id, label: c.nome })), // Transforma em {id, label}
+            true // keepExisting: mantém o valor atual se já estiver preenchido (modo edição)
         );
     }
 
-    // Vagas - Searchable
+    // ── Vagas (dropdown pesquisável) ──────────────────────────────────────
     const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
     if (vagas) {
-        setupSearchableDropdown('searchVaga', 'optionsVaga', 'agVaga',
+        setupSearchableDropdown(
+            'searchVaga',
+            'optionsVaga',
+            'agVaga',
             vagas.map(v => ({ id: v.id, label: v.Titulo })),
-            true // Allow keeping existing value
+            true
         );
     }
 
-    // Entrevistadores - Standard Select
+    // ── Entrevistadores (select padrão) ───────────────────────────────────
     const entrevistadorSelect = document.getElementById('agEntrevistador');
     const { data: entrevistadores } = await supabaseClient.from('Entrevistador').select('id, Nome');
     if (entrevistadores && entrevistadorSelect) {
@@ -263,7 +384,21 @@ async function populateModalSelects() {
 }
 
 /**
- * Configures a searchable dropdown
+ * Configura um dropdown com pesquisa em tempo real (searchable dropdown).
+ *
+ * Funcionamento:
+ *   - O utilizador escreve no input de texto (#searchXxx)
+ *   - As opções são filtradas em tempo real pelo texto digitado
+ *   - Ao selecionar uma opção, o input mostra o label e o input hidden guarda o ID
+ *   - O dropdown fecha ao clicar fora dele
+ *
+ * Este padrão é necessário porque o <select> HTML padrão não suporta pesquisa.
+ *
+ * @param {string} inputId - ID do input de texto visível (pesquisa)
+ * @param {string} containerId - ID do div que contém as opções
+ * @param {string} hiddenId - ID do input hidden que guarda o ID selecionado
+ * @param {Array} items - Array de objetos {id, label} com as opções disponíveis
+ * @param {boolean} keepExisting - Se true, não limpa o valor hidden ao inicializar
  */
 function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExisting = false) {
     const input = document.getElementById(inputId);
@@ -272,15 +407,17 @@ function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExis
 
     if (!input || !container || !hidden) return;
 
-    // IMPORTANT: Only clear if not editing or keepExisting is false
+    // Só limpa o valor selecionado se não estivermos em modo de edição
     if (!keepExisting) hidden.value = '';
 
-    // Helper to render
+    // Função auxiliar que renderiza as opções filtradas pelo texto
     const renderOptions = (filterText = '') => {
         container.innerHTML = '';
+        // Filtra os itens pelo texto digitado (case-insensitive)
         const filtered = items.filter(i => i.label.toLowerCase().includes(filterText.toLowerCase()));
 
         if (filtered.length === 0) {
+            // Mostra mensagem quando não há resultados
             const div = document.createElement('div');
             div.className = 'dropdown-option';
             div.textContent = 'Nenhum resultado encontrado';
@@ -291,40 +428,37 @@ function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExis
             return;
         }
 
+        // Cria um elemento clicável para cada opção filtrada
         filtered.forEach(item => {
             const div = document.createElement('div');
             div.className = 'dropdown-option';
             div.textContent = item.label;
             div.onclick = (e) => {
-                e.stopPropagation(); // Prevent bubbling
-                input.value = item.label;
-                hidden.value = item.id;
-                container.classList.remove('active');
+                e.stopPropagation(); // Impede que o clique feche o dropdown prematuramente
+                input.value = item.label; // Mostra o nome no input visível
+                hidden.value = item.id;   // Guarda o ID no input hidden
+                container.classList.remove('active'); // Fecha o dropdown
             };
             container.appendChild(div);
         });
     };
 
-    // Initial populate (hidden)
+    // Renderiza todas as opções inicialmente (sem filtro)
     renderOptions();
 
-    // Event Listeners
+    // Abre o dropdown e filtra ao focar no input
     input.onfocus = () => {
         renderOptions(input.value);
-        container.classList.add('active');
+        container.classList.add('active'); // Mostra o dropdown
     };
 
+    // Filtra as opções em tempo real conforme o utilizador digita
     input.oninput = (e) => {
         renderOptions(e.target.value);
-        // Clear hidden ID if user changes text, enforcing selection
-        // Unless exact match? Safer to clear.
-        // hidden.value = ''; 
         container.classList.add('active');
     };
 
-    // Click outside handling to close dropdown
-    // This is a bit aggressive if added multiple times, but safe enough for this context
-    // Ideally we put this on window once, but for simplicity:
+    // Fecha o dropdown ao clicar fora do input ou do container de opções
     document.addEventListener('click', (e) => {
         if (!input.contains(e.target) && !container.contains(e.target)) {
             container.classList.remove('active');
@@ -332,15 +466,35 @@ function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExis
     });
 }
 
+/**
+ * Processa o submit do formulário de agendamento de entrevista.
+ *
+ * Valida os campos obrigatórios (candidato e vaga devem ser selecionados
+ * da lista, não apenas digitados), e depois:
+ *   - Se #agendamentoId tiver valor → atualiza a entrevista existente (UPDATE)
+ *   - Se #agendamentoId estiver vazio → cria nova entrevista (INSERT)
+ *
+ * Após criar uma nova entrevista, atualiza automaticamente o status do
+ * candidato para "Entrevista técnica" na tabela candidatos.
+ *
+ * Emite o evento customizado 'interview-scheduled' para notificar
+ * outros módulos (ex: pipeline.js) de que uma entrevista foi agendada.
+ *
+ * @param {HTMLFormElement} form - O elemento do formulário
+ * @returns {boolean} true se guardou com sucesso, false se houve erro
+ */
 async function handleAgendamentoSubmit(form) {
-    const candidatoId = document.getElementById('agCandidato').value;
-    const vagaId = document.getElementById('agVaga').value;
-    const tipo = document.getElementById('agTipo').value;
-    const dataHora = document.getElementById('agDataHora').value;
+    // Recolhe os valores dos campos do formulário
+    const candidatoId = document.getElementById('agCandidato').value;   // ID do candidato (hidden)
+    const vagaId = document.getElementById('agVaga').value;             // ID da vaga (hidden)
+    const tipo = document.getElementById('agTipo').value;               // Tipo de entrevista
+    const dataHora = document.getElementById('agDataHora').value;       // Data e hora
     const formDataEntrevistador = document.getElementById('agEntrevistador').value;
     const entrevistadorId = formDataEntrevistador ? parseInt(formDataEntrevistador) : null;
-    const obs = document.getElementById('agObs').value;
+    const obs = document.getElementById('agObs').value;                 // Observações
 
+    // ── Validação: candidato e vaga devem ser selecionados da lista ───────
+    // Os inputs hidden ficam vazios se o utilizador apenas digitou sem selecionar
     if (!candidatoId) {
         alert('Por favor, selecione um candidato da lista.');
         return;
@@ -350,8 +504,9 @@ async function handleAgendamentoSubmit(form) {
         return;
     }
 
-    const interviewId = document.getElementById('agendamentoId').value;
+    const interviewId = document.getElementById('agendamentoId').value; // Vazio se nova entrevista
 
+    // Objeto com os dados a guardar na tabela Entrevistas
     const dataToSave = {
         "Candidato_ID": candidatoId ? parseInt(candidatoId) : null,
         "Vagas_ID": vagaId ? parseInt(vagaId) : null,
@@ -362,6 +517,7 @@ async function handleAgendamentoSubmit(form) {
         "Tipo de entrevista": tipo
     };
 
+    // Validação adicional: garante que os IDs são números válidos
     if (!dataToSave.Candidato_ID || isNaN(dataToSave.Candidato_ID)) {
         alert('Erro: Por favor, selecione um candidato válido da lista.');
         return false;
@@ -373,10 +529,10 @@ async function handleAgendamentoSubmit(form) {
 
     let result;
     if (interviewId) {
-        // Update existing
+        // ── Modo Edição: atualiza a entrevista existente ──────────────────
         result = await supabaseClient.from('Entrevistas').update(dataToSave).eq('id', interviewId);
     } else {
-        // Create new
+        // ── Modo Criação: insere nova entrevista ──────────────────────────
         result = await supabaseClient.from('Entrevistas').insert([dataToSave]);
     }
 
@@ -385,7 +541,9 @@ async function handleAgendamentoSubmit(form) {
         alert('Erro ao salvar entrevista: ' + result.error.message);
         return false;
     } else {
-        // Only update status to "Entrevista técnica" if it's a new appointment
+        // ── Atualiza o status do candidato (apenas em novas entrevistas) ──
+        // Quando uma entrevista é agendada pela primeira vez, o candidato
+        // avança automaticamente para a etapa "Entrevista técnica" no pipeline.
         if (!interviewId) {
             const { error: updateError } = await supabaseClient
                 .from('candidatos')
@@ -398,11 +556,22 @@ async function handleAgendamentoSubmit(form) {
         }
 
         alert(interviewId ? 'Entrevista atualizada com sucesso!' : 'Entrevista agendada com sucesso!');
+
+        // Emite evento customizado para notificar outros módulos (ex: pipeline.js recarrega)
         window.dispatchEvent(new CustomEvent('interview-scheduled', { detail: { candidatoId } }));
         return true;
     }
 }
 
+/**
+ * Alterna entre a vista de Calendário e a vista em Lista.
+ *
+ * Vista Calendário: mostra a grelha do calendário + painel lateral
+ * Vista Lista: mostra todos os cards de entrevistas numa grelha
+ *
+ * @param {HTMLElement|null} btn - O botão clicado (para adicionar classe 'active')
+ * @param {string} view - "calendar" ou "list"
+ */
 function setActiveView(btn, view) {
     const calendarView = document.getElementById('calendarViewContainer');
     const listView = document.getElementById('listViewContainer');
@@ -411,23 +580,27 @@ function setActiveView(btn, view) {
 
     if (!calendarView || !listView || !calendarToggle || !listToggle) return;
 
-    // Toggle active classes on buttons
+    // Remove a classe 'active' de todos os botões de toggle
     document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+
     if (view === 'calendar') {
         calendarToggle.classList.add('active');
-        calendarView.style.display = 'grid';
+        calendarView.style.display = 'grid'; // Mostra o calendário
         listView.style.display = 'none';
-        renderCalendar(currentDate); // Refresh calendar
+        renderCalendar(currentDate); // Atualiza o calendário
     } else {
         listToggle.classList.add('active');
         calendarView.style.display = 'none';
-        listView.style.display = 'grid';
-        renderListView();
+        listView.style.display = 'grid'; // Mostra a lista
+        renderListView(); // Renderiza os cards da lista
     }
 }
 
 /**
- * Renders all interviews in a grid of cards
+ * Renderiza todos os cards de entrevistas na vista em lista (#listViewContainer).
+ * Usa os dados da cache `interviewsCache` (já carregados do BD).
+ *
+ * Cada card é criado pela função `createInterviewListCard()`.
  */
 async function renderListView() {
     const listContainer = document.getElementById('listViewContainer');
@@ -440,6 +613,7 @@ async function renderListView() {
         return;
     }
 
+    // Cria um card para cada entrevista na cache
     interviewsCache.forEach(interview => {
         const card = createInterviewListCard(interview);
         listContainer.appendChild(card);
@@ -447,13 +621,25 @@ async function renderListView() {
 }
 
 /**
- * Creates a redesigned card for the list view based on USER request
+ * Cria e retorna o elemento HTML de um card de entrevista para a vista em lista.
+ *
+ * Este card é mais completo que o card simples do dashboard, incluindo:
+ *   - Ícone do tipo de entrevista (presencial/vídeo/telefone)
+ *   - Status e tipo
+ *   - Nome do candidato, vaga e pontuação (%)
+ *   - Data, hora e entrevistador
+ *   - Observações
+ *   - Menu kebab com ações: Confirmar/Concluir, Editar, Eliminar
+ *
+ * @param {Object} i - Objeto da entrevista com JOINs do Supabase
+ * @returns {HTMLElement} Elemento <div> com o card completo
  */
 function createInterviewListCard(i) {
     const card = document.createElement('div');
     card.className = 'interview-list-card';
 
-    // Data extraction with array handling support
+    // ── Extração de dados dos JOINs ───────────────────────────────────────
+    // O Supabase pode retornar os relacionamentos como array ou objeto
     const candidateObj = Array.isArray(i.candidatos) ? i.candidatos[0] : i.candidatos;
     const candName = candidateObj ? candidateObj.nome : 'Candidato Desconhecido';
     const score = candidateObj && candidateObj.nota != null ? Math.round(candidateObj.nota) : '--';
@@ -464,15 +650,16 @@ function createInterviewListCard(i) {
     const interviewerObj = Array.isArray(i.Entrevistador) ? i.Entrevistador[0] : i.Entrevistador;
     const interviewerName = interviewerObj ? interviewerObj.Nome : 'Não definido';
 
+    // ── Ícone do tipo de entrevista ───────────────────────────────────────
     const type = i["Tipo de entrevista"] || 'Presencial';
-    let typeIcon = 'fa-building';
+    let typeIcon = 'fa-building'; // Presencial (padrão)
     if (type.toLowerCase().includes('video') || type.toLowerCase().includes('online')) typeIcon = 'fa-video';
     if (type.toLowerCase().includes('telefone')) typeIcon = 'fa-phone';
 
     const status = i.status || 'Agendada';
     const statusClass = status.toLowerCase().replace(/\s+/g, '-');
     const dateStr = i.Data ? formatarData(i.Data) : 'Sem data';
-    const timeStr = i.Data ? i.Data.split('T')[1].substring(0, 5) : '--:--';
+    const timeStr = i.Data ? i.Data.split('T')[1].substring(0, 5) : '--:--'; // Extrai HH:MM
 
     card.innerHTML = `
         <div class="ilc-header">
@@ -483,6 +670,7 @@ function createInterviewListCard(i) {
                 <span class="ilc-status">${status}</span>
                 <span class="ilc-type">${type}</span>
             </div>
+            <!-- Menu kebab com ações -->
             <div class="kebab-menu-container">
                 <button class="kebab-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 <div class="kebab-dropdown">
@@ -520,13 +708,13 @@ function createInterviewListCard(i) {
         </div>
     `;
 
-    // Dropdown toggle logic
+    // ── Menu kebab do card ────────────────────────────────────────────────
     const kebab = card.querySelector('.kebab-btn');
     const dropdown = card.querySelector('.kebab-dropdown');
     if (kebab && dropdown) {
         kebab.onclick = (e) => {
             e.stopPropagation();
-            // Close all other dropdowns
+            // Fecha todos os outros dropdowns abertos
             document.querySelectorAll('.kebab-dropdown.show').forEach(d => {
                 if (d !== dropdown) d.classList.remove('show');
             });
@@ -535,32 +723,42 @@ function createInterviewListCard(i) {
         };
     }
 
-    // Action buttons logic
+    // ── Botões de ação do card ────────────────────────────────────────────
     const btnConfirmar = card.querySelector('.btn-confirmar');
     const btnEditar = card.querySelector('.btn-editar');
-    const btnReagendar = card.querySelector('.btn-reagendar');
     const btnEliminar = card.querySelector('.btn-eliminar');
 
+    // Confirmar/Concluir: avança o status da entrevista
     if (btnConfirmar) btnConfirmar.onclick = () => confirmInterview(i.id, status);
+    // Editar: abre o modal pré-preenchido com os dados desta entrevista
     if (btnEditar) btnEditar.onclick = () => editInterview(i);
+    // Eliminar: pede confirmação e elimina a entrevista
     if (btnEliminar) btnEliminar.onclick = () => deleteInterview(i.id);
 
     return card;
 }
 
 /**
- * Updates interview status: Agendada -> Confirmada -> Concluída
+ * Avança o status de uma entrevista na sequência:
+ *   Agendada → Confirmada → Concluída
+ *
+ * Pede confirmação ao utilizador antes de fazer a alteração.
+ * Após a atualização, recarrega as entrevistas do BD.
+ *
+ * @param {number} id - ID da entrevista a atualizar
+ * @param {string} currentStatus - Status atual da entrevista
  */
 async function confirmInterview(id, currentStatus) {
     let newStatus = 'Confirmada';
     let message = 'Deseja marcar esta entrevista como Confirmada?';
 
+    // Se já está Confirmada, o próximo passo é Concluída
     if (currentStatus === 'Confirmada') {
         newStatus = 'Concluída';
         message = 'Deseja marcar esta entrevista como Concluída?';
     }
 
-    if (!confirm(message)) return;
+    if (!confirm(message)) return; // Cancela se o utilizador não confirmar
 
     const { error } = await supabaseClient
         .from('Entrevistas')
@@ -570,31 +768,41 @@ async function confirmInterview(id, currentStatus) {
     if (error) {
         alert('Erro ao atualizar status: ' + error.message);
     } else {
-        fetchMonthInterviews(currentDate);
+        fetchMonthInterviews(currentDate); // Recarrega para refletir a mudança
     }
 }
 
 /**
- * Opens modal pre-filled with interview data
+ * Abre o modal de agendamento pré-preenchido com os dados de uma entrevista
+ * existente, para permitir a sua edição.
+ *
+ * Processo:
+ *   1. Abre o modal e define o ID da entrevista no campo hidden
+ *   2. Popula os dropdowns com os dados do BD
+ *   3. Preenche cada campo com os valores atuais da entrevista
+ *
+ * @param {Object} i - Objeto da entrevista com JOINs do Supabase
  */
 async function editInterview(i) {
     const modal = document.getElementById('agendamentoModal');
     if (!modal) return;
 
     modal.style.display = 'flex';
-    document.getElementById('agendamentoId').value = i.id;
+    document.getElementById('agendamentoId').value = i.id; // Indica modo de edição
 
-    // Wait for dropdowns to be ready
+    // Popula os dropdowns antes de preencher os valores
     await populateModalSelects();
 
-    // Fill data
+    // Extrai os objetos dos JOINs (podem ser array ou objeto)
     const candidateObj = Array.isArray(i.candidatos) ? i.candidatos[0] : i.candidatos;
     const vagaObj = Array.isArray(i.Vagas) ? i.Vagas[0] : i.Vagas;
 
+    // Preenche o dropdown de candidato
     if (candidateObj) {
         document.getElementById('searchCandidato').value = candidateObj.nome;
         document.getElementById('agCandidato').value = candidateObj.id;
     }
+    // Preenche o dropdown de vaga
     if (vagaObj) {
         document.getElementById('searchVaga').value = vagaObj.Titulo;
         document.getElementById('agVaga').value = vagaObj.id;
@@ -602,25 +810,22 @@ async function editInterview(i) {
 
     document.getElementById('agTipo').value = i["Tipo de entrevista"] || 'Presencial';
 
+    // Converte a data ISO para o formato "YYYY-MM-DDTHH:MM" aceite pelo input datetime-local
     if (i.Data) {
-        // Format ISO string to datetime-local compatible format (YYYY-MM-DDTHH:MM)
         const date = new Date(i.Data);
         const iso = date.toLocaleString('sv-SE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit'
         }).replace(' ', 'T').substring(0, 16);
         document.getElementById('agDataHora').value = iso;
     }
 
-    // Correctly find the interviewer ID for the select input
+    // Determina o ID do entrevistador (pode estar em campos diferentes)
     let interviewerId = '';
     if (i.Entrevistador_ID) {
         interviewerId = i.Entrevistador_ID;
     } else if (i.Entrevistador) {
-        // If it's the full object from join
+        // Se veio como objeto do JOIN, usa o ID do objeto
         interviewerId = i.Entrevistador.id || i.Entrevistador;
     }
 
@@ -629,7 +834,10 @@ async function editInterview(i) {
 }
 
 /**
- * Deletes an interview
+ * Elimina uma entrevista da base de dados após confirmação do utilizador.
+ * Após a eliminação, recarrega as entrevistas para atualizar a vista.
+ *
+ * @param {number} id - ID da entrevista a eliminar
  */
 async function deleteInterview(id) {
     if (!confirm('Tem certeza que deseja eliminar esta entrevista? Esta ação não pode ser desfeita.')) return;
@@ -643,78 +851,120 @@ async function deleteInterview(id) {
         alert('Erro ao eliminar entrevista: ' + error.message);
     } else {
         alert('Entrevista eliminada com sucesso.');
-        fetchMonthInterviews(currentDate);
+        fetchMonthInterviews(currentDate); // Atualiza o calendário
     }
 }
 
+/**
+ * Navega para o mês anterior ou seguinte no calendário.
+ * Atualiza a variável `currentDate` e recarrega o calendário e as entrevistas.
+ *
+ * @param {number} delta - -1 para mês anterior, +1 para próximo mês
+ */
 function changeMonth(delta) {
     currentDate.setMonth(currentDate.getMonth() + delta);
     renderCalendar(currentDate);
-    fetchMonthInterviews(currentDate);
+    fetchMonthInterviews(currentDate); // Recarrega as entrevistas para o novo mês
 }
 
+/**
+ * Renderiza a grelha do calendário para um determinado mês.
+ *
+ * Estrutura do calendário:
+ *   - Cabeçalho: "Janeiro 2025" com botões de navegação
+ *   - Grelha: 7 colunas (Dom-Sáb) com os dias do mês
+ *   - Dias do mês anterior/seguinte são mostrados com opacidade reduzida
+ *   - O dia atual é marcado com a classe 'today'
+ *   - O dia selecionado é marcado com a classe 'selected'
+ *
+ * @param {Date} date - Objeto Date representando o mês a renderizar
+ */
 function renderCalendar(date) {
     const year = date.getFullYear();
-    const month = date.getMonth();
+    const month = date.getMonth(); // 0-11
 
-    // Update Header
-    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    // Atualiza o cabeçalho com o nome do mês e o ano
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const display = document.getElementById('currentMonthDisplay');
     if (display) display.textContent = `${monthNames[month]} ${year}`;
 
     const daysGrid = document.getElementById('calendarDaysGrid');
     if (!daysGrid) return;
 
-    daysGrid.innerHTML = '';
+    daysGrid.innerHTML = ''; // Limpa a grelha anterior
 
-    // Logic to generate days
-    const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 (Sun) - 6 (Sat)
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    // Calcula os limites do mês
+    const firstDayOfMonth = new Date(year, month, 1).getDay(); // Dia da semana do 1º dia (0=Dom)
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); // Número de dias no mês
+    const daysInPrevMonth = new Date(year, month, 0).getDate(); // Dias no mês anterior
 
-    // Prev Month Days
+    // ── Dias do mês anterior (para preencher a primeira linha) ────────────
+    // Começa do último dia do mês anterior e vai para trás
     for (let i = firstDayOfMonth - 1; i >= 0; i--) {
         const day = daysInPrevMonth - i;
-        const dayCell = createDayCell(day, true, false);
+        const dayCell = createDayCell(day, true, false); // isOtherMonth=true
         daysGrid.appendChild(dayCell);
     }
 
-    // Current Month Days
+    // ── Dias do mês atual ─────────────────────────────────────────────────
     for (let i = 1; i <= daysInMonth; i++) {
-        const isToday = i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
-        const isSelected = i === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
+        const isToday = i === new Date().getDate()
+            && month === new Date().getMonth()
+            && year === new Date().getFullYear();
+        const isSelected = i === selectedDate.getDate()
+            && month === selectedDate.getMonth()
+            && year === selectedDate.getFullYear();
         const dayCell = createDayCell(i, false, isToday, isSelected, new Date(year, month, i));
         daysGrid.appendChild(dayCell);
     }
 
-    // Next Month Days (fill row)
+    // ── Dias do próximo mês (para completar a última linha) ───────────────
     const totalCells = daysGrid.children.length;
-    // const remainingCells = 42 - totalCells; // 6 rows * 7
-    const rowsNeeded = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
+    const rowsNeeded = Math.ceil((daysInMonth + firstDayOfMonth) / 7); // Número de linhas necessárias
     const totalSlots = rowsNeeded * 7;
-    const remainingParams = totalSlots - totalCells; // Just fill the row
+    const remainingParams = totalSlots - totalCells;
 
     for (let i = 1; i <= remainingParams; i++) {
-        const dayCell = createDayCell(i, true, false);
+        const dayCell = createDayCell(i, true, false); // isOtherMonth=true
         daysGrid.appendChild(dayCell);
     }
 
-    // Add Event Dots (if data exists)
+    // Adiciona os pontos coloridos nos dias que têm entrevistas
     updateCalendarDots();
 }
 
+/**
+ * Cria e retorna o elemento HTML de uma célula de dia no calendário.
+ *
+ * Cada célula contém:
+ *   - O número do dia
+ *   - Um container para os pontos de eventos (preenchido por updateCalendarDots)
+ *
+ * Ao clicar num dia do mês atual, atualiza o painel lateral com as entrevistas desse dia.
+ *
+ * @param {number} day - Número do dia
+ * @param {boolean} isOtherMonth - Se true, é um dia do mês anterior/seguinte (opacidade reduzida)
+ * @param {boolean} isToday - Se true, aplica o estilo de "hoje"
+ * @param {boolean} isSelected - Se true, aplica o estilo de "selecionado"
+ * @param {Date|null} dateObj - Objeto Date do dia (null para dias de outros meses)
+ * @returns {HTMLElement} Elemento <div> da célula do dia
+ */
 function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj = null) {
     const el = document.createElement('div');
     el.className = `day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`;
 
+    // Apenas dias do mês atual são clicáveis
     if (!isOtherMonth && dateObj) {
         el.onclick = () => {
-            selectedDate = dateObj;
+            selectedDate = dateObj; // Atualiza o dia selecionado
+            // Remove a seleção de todos os dias e aplica ao clicado
             document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
-            renderSidePanel(selectedDate);
+            renderSidePanel(selectedDate); // Atualiza o painel lateral
         };
-        el.setAttribute('data-date', dateObj.toISOString().split('T')[0]); // YYYY-MM-DD
+        // Guarda a data no atributo data-date para ser usado por updateCalendarDots
+        el.setAttribute('data-date', dateObj.toISOString().split('T')[0]); // "YYYY-MM-DD"
     }
 
     el.innerHTML = `
@@ -724,8 +974,19 @@ function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj =
     return el;
 }
 
+/**
+ * Busca todas as entrevistas do Supabase, atualiza a cache local
+ * e re-renderiza o calendário, o painel lateral e os contadores.
+ *
+ * Esta função é chamada:
+ *   - Na inicialização da página
+ *   - Após agendar, editar ou eliminar uma entrevista
+ *   - Ao navegar entre meses
+ *
+ * @param {Date} date - Mês de referência (usado para contexto, mas busca todas as entrevistas)
+ */
 async function fetchMonthInterviews(date) {
-    // Fetching all for simplicity as per original code
+    // Busca TODAS as entrevistas (sem filtro de mês) para popular a cache completa
     const { data, error } = await supabaseClient
         .from("Entrevistas")
         .select(`
@@ -734,37 +995,55 @@ async function fetchMonthInterviews(date) {
       candidatos(id, nome, nota),
       Entrevistador(id, Nome)
     `)
-        .order('Data', { ascending: true });
+        .order('Data', { ascending: true }); // Ordena por data crescente
 
     if (error) {
         console.error('Error fetching interviews', error);
         return;
     }
 
+    // Atualiza a cache local com os dados mais recentes
     interviewsCache = data || [];
-    updateCalendarDots();
-    renderSidePanel(selectedDate);
-    updateStatsCounters();
 
-    // If we are in list view, refresh it too
+    // Atualiza todos os elementos visuais que dependem da cache
+    updateCalendarDots();      // Pontos coloridos no calendário
+    renderSidePanel(selectedDate); // Painel lateral do dia selecionado
+    updateStatsCounters();     // Contadores de estatísticas (Hoje, Semana, etc.)
+
+    // Se a vista em lista estiver ativa, atualiza-a também
     const listToggle = document.getElementById('viewList');
     if (listToggle && listToggle.classList.contains('active')) {
         renderListView();
     }
 }
 
+/**
+ * Adiciona pontos coloridos nas células do calendário que têm entrevistas.
+ *
+ * Cada ponto representa uma entrevista nesse dia:
+ *   - Ponto verde: entrevista presencial
+ *   - Ponto azul: entrevista online/vídeo
+ *
+ * Máximo de 3 pontos por dia (para não sobrecarregar visualmente).
+ * Usa os dados da cache `interviewsCache`.
+ */
 function updateCalendarDots() {
+    // Limpa todos os pontos existentes antes de re-renderizar
     document.querySelectorAll('.day-events-dots').forEach(d => d.innerHTML = '');
 
     interviewsCache.forEach(interview => {
         if (!interview.Data) return;
+
+        // Extrai apenas a parte da data "YYYY-MM-DD" para encontrar a célula correta
         const dateKey = interview.Data.split('T')[0];
         const cell = document.querySelector(`.day-cell[data-date="${dateKey}"]`);
 
         if (cell) {
             const dotsContainer = cell.querySelector('.day-events-dots');
+            // Limita a 3 pontos por dia para não sobrecarregar visualmente
             if (dotsContainer.children.length < 3) {
                 const dot = document.createElement('div');
+                // Cor diferente para entrevistas online vs presenciais
                 dot.className = `event-dot ${interview["Tipo de entrevista"] === 'Online' ? 'online' : 'presencial'}`;
                 dotsContainer.appendChild(dot);
             }
@@ -772,9 +1051,19 @@ function updateCalendarDots() {
     });
 }
 
+/**
+ * Renderiza as entrevistas do dia selecionado no painel lateral do calendário.
+ *
+ * Aplica os filtros ativos (tipo e status) antes de renderizar.
+ * Se não houver entrevistas para o dia (após filtros), mostra mensagem vazia.
+ *
+ * @param {Date} date - O dia selecionado no calendário
+ */
 function renderSidePanel(date) {
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = date.toISOString().split('T')[0]; // "YYYY-MM-DD"
     const displayDate = date.toLocaleDateString('pt-AO', { day: 'numeric', month: 'long' });
+
+    // Atualiza o título do painel lateral com a data selecionada
     const selectedDateDisplay = document.getElementById('selectedDateDisplay');
     if (selectedDateDisplay) selectedDateDisplay.textContent = displayDate;
 
@@ -783,18 +1072,22 @@ function renderSidePanel(date) {
 
     listContainer.innerHTML = '';
 
+    // Filtra as entrevistas da cache para o dia selecionado
     const dayInterviews = interviewsCache.filter(i => i.Data && i.Data.startsWith(dateKey));
 
-    // Client-side filtering
+    // ── Aplica os filtros ativos ───────────────────────────────────────────
     const filterType = document.getElementById('filterType');
     const filterStatus = document.getElementById('filterStatus');
-
     const typeFilterValue = filterType ? filterType.value : 'all';
     const statusFilterValue = filterStatus ? filterStatus.value : 'all';
 
     const filtered = dayInterviews.filter(i => {
-        if (typeFilterValue !== 'all' && i["Tipo de entrevista"] && i["Tipo de entrevista"].toLowerCase() !== typeFilterValue) return false;
-        if (statusFilterValue !== 'all' && i.status && i.status.toLowerCase() !== statusFilterValue) return false;
+        // Filtra por tipo (presencial, video, telefone)
+        if (typeFilterValue !== 'all' && i["Tipo de entrevista"] &&
+            i["Tipo de entrevista"].toLowerCase() !== typeFilterValue) return false;
+        // Filtra por status (agendada, concluida)
+        if (statusFilterValue !== 'all' && i.status &&
+            i.status.toLowerCase() !== statusFilterValue) return false;
         return true;
     });
 
@@ -803,8 +1096,9 @@ function renderSidePanel(date) {
         return;
     }
 
+    // Renderiza um mini-card para cada entrevista do dia no painel lateral
     filtered.forEach(i => {
-        const time = i.Data.split('T')[1].substring(0, 5); // HH:MM
+        const time = i.Data.split('T')[1].substring(0, 5); // Extrai "HH:MM"
         const nomeCandidato = i.candidatos ? i.candidatos.nome : 'Candidato desconhecido';
         const nomeVaga = i.Vagas ? i.Vagas.Titulo : 'Vaga não informada';
 
@@ -812,6 +1106,7 @@ function renderSidePanel(date) {
         card.className = 'side-event-card';
         card.innerHTML = `
            <div class="event-icon-box">
+             <!-- Ícone diferente para online vs presencial -->
              <i class="fa-solid ${i["Tipo de entrevista"] === 'Online' ? 'fa-video' : 'fa-building'}"></i>
            </div>
            <div class="event-info">
@@ -824,20 +1119,33 @@ function renderSidePanel(date) {
     });
 }
 
+/**
+ * Calcula e atualiza os 4 contadores de estatísticas na página de Entrevistas.
+ *
+ * Contadores:
+ *   - Hoje (#statHoje): entrevistas com data igual a hoje
+ *   - Esta Semana (#statSemana): entrevistas entre segunda e domingo desta semana
+ *   - Presenciais (#statPresenciais): entrevistas com tipo "Presencial"
+ *   - Agendadas (#statPendentes): entrevistas com status "Agendada"
+ *
+ * Os valores são animados numericamente (de 0 até o valor final) pela função animateValue().
+ * Usa os dados da cache `interviewsCache`.
+ */
 function updateStatsCounters() {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-    // Get start of week (Monday)
+    // Calcula o início da semana (segunda-feira)
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Dia da semana: 0=Dom, 1=Seg...
     const startOfWeekStr = startOfWeek.toISOString().split('T')[0];
 
-    // Get end of week (Sunday)
+    // Calcula o fim da semana (domingo)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     const endOfWeekStr = endOfWeek.toISOString().split('T')[0];
 
+    // Calcula cada contador a partir da cache
     const countToday = interviewsCache.filter(i => i.Data && i.Data.startsWith(todayStr)).length;
     const countWeek = interviewsCache.filter(i => {
         if (!i.Data) return false;
@@ -847,39 +1155,64 @@ function updateStatsCounters() {
     const countPending = interviewsCache.filter(i => i.status === 'Agendada').length;
     const countPresencial = interviewsCache.filter(i => i["Tipo de entrevista"] === 'Presencial').length;
 
+    // Anima cada contador de 0 até o valor calculado (duração: 1 segundo)
     animateValue("statHoje", 0, countToday, 1000);
     animateValue("statSemana", 0, countWeek, 1000);
     animateValue("statPresenciais", 0, countPresencial, 1000);
     animateValue("statPendentes", 0, countPending, 1000);
 }
 
+/**
+ * Alias de updateStatsCounters() — mantido por compatibilidade.
+ */
 function updateStatsPlaceholder() {
     updateStatsCounters();
 }
 
+/**
+ * Anima numericamente o conteúdo de um elemento HTML de um valor inicial até um valor final.
+ * Cria um efeito de "contador a subir" muito comum em dashboards.
+ *
+ * Exemplo: animateValue("statHoje", 0, 5, 1000)
+ *   → O elemento #statHoje vai de 0 para 5 em 1 segundo
+ *
+ * @param {string} id - ID do elemento HTML a animar
+ * @param {number} start - Valor inicial (normalmente 0)
+ * @param {number} end - Valor final (o número real)
+ * @param {number} duration - Duração total da animação em milissegundos
+ */
 function animateValue(id, start, end, duration) {
-    if (start === end) return;
+    if (start === end) return; // Sem animação se os valores forem iguais
+
     const range = end - start;
     let current = start;
-    const increment = end > start ? 1 : -1;
-    const stepTime = Math.abs(Math.floor(duration / range));
+    const increment = end > start ? 1 : -1; // Sobe ou desce
+    const stepTime = Math.abs(Math.floor(duration / range)); // Tempo entre cada incremento
+
     const obj = document.getElementById(id);
     if (!obj) return;
 
+    // Usa setInterval para incrementar o valor a cada `stepTime` milissegundos
     const timer = setInterval(function () {
         current += increment;
         obj.innerHTML = current;
         if (current == end) {
-            clearInterval(timer);
+            clearInterval(timer); // Para a animação quando chega ao valor final
         }
     }, stepTime);
 }
 
-// Auto-init for new Interviews Page
+// ── Auto-inicialização ────────────────────────────────────────────────────────
+// Quando o DOM estiver pronto, verifica em que página estamos e inicializa
+// os componentes apropriados.
 document.addEventListener('DOMContentLoaded', () => {
+    // Se estivermos na página de Entrevistas (tem a classe .main-entrevistas),
+    // inicializa o calendário completo
     if (document.querySelector('.main-entrevistas')) {
         initCalendarPage();
     }
-    // Always setup modal (for other pages like Pipeline)
+
+    // O modal de agendamento também existe no Pipeline.html, por isso é sempre
+    // configurado (setupAgendamentoModal verifica internamente se os elementos existem)
     setupAgendamentoModal();
 });

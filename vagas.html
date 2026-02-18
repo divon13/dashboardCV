@@ -1,5 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<!--
+  vagas.html — Página de Gestão de Vagas
+  ─────────────────────────────────────────────────────────────
+  Permite criar, editar, eliminar e visualizar vagas de emprego.
+
+  Funcionalidades:
+    - Botão "Adicionar Vaga" (expande no hover) → abre #vagaModal
+    - Cards de vagas com menu kebab (Editar, Eliminar, Ver Detalhes)
+    - Modal de criação/edição (#vagaModal) com formulário
+    - Modal de confirmação de eliminação (#confirmDeleteModal)
+    - Modal de detalhes da vaga (#vagaDetalhesModal)
+
+  Elementos dinâmicos:
+    - #vagasContainer → carregarVagas() em vagas.js
+      (cards criados por criarCardVaga())
+
+  Modais presentes:
+    1. #vagaModal          → Formulário de criação/edição de vaga
+       - #vagaId (hidden)  → Vazio = nova vaga; preenchido = edição
+    2. #confirmDeleteModal → Confirmação antes de apagar uma vaga
+    3. #vagaDetalhesModal  → Visualização dos detalhes de uma vaga
+  ─────────────────────────────────────────────────────────────
+-->
+<html lang="pt">
 
 <head>
   <meta charset="UTF-8">
@@ -7,10 +30,11 @@
   <link rel="icon" type="image/png" href="midia/logo.png">
   <title>Vagas - Dashboard RH</title>
   <link rel="stylesheet" href="./css/style.css">
+  <!-- Supabase SDK e ícones Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <!-- JS -->
+  <!-- Scripts JS (ordem importante: supabaseClient primeiro, dashboard.js por último) -->
   <script src="assets/js/supabaseClient.js" defer></script>
   <script src="assets/js/utils.js" defer></script>
   <script src="assets/js/candidatos.js" defer></script>
@@ -22,6 +46,7 @@
 
 <body>
 
+  <!-- ── Sidebar de Navegação ──────────────────────────────────────────── -->
   <div class="sidebar">
     <img src="midia/logo.png" alt="" class="logo-sidebar">
     <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Início</a>
@@ -30,17 +55,23 @@
     <a class="nav-item" href="Pipeline.html"><i class="fa-solid fa-chart-column"></i>Fluxo</a>
     <a class="nav-item" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
   </div>
+
   <div class="main">
 
+    <!-- Cabeçalho da página com título e botão de adicionar vaga -->
+    <!-- O botão expande ao hover (CSS: width 40px → 150px) mostrando o texto -->
     <div class="vaga-header">
       <h1>Gestão de Vagas</h1>
       <button id="btnAbrirModal" class="btn-add-vaga">
-        <span class="icone-btn">+</span>
-        <span class="texto-btn">Adicionar Vaga</span>
+        <span class="icone-btn">+</span><!-- Roda 90° no hover (CSS) -->
+        <span class="texto-btn">Adicionar Vaga</span><!-- Aparece no hover -->
       </button>
     </div>
 
-    <!-- Modal de Confirmação de Exclusão -->
+    <!-- ── Modal de Confirmação de Eliminação ─────────────────────────── -->
+    <!-- Aberto pelo botão "Eliminar" no menu kebab de um card de vaga.   -->
+    <!-- O título da vaga a eliminar é mostrado em #deleteVagaTitulo.     -->
+    <!-- Ao confirmar, eliminarVaga() em vagas.js é chamado.              -->
     <div id="confirmDeleteModal" class="modal" style="display:none;">
       <div class="modal-content" style="max-width:420px;">
         <div class="modal-header">
@@ -49,6 +80,7 @@
         </div>
         <div class="modal-body" style="padding:18px;">
           <p>Tem certeza que deseja apagar esta vaga? Esta ação não pode ser desfeita.</p>
+          <!-- Nome da vaga a eliminar (preenchido por JS antes de abrir o modal) -->
           <p id="deleteVagaTitulo" style="color:var(--secondary-color); margin-top:8px;"></p>
         </div>
         <div class="modal-actions" style="padding:14px; display:flex; justify-content:flex-end; gap:8px;">
@@ -58,6 +90,10 @@
       </div>
     </div>
 
+    <!-- ── Modal de Criação / Edição de Vaga ─────────────────────────── -->
+    <!-- Aberto pelo botão "Adicionar Vaga" ou pelo botão "Editar" no kebab. -->
+    <!-- #vagaId (hidden): vazio → nova vaga; com valor → edição da vaga existente -->
+    <!-- O submit do formulário é tratado por handleVagaFormSubmit() em vagas.js -->
     <div id="vagaModal" class="modal" style="display:none;">
       <div class="modal-content-vaga">
         <div class="modal-header">
@@ -65,6 +101,7 @@
           <span class="close" id="btnFecharModal">&times;</span>
         </div>
         <form id="vagaForm" class="vaga-form-v2">
+          <!-- ID da vaga (oculto): vazio = nova vaga, preenchido = edição -->
           <input type="hidden" id="vagaId">
 
           <div class="form-group-v2">
@@ -95,7 +132,9 @@
       </div>
     </div>
 
-    <!-- Modal de Detalhes da Vaga -->
+    <!-- ── Modal de Detalhes da Vaga ─────────────────────────────────── -->
+    <!-- Aberto pelo botão "Ver Detalhes" no menu kebab de um card de vaga. -->
+    <!-- Preenchido por preencherModalDetalhes() em vagas.js               -->
     <div id="vagaDetalhesModal" class="modal" style="display:none;">
       <div class="modal-content" style="max-width:700px;">
         <div class="modal-header">
@@ -105,6 +144,7 @@
         <div class="modal-body" style="padding:22px;">
           <p><strong>Título:</strong> <span id="det-titulo"></span></p>
           <p><strong>Descrição:</strong></p>
+          <!-- white-space:pre-wrap preserva quebras de linha do texto -->
           <p id="det-descricao" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
           <p><strong>Requisitos:</strong></p>
           <p id="det-requisitos" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
@@ -118,9 +158,11 @@
       </div>
     </div>
 
+    <!-- Container dos Cards de Vagas -->
+    <!-- Preenchido dinamicamente por carregarVagas() em vagas.js -->
     <h2>Vagas Abertas</h2>
     <div id="vagasContainer" class="cards-vagas">
-      <!-- cartoes do Js -->
+      <!-- Cards criados dinamicamente por criarCardVaga() em vagas.js -->
     </div>
   </div>
 </body>
