@@ -5,13 +5,11 @@
   Quadro Kanban com 6 colunas representando as etapas do processo seletivo.
   Os candidatos são exibidos como cards arrastáveis entre as colunas.
 
-  Colunas (em ordem, pipeline-column-1 a pipeline-column-6):
+  Colunas (em ordem, pipeline-column-1 a pipeline-column-4):
     1. Aplicado           → Candidato candidatou-se
-    2. Triagem            → Em triagem inicial
-    3. Entrevista técnica → Entrevista agendada/realizada (abre modal ao soltar)
-    4. Adequação à cultura → Avaliação cultural
-    5. Oferta enviada     → Proposta enviada
-    6. Contratado         → Processo concluído com sucesso
+    2. Entrevista técnica → Entrevista agendada/realizada (abre modal ao soltar)
+    3. Oferta enviada     → Proposta enviada
+    4. Contratado         → Processo concluído com sucesso
 
   Funcionalidades:
     - Drag-and-drop entre colunas (HTML5 Drag API)
@@ -106,19 +104,8 @@
           </div>
         </div>
 
-        <!-- Coluna 2: Triagem — candidatos em triagem inicial -->
+        <!-- Coluna 2: Entrevista técnica — ao soltar aqui, abre o modal de agendamento -->
         <div class="pipeline-column pipeline-column-2">
-          <div class="pipeline-column-header">
-            <h3>Triagem</h3>
-            <span class="pipeline-column-count">0</span>
-          </div>
-          <div class="pipeline-column-body">
-            <!-- Vazio - sem cards de candidatos -->
-          </div>
-        </div>
-
-        <!-- Coluna 3: Entrevista técnica — ao soltar aqui, abre o modal de agendamento -->
-        <div class="pipeline-column pipeline-column-3">
           <div class="pipeline-column-header">
             <h3>Entrevista técnica</h3>
             <span class="pipeline-column-count">0</span>
@@ -128,19 +115,8 @@
           </div>
         </div>
 
-        <!-- Coluna 4: Adequação à cultura — avaliação de fit cultural -->
-        <div class="pipeline-column pipeline-column-4">
-          <div class="pipeline-column-header">
-            <h3>Adequação à cultura</h3>
-            <span class="pipeline-column-count">0</span>
-          </div>
-          <div class="pipeline-column-body">
-            <!-- Vazio - sem cards de candidatos -->
-          </div>
-        </div>
-
-        <!-- Coluna 5: Oferta enviada — proposta de emprego enviada ao candidato -->
-        <div class="pipeline-column pipeline-column-5">
+        <!-- Coluna 3: Oferta enviada — proposta de emprego enviada ao candidato -->
+        <div class="pipeline-column pipeline-column-3">
           <div class="pipeline-column-header">
             <h3>Oferta enviada</h3>
             <span class="pipeline-column-count">0</span>
@@ -150,8 +126,8 @@
           </div>
         </div>
 
-        <!-- Coluna 6: Contratado — candidato aceite e contratado -->
-        <div class="pipeline-column pipeline-column-6">
+        <!-- Coluna 4: Contratado — candidato aceite e contratado -->
+        <div class="pipeline-column pipeline-column-4">
           <div class="pipeline-column-header">
             <h3>Contratado</h3>
             <span class="pipeline-column-count">0</span>
@@ -177,15 +153,7 @@
           </div>
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
-            <h4>Triagem</h4>
-          </div>
-          <div class="pipeline-summary-card">
-            <p class="pipeline-summary-count">0</p>
             <h4>Entrevista técnica</h4>
-          </div>
-          <div class="pipeline-summary-card">
-            <p class="pipeline-summary-count">0</p>
-            <h4>Adequação à cultura</h4>
           </div>
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>

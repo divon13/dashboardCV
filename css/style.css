@@ -989,8 +989,36 @@ table tbody tr td[colspan="5"] {
 .pipeline-column-body {
   padding: 16px;
   min-height: 200px;
+  max-height: 60vh;
   flex: 1;
-  /* Vazio - sem conteúdo */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Barra de rolagem vertical para colunas do pipeline */
+.pipeline-column-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pipeline-column-body::-webkit-scrollbar-track {
+  background: var(--hover-dark);
+  border-radius: 4px;
+}
+
+.pipeline-column-body::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.pipeline-column-body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* Firefox scrollbar */
+.pipeline-column-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-dark) var(--hover-dark);
 }
 
 /* Rodapé Fixo */

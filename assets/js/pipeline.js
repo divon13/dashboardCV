@@ -3,17 +3,15 @@
  * ─────────────────────────────────────────────────────────────
  * Módulo responsável por toda a lógica do Pipeline de Recrutamento (Pipeline.html).
  *
- * O Pipeline é um quadro Kanban com 6 colunas que representam as etapas
+ * O Pipeline é um quadro Kanban com 4 colunas que representam as etapas
  * do processo seletivo. Os candidatos são exibidos como cards e podem
  * ser movidos entre colunas por drag-and-drop.
  *
  * Colunas do Pipeline (em ordem):
  *   1. Aplicado          → Candidato acabou de se candidatar
- *   2. Triagem           → Em processo de triagem inicial
- *   3. Entrevista técnica→ Entrevista técnica agendada/realizada
- *   4. Adequação à cultura → Avaliação cultural
- *   5. Oferta enviada    → Proposta de emprego enviada
- *   6. Contratado        → Candidato contratado
+ *   2. Entrevista técnica→ Entrevista técnica agendada/realizada
+ *   3. Oferta enviada    → Proposta de emprego enviada
+ *   4. Contratado        → Candidato contratado
  *
  * Funcionalidades principais:
  *   - Drag-and-drop entre colunas (atualiza o status no BD automaticamente)
@@ -52,14 +50,12 @@
  * O mapeamento de status para coluna é feito pelo objeto `mapStatusToColumn`.
  */
 async function carregarPipeline() {
-    // Mapeamento: status do candidato → número da coluna (1-6)
+    // Mapeamento: status do candidato → número da coluna (1-4)
     const mapStatusToColumn = {
         'Aplicado': 1,
-        'Triagem': 2,
-        'Entrevista técnica': 3,
-        'Adequação à cultura': 4,
-        'Oferta enviada': 5,
-        'Contratado': 6
+        'Entrevista técnica': 2,
+        'Oferta enviada': 3,
+        'Contratado': 4
     };
 
     // Busca todos os candidatos sem filtro
@@ -110,7 +106,7 @@ async function carregarPipeline() {
     if (filtroSelect) filtroSelect.value = filtroAtual;
 
     // ── Limpa o conteúdo de todas as colunas ─────────────────────────────
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 4; i++) {
         const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
         if (colBody) colBody.innerHTML = '';
         const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
@@ -120,7 +116,7 @@ async function carregarPipeline() {
     document.querySelectorAll('.pipeline-summary-count').forEach(el => el.textContent = '0');
 
     // Contadores por coluna para atualizar os badges e o resumo
-    const contadores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    const contadores = { 1: 0, 2: 0, 3: 0, 4: 0 };
     let countRejeitados = 0;
 
     // ── Processa cada candidato ───────────────────────────────────────────
@@ -158,7 +154,7 @@ async function carregarPipeline() {
     }
 
     // ── Atualiza os contadores das colunas e do resumo ────────────────────
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 4; i++) {
         // Badge de contagem no cabeçalho de cada coluna
         const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
         if (colCount) colCount.textContent = contadores[i];
@@ -458,8 +454,8 @@ function configurarDragAndDrop() {
                         // se o utilizador cancelar o agendamento
                         const oldStatus = card.dataset.status;
                         const mapStatusToColumn = {
-                            'Aplicado': 1, 'Triagem': 2, 'Entrevista técnica': 3,
-                            'Adequação à cultura': 4, 'Oferta enviada': 5, 'Contratado': 6
+                            'Aplicado': 1, 'Entrevista técnica': 2,
+                            'Oferta enviada': 3, 'Contratado': 4
                         };
                         const oldColIndex = mapStatusToColumn[oldStatus] || 1;
                         const revertTarget = document.querySelector(`.pipeline-column-${oldColIndex} .pipeline-column-body`);
@@ -545,7 +541,7 @@ async function atualizarStatusCandidato(id, novoStatus) {
  * sem precisar de recarregar dados do BD.
  */
 function recalcularContadores() {
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 4; i++) {
         const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
         const count = colBody ? colBody.children.length : 0; // Conta os cards na coluna
 
