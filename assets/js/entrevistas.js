@@ -64,10 +64,11 @@ async function carregarEntrevistas() {
         .from("Entrevistas")
         .select(`
       *,
-      Vagas(id, Titulo),
+      Vagas!inner(id, Titulo, status_vagas),
       candidatos(id, nome),
       Entrevistador(id, Nome)
     `)
+        .eq('Vagas.status_vagas', 'aberta')
         .gte('Data', hojeISO)          // Apenas entrevistas de hoje em diante
         .order('Data', { ascending: true }) // Mais próximas primeiro
         .limit(7);                     // Máximo de 7 cards no dashboard
@@ -357,8 +358,8 @@ async function populateModalSelects() {
         );
     }
 
-    // ── Vagas (dropdown pesquisável) ──────────────────────────────────────
-    const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
+    // ── Vagas (dropdown pesquisável - apenas vagas abertas) ───────────────
+    const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo').eq('status_vagas', 'aberta');
     if (vagas) {
         setupSearchableDropdown(
             'searchVaga',
@@ -984,10 +985,11 @@ async function fetchMonthInterviews(date) {
         .from("Entrevistas")
         .select(`
       *,
-      Vagas(id, Titulo),
+      Vagas!inner(id, Titulo, status_vagas),
       candidatos(id, nome, nota),
       Entrevistador(id, Nome)
     `)
+        .eq('Vagas.status_vagas', 'aberta')
         .gte('Data', hojeISO)
         .order('Data', { ascending: true }); // Ordena por data crescente
 
