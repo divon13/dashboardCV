@@ -194,23 +194,17 @@
     <!-- Aberto ao clicar em "Rejeitar" num card de candidato.            -->
     <!-- O ID do candidato é guardado em #idCandidatoRejeicao (hidden).  -->
     <!-- Ao confirmar, rejeitarCandidatoLista() é chamado em candidatos.js -->
-    <div id="confirmRejeicaoModal" class="modal" style="display:none;">
-      <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <!-- Ícone de aviso -->
-        <div class="modal-header"
-          style="display: block; text-align: center; border:none; padding-bottom:0; padding-top: 0; background: transparent;">
-          <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: var(--error-color);"></i>
+    <div id="confirmRejeicaoModal" class="modal modal-confirm" style="display:none;">
+      <div class="modal-confirm-card modal-confirm-card--danger">
+        <div class="modal-confirm__icon" aria-hidden="true">
+          <i class="fa-solid fa-user-xmark"></i>
         </div>
-        <div class="modal-body">
-          <h3 style="margin: 10px 0;">Rejeitar Candidato?</h3>
-          <p>O candidato será removido da lista. Esta ação não apaga o registro do banco de dados.</p>
-          <!-- Input hidden que guarda o ID do candidato a rejeitar -->
-          <input type="hidden" id="idCandidatoRejeicao">
-        </div>
-        <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <h2 class="modal-confirm__title">Rejeitar candidato?</h2>
+        <p class="modal-confirm__text">O candidato será removido da lista. O registo na base de dados mantém-se.</p>
+        <input type="hidden" id="idCandidatoRejeicao">
+        <div class="modal-confirm__actions">
           <button type="button" class="btn-cancel" id="cancelarRejeicao">Cancelar</button>
-          <button type="button" class="btn-submit" id="confirmarRejeicao"
-            style="background-color: var(--error-color);">Confirmar</button>
+          <button type="button" class="btn-submit btn-submit--danger" id="confirmarRejeicao">Rejeitar</button>
         </div>
       </div>
     </div>

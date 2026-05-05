@@ -39,6 +39,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="midia/logo.png">
   <title>Entrevistas - Dashboard RH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css">
   <!-- Supabase SDK e ícones Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -214,13 +217,17 @@
   <!-- Também é aberto pelo Pipeline quando um candidato é movido para      -->
   <!-- a coluna "Entrevista técnica".                                        -->
   <!-- Submit tratado por handleAgendamentoSubmit() em entrevistas.js       -->
-  <div id="agendamentoModal" class="modal">
-    <div class="modal-content-vaga">
-      <div class="modal-header">
-        <h2>Agendar Entrevista</h2>
-        <span class="close" id="closeAgendamentoModal">&times;</span>
+  <div id="agendamentoModal" class="modal modal-agendamento">
+    <div class="modal-content-vaga modal-surface modal-surface--agendamento">
+      <div class="modal-header modal-header--surface">
+        <div class="modal-header__lead">
+          <p class="modal-eyebrow">Agenda</p>
+          <h2>Agendar entrevista</h2>
+          <p class="modal-subtitle">Associe candidato e vaga, depois defina tipo, data e entrevistador.</p>
+        </div>
+        <span class="close" id="closeAgendamentoModal" aria-label="Fechar">&times;</span>
       </div>
-      <form id="agendamentoForm" class="vaga-form-v2">
+      <form id="agendamentoForm" class="vaga-form-v2 form-agendamento">
         <!-- ID da entrevista (oculto): vazio = nova; preenchido = edição -->
         <input type="hidden" id="agendamentoId">
 
@@ -228,62 +235,87 @@
         <!-- #searchCandidato = input de texto visível para pesquisa -->
         <!-- #agCandidato = input hidden com o ID real do candidato selecionado -->
         <div class="form-group-v2">
-          <label>Candidato</label>
+          <label for="searchCandidato">Candidato</label>
           <div class="searchable-dropdown" id="dropdownCandidato">
-            <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select"
-              autocomplete="off" style="width: 100%;">
+            <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select modal-search-input"
+              autocomplete="off">
             <input type="hidden" id="agCandidato">
             <div class="dropdown-options" id="optionsCandidato"></div>
           </div>
         </div>
 
-        <!-- Campo Vaga: dropdown pesquisável (mesmo padrão do candidato) -->
         <div class="form-group-v2">
-          <label>Vaga</label>
+          <label for="searchVaga">Vaga</label>
           <div class="searchable-dropdown" id="dropdownVaga">
-            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select" autocomplete="off"
-              style="width: 100%;">
+            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select modal-search-input" autocomplete="off">
             <input type="hidden" id="agVaga">
             <div class="dropdown-options" id="optionsVaga"></div>
           </div>
         </div>
 
-        <!-- Tipo de entrevista (Presencial, Online/Vídeo, Telefone) -->
-        <div class="form-group-v2">
-          <label>Tipo de Entrevista</label>
-          <select id="agTipo" required class="filter-select" style="width:100%">
-            <option value="Presencial">Presencial</option>
-            <option value="Online">Vídeo</option>
-            <option value="Telefone">Telefone</option>
-          </select>
+        <div class="form-agendamento__pair">
+          <div class="form-group-v2">
+            <label for="agTipo">Tipo</label>
+            <select id="agTipo" required class="filter-select form-select-full">
+              <option value="Presencial">Presencial</option>
+              <option value="Online">Vídeo</option>
+              <option value="Telefone">Telefone</option>
+            </select>
+          </div>
+          <div class="form-group-v2">
+            <label for="agDataHora">Data e hora</label>
+            <input type="datetime-local" id="agDataHora" required class="form-input-datetime">
+          </div>
         </div>
 
-        <!-- Data e hora da entrevista (datetime-local) -->
         <div class="form-group-v2">
-          <label>Data e Hora</label>
-          <input type="datetime-local" id="agDataHora" required
-            style="background-color: #0f172a; color: white; color-scheme: dark; padding: 10px 12px; border: 1px solid #334155; border-radius: 8px; font-size: 14px; font-family: inherit; transition: all 0.3s ease; width: 100%; box-sizing: border-box;"
-            onfocus="this.style.borderColor='#334155'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.1)';"
-            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
+          <label for="agEntrevistador">Entrevistador</label>
+          <select id="agEntrevistador" required class="filter-select form-select-full"></select>
         </div>
 
-        <!-- Entrevistador: select preenchido dinamicamente por populateModalSelects() -->
         <div class="form-group-v2">
-          <label>Entrevistador</label>
-          <select id="agEntrevistador" required class="filter-select" style="width:100%"></select>
-        </div>
-
-        <!-- Observações opcionais sobre a entrevista -->
-        <div class="form-group-v2">
-          <label>Observações</label>
+          <label for="agObs">Observações</label>
           <textarea id="agObs" rows="3"></textarea>
         </div>
 
-        <div class="form-actions">
+        <div class="form-actions form-actions--agendamento">
           <button type="button" class="btn-cancel" id="cancelAgendamento">Cancelar</button>
-          <button type="submit" class="btn-submit">Agendar</button>
+          <button type="submit" class="btn-submit"><i class="fa-solid fa-calendar-check"></i> Guardar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ── Modal de Confirmação de Exclusão de Entrevista ────────────────── -->
+  <div id="confirmDeleteInterviewModal" class="modal modal-confirm" style="display:none;">
+    <div class="modal-confirm-card modal-confirm-card--danger">
+      <div class="modal-confirm__icon" aria-hidden="true">
+        <i class="fa-solid fa-calendar-xmark"></i>
+      </div>
+      <h2 class="modal-confirm__title">Eliminar entrevista?</h2>
+      <p class="modal-confirm__text">Esta ação não pode ser desfeita.</p>
+      <input type="hidden" id="idEntrevistaDelete">
+      <div class="modal-confirm__actions">
+        <button type="button" class="btn-cancel" id="cancelarDeleteInterview">Cancelar</button>
+        <button type="button" class="btn-submit btn-submit--danger" id="confirmarDeleteInterview">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal de Confirmação de Mudança de Status da Entrevista ────────── -->
+  <div id="confirmStatusModal" class="modal modal-confirm" style="display:none;">
+    <div class="modal-confirm-card modal-confirm-card--primary">
+      <div class="modal-confirm__icon modal-confirm__icon--primary" aria-hidden="true">
+        <i class="fa-solid fa-arrow-trend-up"></i>
+      </div>
+      <h2 id="statusModalTitle" class="modal-confirm__title">Avançar estado?</h2>
+      <p id="statusModalMessage" class="modal-confirm__text">Deseja atualizar o estado desta entrevista?</p>
+      <input type="hidden" id="idEntrevistaStatus">
+      <input type="hidden" id="novoStatusEntrevista">
+      <div class="modal-confirm__actions">
+        <button type="button" class="btn-cancel" id="cancelarStatusBtn">Cancelar</button>
+        <button type="button" class="btn-submit" id="confirmarStatusBtn">Confirmar</button>
+      </div>
     </div>
   </div>
 

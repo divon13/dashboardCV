@@ -23,6 +23,9 @@
   <meta charset="UTF-8" />
   <link rel="icon" href="midia/logo.png" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css">
 
   <!-- Supabase SDK e ícones Font Awesome -->
@@ -55,61 +58,90 @@
   </div>
 
   <!-- ── Conteúdo Principal ────────────────────────────────────────────── -->
-  <div class="main">
+  <div class="main dashboard-main">
 
-    <!-- Cards de Métricas (linha horizontal com 3 cards) -->
-    <div class="cards">
-
-      <!-- Card 1: Total de Candidatos — preenchido por carregarCandidatos() -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Total de Candidatos</h3>
-          <i class="fa-solid fa-people-group"></i>
+    <header class="dashboard-hero" aria-label="Resumo do dashboard">
+      <div class="dashboard-hero-text">
+        <p class="dashboard-greeting" id="dashboardGreeting">Bom dia</p>
+        <h1 class="dashboard-title">Visão geral do recrutamento</h1>
+        <p class="dashboard-subtitle">Acompanhe candidatos, vagas ativas e a sua agenda num só lugar.</p>
+      </div>
+      <div class="dashboard-hero-aside">
+        <div class="dashboard-date-pill">
+          <i class="fa-regular fa-calendar"></i>
+          <span id="dashboardDate"></span>
         </div>
-        <!-- SVG loader visível durante o carregamento; substituído pelo número -->
-        <p id="total-candidatos-val">
-          <svg viewBox="25 25 50 50" class="container">
-            <circle cx="50" cy="50" r="20" class="loader"></circle>
-          </svg>
-        </p>
+        <div class="dashboard-hero-actions">
+          <a class="btn-dash-secondary" href="vagas.html"><i class="fa-solid fa-briefcase"></i> Vagas</a>
+          <a class="btn-dash-primary" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i> Agenda completa</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Cards de Métricas -->
+    <div class="cards dashboard-metrics">
+
+      <div class="card metric-card metric-card--candidates">
+        <div class="metric-card-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></div>
+        <div class="metric-card-body">
+          <div class="card-header">
+            <h3>Total de candidatos</h3>
+          </div>
+          <p id="total-candidatos-val" class="metric-value">
+            <svg viewBox="25 25 50 50" class="container">
+              <circle cx="50" cy="50" r="20" class="loader"></circle>
+            </svg>
+          </p>
+          <p class="metric-hint">Na base de talentos</p>
+        </div>
       </div>
 
-      <!-- Card 2: Vagas Abertas — preenchido por carregarVagasAbertas() -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Vagas Abertas</h3>
-          <i class="fa-solid fa-briefcase"></i>
+      <div class="card metric-card metric-card--jobs">
+        <div class="metric-card-icon" aria-hidden="true"><i class="fa-solid fa-briefcase"></i></div>
+        <div class="metric-card-body">
+          <div class="card-header">
+            <h3>Vagas abertas</h3>
+          </div>
+          <p id="vagas-abertas-val" class="metric-value">
+            <svg viewBox="25 25 50 50" class="container">
+              <circle cx="50" cy="50" r="20" class="loader"></circle>
+            </svg>
+          </p>
+          <p class="metric-hint">Em divulgação ativa</p>
         </div>
-        <p id="vagas-abertas-val">
-          <svg viewBox="25 25 50 50" class="container">
-            <circle cx="50" cy="50" r="20" class="loader"></circle>
-          </svg>
-        </p>
       </div>
 
-      <!-- Card 3: Entrevistas Hoje — preenchido por carregarEntrevistas() -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Entrevistas Hoje</h3>
-          <i class="fa-solid fa-calendar-day"></i>
+      <div class="card metric-card metric-card--today">
+        <div class="metric-card-icon" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></div>
+        <div class="metric-card-body">
+          <div class="card-header">
+            <h3>Entrevistas hoje</h3>
+          </div>
+          <p id="entrevistas-hoje-val" class="metric-value">0</p>
+          <p class="metric-hint">Agendadas para hoje</p>
         </div>
-        <p id="entrevistas-hoje-val">0</p>
       </div>
     </div>
 
-    <!-- ── Secção "Próximas Entrevistas" ──────────────────────────────── -->
-    <!-- Os cards são inseridos dinamicamente por carregarEntrevistas() em entrevistas.js -->
-    <div class="entrevistas-section">
-      <h2 class="section-title">Próximas Entrevistas <i class="fa-solid fa-calendar"></i></h2>
-      <div id="entrevistasContainer" class="cards-entrevistas">
-        <!-- Loader inicial — substituído pelos cards após o carregamento -->
+    <!-- Próximas entrevistas -->
+    <section class="entrevistas-section dashboard-interviews">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title"><span class="section-title-accent"></span> Próximas entrevistas</h2>
+          <p class="section-lead">Até 7 agendamentos a partir de hoje, ordenados por data.</p>
+        </div>
+        <a class="section-link" href="Entrevistas.html">Ver agenda <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div id="entrevistasContainer" class="cards-entrevistas cards-entrevistas--dashboard">
         <div class="loading-entrevistas">
           <svg viewBox="25 25 50 50" class="container">
             <circle cx="50" cy="50" r="20" class="loader"></circle>
           </svg>
         </div>
       </div>
-    </div>
+    </section>
+
+  </div>
 
 </body>
 

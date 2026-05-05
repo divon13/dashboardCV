@@ -218,3 +218,63 @@ function configurarModais() {
         }
     });
 }
+
+/**
+ * Cria e exibe uma notificação personalizada no canto superior direito.
+ * 
+ * @param {string} message - A mensagem a ser exibida.
+ * @param {string} type - 'success' (padrão) ou 'error' para definir a cor e ícone.
+ */
+function showNotification(message, type = 'success') {
+    // Remove qualquer notificação existente
+    const existing = document.querySelector('.custom-notification');
+    if (existing) {
+        existing.remove();
+    }
+
+    const notif = document.createElement('div');
+    notif.className = `custom-notification ${type}`;
+    notif.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}" style="font-size: 1.5rem;"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Estilos inline para garantir que funciona sem mexer no CSS principal
+    Object.assign(notif.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: '20px 30px',
+        backgroundColor: type === 'success' ? '#10b981' : '#ef4444',
+        color: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        zIndex: '9999',
+        fontFamily: 'inherit',
+        fontSize: '16px',
+        fontWeight: '500',
+        opacity: '0',
+        transform: 'translateY(-20px)',
+        transition: 'all 0.3s ease',
+        minWidth: '300px'
+    });
+
+    document.body.appendChild(notif);
+
+    // Anima a entrada
+    setTimeout(() => {
+        notif.style.opacity = '1';
+        notif.style.transform = 'translateY(0)';
+    }, 10);
+
+    // Anima a saída e remove após 5 segundos
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        notif.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            notif.remove();
+        }, 300);
+    }, 5000);
+}

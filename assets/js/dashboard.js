@@ -21,7 +21,37 @@
 //   7. dashboard.js       → Este ficheiro (inicialização final)
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Saudação dinâmica e data na página inicial (index.html).
+ */
+function initDashboardHome() {
+  const greetingEl = document.getElementById('dashboardGreeting');
+  const dateEl = document.getElementById('dashboardDate');
+  if (!greetingEl && !dateEl) return;
+
+  const hour = new Date().getHours();
+  let greeting = 'Boa noite';
+  if (hour < 12) greeting = 'Bom dia';
+  else if (hour < 18) greeting = 'Boa tarde';
+
+  if (greetingEl) greetingEl.textContent = greeting;
+  if (dateEl) {
+    try {
+      dateEl.textContent = new Intl.DateTimeFormat('pt-PT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(new Date());
+    } catch (e) {
+      dateEl.textContent = new Date().toLocaleDateString('pt-PT');
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+
+  initDashboardHome();
 
   // ── Configuração global de Modais ────────────────────────────────────
   // Configura os modais de Vagas (criar, editar, excluir, ver detalhes).

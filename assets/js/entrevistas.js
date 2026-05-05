@@ -76,7 +76,7 @@ async function carregarEntrevistas() {
         console.error("Erro ao carregar entrevistas:", error);
         const container = document.getElementById('entrevistasContainer');
         if (container) {
-            container.innerHTML = '<p style="color: var(--secondary-color); text-align: center; padding: 20px;">Erro ao carregar entrevistas.</p>';
+            container.innerHTML = '<div class="empty-state-dashboard empty-state-dashboard--error" role="alert">Erro ao carregar entrevistas.</div>';
         }
         return;
     }
@@ -98,7 +98,7 @@ async function carregarEntrevistas() {
     container.innerHTML = '';
 
     if (!data || data.length === 0) {
-        container.innerHTML = '<p style="color: var(--secondary-color); text-align: center; padding: 20px;">Nenhuma entrevista agendada.</p>';
+        container.innerHTML = '<div class="empty-state-dashboard empty-state-dashboard--empty"><i class="fa-regular fa-calendar-xmark"></i><span>Nenhuma entrevista agendada nos próximos dias.</span></div>';
         return;
     }
 
@@ -322,14 +322,14 @@ function setupAgendamentoModal() {
 
     // Processa o submit do formulário
     if (form) {
-        form.addEventListener('submit', async (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault(); // Impede reload da página
             const success = await handleAgendamentoSubmit(form);
             if (success) {
                 closeModal();
                 fetchMonthInterviews(currentDate); // Atualiza o calendário após agendar
             }
-        });
+        };
     }
 }
 
@@ -496,11 +496,11 @@ async function handleAgendamentoSubmit(form) {
     // ── Validação: candidato e vaga devem ser selecionados da lista ───────
     // Os inputs hidden ficam vazios se o utilizador apenas digitou sem selecionar
     if (!candidatoId) {
-        alert('Por favor, selecione um candidato da lista.');
+        showNotification('Por favor, selecione um candidato da lista.', 'error');
         return;
     }
     if (!vagaId) {
-        alert('Por favor, selecione uma vaga da lista.');
+        showNotification('Por favor, selecione uma vaga da lista.', 'error');
         return;
     }
 
@@ -519,11 +519,11 @@ async function handleAgendamentoSubmit(form) {
 
     // Validação adicional: garante que os IDs são números válidos
     if (!dataToSave.Candidato_ID || isNaN(dataToSave.Candidato_ID)) {
-        alert('Erro: Por favor, selecione um candidato válido da lista.');
+        showNotification('Erro: Por favor, selecione um candidato válido da lista.', 'error');
         return false;
     }
     if (!dataToSave.Vagas_ID || isNaN(dataToSave.Vagas_ID)) {
-        alert('Erro: Por favor, selecione uma vaga válida da lista.');
+        showNotification('Erro: Por favor, selecione uma vaga válida da lista.', 'error');
         return false;
     }
 
@@ -538,7 +538,7 @@ async function handleAgendamentoSubmit(form) {
 
     if (result.error) {
         console.error('Error saving interview:', result.error);
-        alert('Erro ao salvar entrevista: ' + result.error.message);
+        showNotification('Erro ao salvar entrevista: ' + result.error.message, 'error');
         return false;
     } else {
         // ── Atualiza o status do candidato (apenas em novas entrevistas) ──
@@ -555,7 +555,7 @@ async function handleAgendamentoSubmit(form) {
             }
         }
 
-        alert(interviewId ? 'Entrevista atualizada com sucesso!' : 'Entrevista agendada com sucesso!');
+        showNotification(interviewId ? 'Entrevista atualizada com sucesso!' : 'Entrevista agendada com sucesso!', 'success');
 
         // Emite evento customizado para notificar outros módulos (ex: pipeline.js recarrega)
         window.dispatchEvent(new CustomEvent('interview-scheduled', { detail: { candidatoId } }));
@@ -739,16 +739,16 @@ function createInterviewListCard(i) {
 }
 
 /**
- * Avança o status de uma entrevista na sequência:
+ * Abre o modal de confirmação para avançar o status da entrevista.
  *   Agendada → Confirmada → Concluída
- *
- * Pede confirmação ao utilizador antes de fazer a alteração.
- * Após a atualização, recarrega as entrevistas do BD.
  *
  * @param {number} id - ID da entrevista a atualizar
  * @param {string} currentStatus - Status atual da entrevista
  */
-async function confirmInterview(id, currentStatus) {
+function confirmInterview(id, currentStatus) {
+    const modal = document.getElementById('confirmStatusModal');
+    if (!modal) return;
+    
     let newStatus = 'Confirmada';
     let message = 'Deseja marcar esta entrevista como Confirmada?';
 
@@ -758,18 +758,16 @@ async function confirmInterview(id, currentStatus) {
         message = 'Deseja marcar esta entrevista como Concluída?';
     }
 
-    if (!confirm(message)) return; // Cancela se o utilizador não confirmar
+    document.getElementById('statusModalMessage').textContent = message;
+    document.getElementById('idEntrevistaStatus').value = id;
+    document.getElementById('novoStatusEntrevista').value = newStatus;
 
-    const { error } = await supabaseClient
-        .from('Entrevistas')
-        .update({ status: newStatus })
-        .eq('id', id);
-
-    if (error) {
-        alert('Erro ao atualizar status: ' + error.message);
-    } else {
-        fetchMonthInterviews(currentDate); // Recarrega para refletir a mudança
+    const titleEl = document.getElementById('statusModalTitle');
+    if (titleEl) {
+        titleEl.textContent = newStatus === 'Concluída' ? 'Concluir entrevista?' : 'Confirmar entrevista?';
     }
+
+    modal.style.display = 'flex';
 }
 
 /**
@@ -834,25 +832,16 @@ async function editInterview(i) {
 }
 
 /**
- * Elimina uma entrevista da base de dados após confirmação do utilizador.
- * Após a eliminação, recarrega as entrevistas para atualizar a vista.
+ * Abre o modal de confirmação para eliminar uma entrevista da base de dados.
  *
  * @param {number} id - ID da entrevista a eliminar
  */
-async function deleteInterview(id) {
-    if (!confirm('Tem certeza que deseja eliminar esta entrevista? Esta ação não pode ser desfeita.')) return;
-
-    const { error } = await supabaseClient
-        .from('Entrevistas')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        alert('Erro ao eliminar entrevista: ' + error.message);
-    } else {
-        alert('Entrevista eliminada com sucesso.');
-        fetchMonthInterviews(currentDate); // Atualiza o calendário
-    }
+function deleteInterview(id) {
+    const modal = document.getElementById('confirmDeleteInterviewModal');
+    if (!modal) return;
+    
+    document.getElementById('idEntrevistaDelete').value = id;
+    modal.style.display = 'flex';
 }
 
 /**
@@ -975,7 +964,7 @@ function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj =
 }
 
 /**
- * Busca todas as entrevistas do Supabase, atualiza a cache local
+ * Busca as entrevistas futuras do Supabase, atualiza a cache local
  * e re-renderiza o calendário, o painel lateral e os contadores.
  *
  * Esta função é chamada:
@@ -983,10 +972,14 @@ function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj =
  *   - Após agendar, editar ou eliminar uma entrevista
  *   - Ao navegar entre meses
  *
- * @param {Date} date - Mês de referência (usado para contexto, mas busca todas as entrevistas)
+ * @param {Date} date - Mês de referência (usado para contexto)
  */
 async function fetchMonthInterviews(date) {
-    // Busca TODAS as entrevistas (sem filtro de mês) para popular a cache completa
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const hojeISO = hoje.toISOString().split('T')[0];
+
+    // Busca apenas as entrevistas futuras (a partir de hoje) para não carregar todas do banco de dados
     const { data, error } = await supabaseClient
         .from("Entrevistas")
         .select(`
@@ -995,6 +988,7 @@ async function fetchMonthInterviews(date) {
       candidatos(id, nome, nota),
       Entrevistador(id, Nome)
     `)
+        .gte('Data', hojeISO)
         .order('Data', { ascending: true }); // Ordena por data crescente
 
     if (error) {
@@ -1215,4 +1209,71 @@ document.addEventListener('DOMContentLoaded', () => {
     // O modal de agendamento também existe no Pipeline.html, por isso é sempre
     // configurado (setupAgendamentoModal verifica internamente se os elementos existem)
     setupAgendamentoModal();
+    
+    // Configura os modais de confirmação
+    setupConfirmModals();
 });
+
+/**
+ * Configura os event listeners para os modais de confirmação de status e exclusão.
+ */
+function setupConfirmModals() {
+    // --- Modal Status ---
+    const statusModal = document.getElementById('confirmStatusModal');
+    if (statusModal) {
+        document.getElementById('cancelarStatusBtn').addEventListener('click', () => {
+            statusModal.style.display = 'none';
+        });
+        document.getElementById('confirmarStatusBtn').addEventListener('click', async () => {
+            const id = document.getElementById('idEntrevistaStatus').value;
+            const newStatus = document.getElementById('novoStatusEntrevista').value;
+            
+            if (id && newStatus) {
+                const { error } = await supabaseClient
+                    .from('Entrevistas')
+                    .update({ status: newStatus })
+                    .eq('id', id);
+
+                if (error) {
+                    showNotification('Erro ao atualizar status: ' + error.message, 'error');
+                } else {
+                    showNotification(`Entrevista marcada como ${newStatus}.`, 'success');
+                    fetchMonthInterviews(currentDate);
+                }
+                statusModal.style.display = 'none';
+            }
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === statusModal) statusModal.style.display = 'none';
+        });
+    }
+
+    // --- Modal Exclusão ---
+    const deleteModal = document.getElementById('confirmDeleteInterviewModal');
+    if (deleteModal) {
+        document.getElementById('cancelarDeleteInterview').addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+        });
+        document.getElementById('confirmarDeleteInterview').addEventListener('click', async () => {
+            const id = document.getElementById('idEntrevistaDelete').value;
+            
+            if (id) {
+                const { error } = await supabaseClient
+                    .from('Entrevistas')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    showNotification('Erro ao eliminar entrevista: ' + error.message, 'error');
+                } else {
+                    showNotification('Entrevista eliminada com sucesso.', 'success');
+                    fetchMonthInterviews(currentDate);
+                }
+                deleteModal.style.display = 'none';
+            }
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === deleteModal) deleteModal.style.display = 'none';
+        });
+    }
+}

@@ -29,6 +29,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="midia/logo.png">
   <title>Vagas - Dashboard RH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css">
   <!-- Supabase SDK e ícones Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -56,36 +59,59 @@
     <a class="nav-item" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
   </div>
 
-  <div class="main">
+  <div class="main vagas-main">
 
-    <!-- Cabeçalho da página com título e botão de adicionar vaga -->
-    <!-- O botão expande ao hover (CSS: width 40px → 150px) mostrando o texto -->
-    <div class="vaga-header">
-      <h1>Gestão de Vagas</h1>
-      <button id="btnAbrirModal" class="btn-add-vaga">
-        <span class="icone-btn">+</span><!-- Roda 90° no hover (CSS) -->
-        <span class="texto-btn">Adicionar Vaga</span><!-- Aparece no hover -->
+    <header class="vagas-hero">
+      <div class="vagas-hero-text">
+        <p class="vagas-eyebrow">Recrutamento</p>
+        <h1 class="vagas-title">Gestão de vagas</h1>
+        <p class="vagas-lead">Crie posições, acompanhe estados e volumes de candidatos por vaga.</p>
+      </div>
+      <button id="btnAbrirModal" type="button" class="btn-add-vaga btn-add-vaga--prominent">
+        <span class="icone-btn"><i class="fa-solid fa-plus"></i></span>
+        <span class="texto-btn">Nova vaga</span>
       </button>
+    </header>
+
+    <div class="vagas-stats" aria-label="Resumo das vagas">
+      <div class="vagas-stat-card">
+        <span class="vagas-stat-label">Total no sistema</span>
+        <strong class="vagas-stat-value" id="statTotalVagas">—</strong>
+      </div>
+      <div class="vagas-stat-card vagas-stat-card--accent">
+        <span class="vagas-stat-label">Em recrutamento</span>
+        <strong class="vagas-stat-value" id="statVagasAtivas">—</strong>
+      </div>
+      <div class="vagas-stat-card">
+        <span class="vagas-stat-label">Com candidatos</span>
+        <strong class="vagas-stat-value" id="statVagasComCandidatos">—</strong>
+      </div>
+    </div>
+
+    <div class="vagas-toolbar">
+      <div class="vagas-search-wrap">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" id="filtroVagas" class="vagas-search-input" placeholder="Pesquisar por título ou estado..." autocomplete="off" aria-label="Pesquisar vagas">
+      </div>
+      <p class="vagas-toolbar-hint"><i class="fa-solid fa-circle-info"></i> Clique nos ⋮ de cada card para editar, ver detalhes ou eliminar.</p>
     </div>
 
     <!-- ── Modal de Confirmação de Eliminação ─────────────────────────── -->
     <!-- Aberto pelo botão "Eliminar" no menu kebab de um card de vaga.   -->
     <!-- O título da vaga a eliminar é mostrado em #deleteVagaTitulo.     -->
     <!-- Ao confirmar, eliminarVaga() em vagas.js é chamado.              -->
-    <div id="confirmDeleteModal" class="modal" style="display:none;">
-      <div class="modal-content" style="max-width:420px;">
-        <div class="modal-header">
-          <h2>Confirmar Exclusão</h2>
-          <span class="close" id="fecharConfirmDelete">&times;</span>
+    <div id="confirmDeleteModal" class="modal modal-confirm" style="display:none;">
+      <div class="modal-confirm-card modal-confirm-card--danger">
+        <button type="button" class="close modal-confirm__close" id="fecharConfirmDelete" aria-label="Fechar">&times;</button>
+        <div class="modal-confirm__icon" aria-hidden="true">
+          <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-        <div class="modal-body" style="padding:18px;">
-          <p>Tem certeza que deseja apagar esta vaga? Esta ação não pode ser desfeita.</p>
-          <!-- Nome da vaga a eliminar (preenchido por JS antes de abrir o modal) -->
-          <p id="deleteVagaTitulo" style="color:var(--secondary-color); margin-top:8px;"></p>
-        </div>
-        <div class="modal-actions" style="padding:14px; display:flex; justify-content:flex-end; gap:8px;">
-          <button id="cancelarDeleteBtn" class="btn-cancel">Cancelar</button>
-          <button id="confirmarDeleteBtn" class="btn-submit" style="background:#fc466b;">Apagar</button>
+        <h2 class="modal-confirm__title">Eliminar vaga?</h2>
+        <p class="modal-confirm__text">Esta ação não pode ser desfeita. A posição deixa de aparecer na lista de vagas ativas.</p>
+        <p id="deleteVagaTitulo" class="modal-confirm__highlight"></p>
+        <div class="modal-confirm__actions">
+          <button type="button" id="cancelarDeleteBtn" class="btn-cancel">Cancelar</button>
+          <button type="button" id="confirmarDeleteBtn" class="btn-submit btn-submit--danger">Apagar</button>
         </div>
       </div>
     </div>
@@ -94,11 +120,15 @@
     <!-- Aberto pelo botão "Adicionar Vaga" ou pelo botão "Editar" no kebab. -->
     <!-- #vagaId (hidden): vazio → nova vaga; com valor → edição da vaga existente -->
     <!-- O submit do formulário é tratado por handleVagaFormSubmit() em vagas.js -->
-    <div id="vagaModal" class="modal" style="display:none;">
-      <div class="modal-content-vaga">
-        <div class="modal-header">
-          <h2>Adicionar/Editar Vaga</h2>
-          <span class="close" id="btnFecharModal">&times;</span>
+    <div id="vagaModal" class="modal modal-form modal-form-vaga" style="display:none;">
+      <div class="modal-content-vaga modal-surface modal-surface--vaga">
+        <div class="modal-header modal-header--surface">
+          <div class="modal-header__lead">
+            <p class="modal-eyebrow">Recrutamento</p>
+            <h2>Nova ou editar vaga</h2>
+            <p class="modal-subtitle">Defina título, descrição, requisitos e data limite de candidaturas.</p>
+          </div>
+          <span class="close" id="btnFecharModal" aria-label="Fechar">&times;</span>
         </div>
         <form id="vagaForm" class="vaga-form-v2">
           <!-- ID da vaga (oculto): vazio = nova vaga, preenchido = edição -->
@@ -135,34 +165,49 @@
     <!-- ── Modal de Detalhes da Vaga ─────────────────────────────────── -->
     <!-- Aberto pelo botão "Ver Detalhes" no menu kebab de um card de vaga. -->
     <!-- Preenchido por preencherModalDetalhes() em vagas.js               -->
-    <div id="vagaDetalhesModal" class="modal" style="display:none;">
-      <div class="modal-content" style="max-width:700px;">
-        <div class="modal-header">
-          <h2>Detalhes da Vaga</h2>
-          <span class="close" id="fecharDetalhes">&times;</span>
+    <div id="vagaDetalhesModal" class="modal modal-detalhes" style="display:none;">
+      <div class="modal-content modal-surface modal-surface--detalhes-vaga">
+        <div class="modal-header modal-header--surface">
+          <div class="modal-header__lead">
+            <p class="modal-eyebrow">Vaga</p>
+            <h2 id="det-titulo" class="modal-detalhes-vaga__title">—</h2>
+          </div>
+          <span class="close" id="fecharDetalhes" aria-label="Fechar">&times;</span>
         </div>
-        <div class="modal-body" style="padding:22px;">
-          <p><strong>Título:</strong> <span id="det-titulo"></span></p>
-          <p><strong>Descrição:</strong></p>
-          <!-- white-space:pre-wrap preserva quebras de linha do texto -->
-          <p id="det-descricao" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
-          <p><strong>Requisitos:</strong></p>
-          <p id="det-requisitos" style="white-space:pre-wrap; margin-top:6px; color:var(--secondary-color);"></p>
-          <p style="margin-top:12px;"><strong>Status:</strong> <span id="det-status"></span></p>
-          <p><strong>Data de Abertura:</strong> <span id="det-abertura"></span></p>
-          <p><strong>Data de Encerramento:</strong> <span id="det-encerramento"></span></p>
+        <div class="modal-body modal-detalhes-vaga__body">
+          <div class="det-vaga-meta">
+            <span class="det-vaga-chip" id="det-status"></span>
+            <div class="det-vaga-dates">
+              <div class="det-vaga-date">
+                <span class="det-vaga-label">Abertura</span>
+                <span id="det-abertura" class="det-vaga-value"></span>
+              </div>
+              <div class="det-vaga-date">
+                <span class="det-vaga-label">Encerramento</span>
+                <span id="det-encerramento" class="det-vaga-value"></span>
+              </div>
+            </div>
+          </div>
+          <div class="det-vaga-section">
+            <h3 class="det-vaga-h"><i class="fa-solid fa-align-left"></i> Descrição</h3>
+            <div id="det-descricao" class="det-vaga-prose"></div>
+          </div>
+          <div class="det-vaga-section">
+            <h3 class="det-vaga-h"><i class="fa-solid fa-list-check"></i> Requisitos</h3>
+            <div id="det-requisitos" class="det-vaga-prose"></div>
+          </div>
         </div>
-        <div class="modal-actions" style="padding:18px; display:flex; justify-content:flex-end; gap:8px;">
-          <button id="fecharDetalhesBtn" class="btn-cancel">Fechar</button>
+        <div class="modal-footer-actions">
+          <button type="button" id="fecharDetalhesBtn" class="btn-cancel">Fechar</button>
         </div>
       </div>
     </div>
 
-    <!-- Container dos Cards de Vagas -->
-    <!-- Preenchido dinamicamente por carregarVagas() em vagas.js -->
-    <h2>Vagas Abertas</h2>
-    <div id="vagasContainer" class="cards-vagas">
-      <!-- Cards criados dinamicamente por criarCardVaga() em vagas.js -->
+    <div class="vagas-list-head">
+      <h2 class="vagas-section-title">Todas as vagas</h2>
+      <span class="vagas-count-badge" id="vagasCountLabel">0 vagas</span>
+    </div>
+    <div id="vagasContainer" class="cards-vagas cards-vagas-grid">
     </div>
   </div>
 </body>

@@ -37,6 +37,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="midia/logo.png">
   <title>Pipeline - Dashboard RH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css">
   <!-- Supabase SDK e ícones Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -68,23 +71,24 @@
   <!-- .pipeline-main usa flex-column para empilhar: header + scroll + footer -->
   <div class="main pipeline-main">
 
-    <!-- Cabeçalho Fixo com título e filtro por vaga -->
-    <div class="pipeline-header" style="display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <h1>Pipeline de Recrutamento</h1>
+    <header class="pipeline-hero">
+      <div class="pipeline-hero__text">
+        <p class="pipeline-eyebrow">Kanban</p>
+        <h1 class="pipeline-hero__title">Pipeline de recrutamento</h1>
         <p class="pipeline-instruction">Arraste e solte os candidatos entre as etapas do processo seletivo.</p>
       </div>
-      <!-- Filtro por vaga: "Todas as Vagas" + opções preenchidas por carregarPipeline() -->
-      <div class="filters-group">
-        <div class="filter-wrapper">
-          <i class="fa-solid fa-filter"></i> Filtros:
-          <select id="filtroVaga" class="filter-select">
-            <option value="todos">Todas as Vagas</option>
-            <!-- Opções preenchidas dinamicamente por carregarPipeline() em pipeline.js -->
-          </select>
+      <div class="pipeline-hero__toolbar">
+        <div class="filters-group pipeline-filter-group">
+          <div class="filter-wrapper">
+            <i class="fa-solid fa-filter" aria-hidden="true"></i>
+            <span class="pipeline-filter-label">Vaga</span>
+            <select id="filtroVaga" class="filter-select pipeline-filter-select" aria-label="Filtrar por vaga">
+              <option value="todos">Todas as vagas</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
+    </header>
 
     <!-- ── Área de Scroll Horizontal com as Colunas Kanban ───────────── -->
     <!-- Permite scroll horizontal quando as colunas excedem a largura do ecrã -->
@@ -143,8 +147,8 @@
     <!-- Mostra a contagem de candidatos em cada etapa + rejeitados.      -->
     <!-- Os valores são atualizados por recalcularContadores() em pipeline.js -->
     <div class="pipeline-footer">
-      <div class="pipeline-summary-wrapper">
-        <h2 class="pipeline-footer-title">Resumo do Pipeline</h2>
+      <div class="pipeline-summary-wrapper pipeline-summary-wrapper--v2">
+        <h2 class="pipeline-footer-title">Resumo do pipeline</h2>
         <!-- .pipeline-summary-count são selecionados por índice (nth-child) em pipeline.js -->
         <div class="pipeline-summary-cards">
           <div class="pipeline-summary-card">
@@ -164,9 +168,8 @@
             <h4>Contratado</h4>
           </div>
           <!-- Card especial para rejeitados (borda e fundo vermelhos) -->
-          <div class="pipeline-summary-card"
-            style="border: 1px solid var(--error-color); background: rgba(239, 68, 68, 0.1);">
-            <p class="pipeline-summary-count" id="count-rejeitados" style="color: var(--error-color);">0</p>
+          <div class="pipeline-summary-card pipeline-summary-card--danger">
+            <p class="pipeline-summary-count" id="count-rejeitados">0</p>
             <h4>Rejeitados</h4>
           </div>
         </div>
@@ -178,23 +181,27 @@
   <!-- Aberto automaticamente quando um candidato é arrastado para a coluna -->
   <!-- "Entrevista técnica". Também pode ser aberto pelo menu kebab.        -->
   <!-- Se o utilizador cancelar, o card reverte para a coluna anterior.     -->
-  <div id="agendamentoModal" class="modal">
-    <div class="modal-content-vaga">
-      <div class="modal-header">
-        <h2>Agendar Entrevista</h2>
-        <span class="close" id="closeAgendamentoModal">&times;</span>
+  <div id="agendamentoModal" class="modal modal-agendamento">
+    <div class="modal-content-vaga modal-surface modal-surface--agendamento">
+      <div class="modal-header modal-header--surface">
+        <div class="modal-header__lead">
+          <p class="modal-eyebrow">Agenda</p>
+          <h2>Agendar entrevista</h2>
+          <p class="modal-subtitle">Associe candidato e vaga, depois defina tipo, data e entrevistador.</p>
+        </div>
+        <span class="close" id="closeAgendamentoModal" aria-label="Fechar">&times;</span>
       </div>
-      <form id="agendamentoForm" class="vaga-form-v2">
+      <form id="agendamentoForm" class="vaga-form-v2 form-agendamento">
         <!-- ID da entrevista (oculto): vazio = nova; preenchido = edição -->
         <input type="hidden" id="agendamentoId">
 
         <!-- Campo Candidato: dropdown pesquisável -->
         <!-- Pré-preenchido com o candidato arrastado quando vem do drag-and-drop -->
         <div class="form-group-v2">
-          <label>Candidato</label>
+          <label for="searchCandidato">Candidato</label>
           <div class="searchable-dropdown" id="dropdownCandidato">
-            <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select"
-              autocomplete="off" style="width: 100%;">
+            <input type="text" id="searchCandidato" placeholder="Pesquisar candidato..." class="filter-select modal-search-input"
+              autocomplete="off">
             <input type="hidden" id="agCandidato"><!-- ID real do candidato selecionado -->
             <div class="dropdown-options" id="optionsCandidato"></div>
           </div>
@@ -202,49 +209,44 @@
 
         <!-- Campo Vaga: dropdown pesquisável -->
         <div class="form-group-v2">
-          <label>Vaga</label>
+          <label for="searchVaga">Vaga</label>
           <div class="searchable-dropdown" id="dropdownVaga">
-            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select" autocomplete="off"
-              style="width: 100%;">
+            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select modal-search-input" autocomplete="off">
             <input type="hidden" id="agVaga"><!-- ID real da vaga selecionada -->
             <div class="dropdown-options" id="optionsVaga"></div>
           </div>
         </div>
 
-        <!-- Tipo de entrevista -->
-        <div class="form-group-v2">
-          <label>Tipo de Entrevista</label>
-          <select id="agTipo" required class="filter-select" style="width:100%">
-            <option value="Presencial">Presencial</option>
-            <option value="Online">Vídeo</option>
-            <option value="Telefone">Telefone</option>
-          </select>
-        </div>
-
-        <!-- Data e hora da entrevista -->
-        <div class="form-group-v2">
-          <label>Data e Hora</label>
-          <input type="datetime-local" id="agDataHora" required
-            style="background-color: #0f172a; color: white; color-scheme: dark; padding: 10px 12px; border: 1px solid #334155; border-radius: 8px; font-size: 14px; font-family: inherit; transition: all 0.3s ease; width: 100%; box-sizing: border-box;"
-            onfocus="this.style.borderColor='#334155'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.1)';"
-            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
+        <div class="form-agendamento__pair">
+          <div class="form-group-v2">
+            <label for="agTipo">Tipo</label>
+            <select id="agTipo" required class="filter-select form-select-full">
+              <option value="Presencial">Presencial</option>
+              <option value="Online">Vídeo</option>
+              <option value="Telefone">Telefone</option>
+            </select>
+          </div>
+          <div class="form-group-v2">
+            <label for="agDataHora">Data e hora</label>
+            <input type="datetime-local" id="agDataHora" required class="form-input-datetime">
+          </div>
         </div>
 
         <!-- Entrevistador: select preenchido por populateModalSelects() -->
         <div class="form-group-v2">
-          <label>Entrevistador</label>
-          <select id="agEntrevistador" required class="filter-select" style="width:100%"></select>
+          <label for="agEntrevistador">Entrevistador</label>
+          <select id="agEntrevistador" required class="filter-select form-select-full"></select>
         </div>
 
         <!-- Observações opcionais -->
         <div class="form-group-v2">
-          <label>Observações</label>
+          <label for="agObs">Observações</label>
           <textarea id="agObs" rows="3"></textarea>
         </div>
 
-        <div class="form-actions">
+        <div class="form-actions form-actions--agendamento">
           <button type="button" class="btn-cancel" id="cancelAgendamento">Cancelar</button>
-          <button type="submit" class="btn-submit">Agendar</button>
+          <button type="submit" class="btn-submit"><i class="fa-solid fa-calendar-check"></i> Guardar</button>
         </div>
       </form>
     </div>
@@ -341,23 +343,17 @@
   <!-- Aberto pelo botão "Rejeitar" no menu kebab de um card do pipeline.  -->
   <!-- O ID do candidato é guardado em #idCandidatoRejeicao (hidden).      -->
   <!-- Ao confirmar, rejeitarCandidato() em pipeline.js é chamado.         -->
-  <div id="confirmRejeicaoModal" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-      <!-- Ícone de aviso -->
-      <div class="modal-header"
-        style="display: block; text-align: center; border:none; padding-bottom:0; padding-top: 0; background: transparent;">
-        <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; color: var(--error-color);"></i>
+  <div id="confirmRejeicaoModal" class="modal modal-confirm" style="display:none;">
+    <div class="modal-confirm-card modal-confirm-card--danger">
+      <div class="modal-confirm__icon" aria-hidden="true">
+        <i class="fa-solid fa-user-xmark"></i>
       </div>
-      <div class="modal-body">
-        <h3 style="margin: 10px 0;">Rejeitar Candidato?</h3>
-        <p>O candidato será removido do pipeline. Esta ação não apaga o registro do banco de dados.</p>
-        <!-- Input hidden com o ID do candidato a rejeitar -->
-        <input type="hidden" id="idCandidatoRejeicao">
-      </div>
-      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+      <h2 class="modal-confirm__title">Rejeitar candidato?</h2>
+      <p class="modal-confirm__text">O candidato deixa de aparecer neste pipeline. O registo na base de dados mantém-se.</p>
+      <input type="hidden" id="idCandidatoRejeicao">
+      <div class="modal-confirm__actions">
         <button type="button" class="btn-cancel" id="cancelarRejeicao">Cancelar</button>
-        <button type="button" class="btn-submit" id="confirmarRejeicao"
-          style="background-color: var(--error-color);">Confirmar</button>
+        <button type="button" class="btn-submit btn-submit--danger" id="confirmarRejeicao">Rejeitar</button>
       </div>
     </div>
   </div>

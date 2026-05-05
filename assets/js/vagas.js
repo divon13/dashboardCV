@@ -18,6 +18,112 @@
  */
 
 /**
+ * Verifica se existem vagas abertas que já passaram da data de encerramento
+ * e atualiza o status delas para "encerrada" no Supabase.
+ * Isso garante que vagas expiradas sejam tratadas corretamente na UI e métricas.
+ */
+async function verificarVagasExpiradas() {
+    const hojeISO = new Date().toISOString().split('T')[0];
+
+    try {
+        // 1. Fecha as que expiraram (Aberta -> Encerrada)
+        const { data: expiradas, error: err1 } = await supabaseClient
+            .from('Vagas')
+            .select('id')
+            .eq('status_vagas', 'aberta')
+            .lt('data_encerramento', hojeISO);
+
+        if (err1) throw err1;
+
+        if (expiradas && expiradas.length > 0) {
+            await supabaseClient.from('Vagas').update({ status_vagas: 'encerrada' }).in('id', expiradas.map(v => v.id));
+            console.log(`[Auto-Status] ${expiradas.length} vaga(s) expirada(s) encerradas.`);
+        }
+
+        // 2. Reabre as que foram estendidas (Encerrada -> Aberta)
+        // Só fazemos isso para "encerrada", mantendo "cancelada" ou "arquivada" como estados manuais permanentes
+        const { data: reabrir, error: err2 } = await supabaseClient
+            .from('Vagas')
+            .select('id')
+            .eq('status_vagas', 'encerrada')
+            .gte('data_encerramento', hojeISO);
+
+        if (err2) throw err2;
+
+        if (reabrir && reabrir.length > 0) {
+            await supabaseClient.from('Vagas').update({ status_vagas: 'aberta' }).in('id', reabrir.map(v => v.id));
+            console.log(`[Auto-Status] ${reabrir.length} vaga(s) reabertas (data estendida).`);
+        }
+    } catch (err) {
+        console.error("Erro no processo de verificação de status das vagas:", err);
+    }
+}
+
+/**
+ * Indica se uma vaga deve ser tratada como encerrada/arquivada para estatísticas.
+ */
+function vagaEstaEncerradaOuArquivada(status) {
+    const s = (status || '').toLowerCase();
+    return s.includes('encerr') || s.includes('fechad') || s.includes('cancel') || s.includes('arquiv');
+}
+
+/**
+ * Atualiza os mini-cards de estatísticas no topo da página de vagas.
+ */
+function atualizarEstatisticasVagas(data) {
+    const elTotal = document.getElementById('statTotalVagas');
+    const elAtivas = document.getElementById('statVagasAtivas');
+    const elComCand = document.getElementById('statVagasComCandidatos');
+    if (!elTotal && !elAtivas && !elComCand) return;
+
+    const list = data || [];
+    if (elTotal) elTotal.textContent = list.length;
+    if (elAtivas) {
+        elAtivas.textContent = list.filter(v => !vagaEstaEncerradaOuArquivada(v.status_vagas)).length;
+    }
+    if (elComCand) {
+        elComCand.textContent = list.filter(v => v.candidatos && v.candidatos.length > 0).length;
+    }
+}
+
+/**
+ * Atualiza o badge "N vagas" conforme filtros visíveis.
+ */
+function atualizarContagemListaVagas() {
+    const label = document.getElementById('vagasCountLabel');
+    const container = document.getElementById('vagasContainer');
+    if (!label || !container) return;
+
+    const cards = container.querySelectorAll('.card-vaga');
+    let visible = 0;
+    cards.forEach(c => {
+        if (c.style.display !== 'none') visible += 1;
+    });
+    label.textContent = visible === 1 ? '1 vaga' : `${visible} vagas`;
+}
+
+/**
+ * Pesquisa local por título ou estado (uma vez ligada ao input).
+ */
+function configurarFiltroVagas() {
+    const input = document.getElementById('filtroVagas');
+    if (!input || input.dataset.bound === '1') return;
+    input.dataset.bound = '1';
+
+    input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        const container = document.getElementById('vagasContainer');
+        if (!container) return;
+
+        container.querySelectorAll('.card-vaga').forEach(card => {
+            const haystack = (card.dataset.search || card.textContent || '').toLowerCase();
+            card.style.display = !q || haystack.includes(q) ? '' : 'none';
+        });
+        atualizarContagemListaVagas();
+    });
+}
+
+/**
  * Carrega todas as vagas da base de dados e renderiza os seus cards
  * no container `#vagasContainer` (vagas.html).
  *
@@ -33,6 +139,9 @@
  * As vagas são ordenadas da mais recente para a mais antiga (id DESC).
  */
 async function carregarVagas() {
+    // Garante que vagas expiradas sejam atualizadas antes de listar
+    await verificarVagasExpiradas();
+
     // Busca todas as vagas com os IDs dos candidatos associados (para contar)
     const { data, error } = await supabaseClient
         .from("Vagas")
@@ -54,24 +163,40 @@ async function carregarVagas() {
     // Limpa o conteúdo anterior antes de re-renderizar
     container.innerHTML = '';
 
+    if (!data || data.length === 0) {
+        container.innerHTML = `
+      <div class="vagas-empty-state" role="status">
+        <div class="vagas-empty-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <p class="vagas-empty-title">Ainda não há vagas</p>
+        <p class="vagas-empty-text">Crie a primeira posição com o botão <strong>Nova vaga</strong> acima.</p>
+      </div>`;
+        atualizarEstatisticasVagas([]);
+        configurarFiltroVagas();
+        atualizarContagemListaVagas();
+        return;
+    }
+
     // Renderiza um card para cada vaga
     data.forEach(vaga => {
         const card = document.createElement('div');
         card.className = 'card-vaga';
 
-        // Conta quantos candidatos estão associados a esta vaga
         const candidatosCount = vaga.candidatos ? vaga.candidatos.length : 0;
+        const dataEncerramento = vaga.data_encerramento ? formatarData(vaga.data_encerramento) : '—';
 
-        // HTML do card com menu kebab (⋮) para as ações
         card.innerHTML = `
+      <div class="card-vaga-accent" aria-hidden="true"></div>
+      <div class="card-vaga-inner">
       <div class="card-top">
         <div class="title-area">
-          <div class="job-title">${vaga.Titulo || ''}</div>
-          <div class="chip-status">${vaga.status_vagas || 'aberto'}</div>
+          <div class="job-icon-wrap"><i class="fa-solid fa-briefcase"></i></div>
+          <div class="job-meta">
+            <div class="job-title">${vaga.Titulo || ''}</div>
+            <span class="chip-status chip-status-vaga status-${(vaga.status_vagas || 'aberta').toLowerCase()}">${vaga.status_vagas || 'aberta'}</span>
+          </div>
         </div>
         <div class="card-actions">
            <div class="kebab-menu-container">
-             <!-- Botão ⋮ que abre o menu dropdown -->
              <button class="kebab-btn" data-id="${vaga.id}"><i class="fa-solid fa-ellipsis"></i></button>
              <div id="menu-${vaga.id}" class="kebab-dropdown">
                <button class="dropdown-item view-btn" data-id="${vaga.id}"><i class="fa-regular fa-eye"></i> Ver Detalhes</button>
@@ -82,14 +207,19 @@ async function carregarVagas() {
         </div>
       </div>
       <div class="card-bottom">
-        <span><i class="fa-solid fa-calendar"></i> ${vaga.data_encerramento ? formatarData(vaga.data_encerramento) : ''}</span>
-        <span><i class="fa-solid fa-users"></i> ${candidatosCount} candidatos</span>
+        <span class="card-vaga-meta"><i class="fa-solid fa-calendar-xmark"></i> Encerra ${dataEncerramento}</span>
+        <span class="card-vaga-meta"><i class="fa-solid fa-users"></i> ${candidatosCount} candidato${candidatosCount === 1 ? '' : 's'}</span>
+      </div>
       </div>
     `;
+        card.dataset.search = `${vaga.Titulo || ''} ${vaga.status_vagas || ''}`.toLowerCase();
         container.appendChild(card);
     });
 
-    // Configura os event handlers dos botões de ação após renderizar todos os cards
+    atualizarEstatisticasVagas(data);
+    configurarFiltroVagas();
+    atualizarContagemListaVagas();
+
     configurarEventosVagas(container, data);
 }
 
@@ -266,6 +396,9 @@ function preencherModalDetalhes(vaga) {
  * sem transferir os dados completos (mais eficiente).
  */
 async function carregarVagasAbertas() {
+    // Garante que vagas expiradas sejam atualizadas antes de contar para o dashboard
+    await verificarVagasExpiradas();
+
     // Conta apenas as vagas com status "aberta" (sem trazer os dados completos)
     const { count, error } = await supabaseClient
         .from("Vagas")
