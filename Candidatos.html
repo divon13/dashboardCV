@@ -25,6 +25,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="midia/logo.png">
   <title>Candidatos - Dashboard RH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css">
 
   <!-- Supabase SDK e ícones Font Awesome -->
@@ -55,44 +58,62 @@
   </div>
 
   <!-- ── Conteúdo Principal ────────────────────────────────────────────── -->
-  <div class="main">
+  <div class="main candidatos-main">
 
-    <!-- Cards de Métricas de Candidatos -->
-    <div class="cards">
-      <!-- Card: Total de candidatos na base de dados -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Total de Candidatos</h3>
-          <i class="fa-solid fa-people-group"></i>
-        </div>
-        <p id="total-candidatos-val">
-          <svg viewBox="25 25 50 50" class="container">
-            <circle cx="50" cy="50" r="20" class="loader"></circle>
-          </svg>
-        </p>
+    <header class="candidatos-hero">
+      <div class="candidatos-hero-text">
+        <p class="candidatos-eyebrow">Talentos</p>
+        <h1 class="candidatos-title">Gestão de candidatos</h1>
+        <p class="candidatos-lead">Acompanhe o funil de talento, identifique perfis qualificados e avance com segurança para entrevistas.</p>
       </div>
-      <!-- Card: Candidatos com nota >= 80% (bem qualificados) -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Qualificados (+80%)</h3>
-          <i class="fa-solid fa-star"></i>
+      <a class="btn-dash-secondary candidatos-hero-link" href="Pipeline.html"><i class="fa-solid fa-chart-column"></i> Ir para fluxo</a>
+    </header>
+
+    <div class="cards candidatos-metrics">
+      <div class="card candidate-metric-card candidate-metric-card--total">
+        <div class="metric-card-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></div>
+        <div class="metric-card-body">
+          <div class="card-header">
+            <h3>Total de candidatos</h3>
+          </div>
+          <p id="total-candidatos-val" class="metric-value">
+            <svg viewBox="25 25 50 50" class="container">
+              <circle cx="50" cy="50" r="20" class="loader"></circle>
+            </svg>
+          </p>
+          <p class="metric-hint">Base ativa de talentos</p>
         </div>
-        <p id="qualificados-val">0</p>
       </div>
-      <!-- Card: Candidatos sem status ou com status "Aplicado" -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Aguardando Entrevista</h3>
-          <i class="fa-solid fa-hourglass-half"></i>
+
+      <div class="card candidate-metric-card candidate-metric-card--qualified">
+        <div class="metric-card-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></div>
+        <div class="metric-card-body">
+          <div class="card-header">
+            <h3>Qualificados (+80%)</h3>
+          </div>
+          <p id="qualificados-val" class="metric-value">0</p>
+          <p class="metric-hint">Alto score de aderência</p>
         </div>
-        <p id="aguardando-val">0</p>
+      </div>
+
+      <div class="card candidate-metric-card candidate-metric-card--pending">
+        <div class="metric-card-icon" aria-hidden="true"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="metric-card-body">
+          <div class="card-header">
+            <h3>Aguardando entrevista</h3>
+          </div>
+          <p id="aguardando-val" class="metric-value">0</p>
+          <p class="metric-hint">Prontos para a próxima etapa</p>
+        </div>
       </div>
     </div>
 
-    <!-- Container dos Cards de Candidatos -->
-    <!-- Preenchido dinamicamente por carregarUsuarios() em candidatos.js -->
-    <div id="candidatesCardsContainer" class="cards-candidatos">
-      <!-- Cards serão inseridos aqui via JavaScript -->
+    <div class="candidatos-list-head">
+      <h2 class="candidatos-section-title">Perfis disponíveis</h2>
+      <span class="candidatos-count-badge" id="candidatosCountLabel">0 candidatos</span>
+    </div>
+
+    <div id="candidatesCardsContainer" class="cards-candidatos cards-candidatos-grid">
     </div>
 
     <!-- ── Modal de Detalhes do Candidato ─────────────────────────────── -->
@@ -101,9 +122,13 @@
     <div id="candidatoDetalhesModal" class="modal modal-candidato" style="display:none;">
       <div class="modal-content modal-candidato-content">
         <!-- Cabeçalho do modal com título e botão de fechar -->
-        <div class="modal-header">
-          <h2>Detalhes do Candidato</h2>
-          <span class="close" id="fecharModalCandidato">&times;</span>
+        <div class="modal-header modal-header--surface modal-header--candidato">
+          <div class="modal-header__lead">
+            <p class="modal-eyebrow">Perfil</p>
+            <h2>Detalhes do candidato</h2>
+            <p class="modal-subtitle">Informações consolidadas para decisão de recrutamento.</p>
+          </div>
+          <span class="close" id="fecharModalCandidato" aria-label="Fechar">&times;</span>
         </div>
 
         <div class="modal-candidato-body">

@@ -52,7 +52,13 @@ async function carregarUsuarios() {
 
     // Caso não haja candidatos na base de dados
     if (!data || data.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--secondary-color); padding:40px;">Nenhum candidato encontrado.</p>';
+        container.innerHTML = `
+      <div class="candidatos-empty-state" role="status">
+        <div class="candidatos-empty-icon"><i class="fa-solid fa-user-group"></i></div>
+        <p class="candidatos-empty-title">Nenhum candidato encontrado</p>
+        <p class="candidatos-empty-text">Os perfis vão aparecer aqui assim que forem inseridos na base de dados.</p>
+      </div>`;
+        atualizarContagemCandidatosVisiveis();
         return;
     }
 
@@ -81,6 +87,16 @@ async function carregarUsuarios() {
         const card = criarCardCandidato(candidato, vagaData);
         container.appendChild(card);
     }
+
+    if (!container.querySelector('.card-candidato')) {
+        container.innerHTML = `
+      <div class="candidatos-empty-state" role="status">
+        <div class="candidatos-empty-icon"><i class="fa-solid fa-user-check"></i></div>
+        <p class="candidatos-empty-title">Sem perfis ativos</p>
+        <p class="candidatos-empty-text">Todos os candidatos atuais estão marcados como rejeitados.</p>
+      </div>`;
+    }
+    atualizarContagemCandidatosVisiveis();
 }
 
 /**
@@ -213,25 +229,12 @@ function criarCardCandidato(candidato, vagaData) {
       ${capacidadesPills}
       ${maisCapacidades}
     </div>
-    <div class="candidato-actions" style="display: flex; gap: 10px;">
+    <div class="candidato-actions candidato-actions-row">
       <button class="btn-ver-perfil" data-id="${candidato.id}">
         <i class="fa-solid fa-external-link"></i>
         Ver Perfil
       </button>
-      <button class="btn-rejeitar" data-id="${candidato.id}" style="
-          background-color: var(--surface-dark);
-          color: var(--error-color);
-          border: 1px solid var(--error-color);
-          padding: 8px 16px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.3s ease;
-      " onmouseover="this.style.backgroundColor='var(--error-color)'; this.style.color='white'"
-        onmouseout="this.style.backgroundColor='var(--surface-dark)'; this.style.color='var(--error-color)'">
+      <button class="btn-rejeitar-candidato" data-id="${candidato.id}">
         <i class="fa-solid fa-xmark"></i>
         Rejeitar
       </button>
@@ -250,7 +253,7 @@ function criarCardCandidato(candidato, vagaData) {
 
     // Botão "Rejeitar" → abre o modal de confirmação de rejeição
     // Guarda o ID do candidato num input hidden para ser usado na confirmação
-    const btnRejeitar = card.querySelector('.btn-rejeitar');
+    const btnRejeitar = card.querySelector('.btn-rejeitar-candidato');
     if (btnRejeitar) {
         btnRejeitar.onclick = function () {
             const modal = document.getElementById('confirmRejeicaoModal');
@@ -263,6 +266,14 @@ function criarCardCandidato(candidato, vagaData) {
     }
 
     return card;
+}
+
+function atualizarContagemCandidatosVisiveis() {
+    const container = document.getElementById('candidatesCardsContainer');
+    const label = document.getElementById('candidatosCountLabel');
+    if (!container || !label) return;
+    const total = container.querySelectorAll('.card-candidato').length;
+    label.textContent = total === 1 ? '1 candidato' : `${total} candidatos`;
 }
 
 /**
