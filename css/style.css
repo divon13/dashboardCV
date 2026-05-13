@@ -2807,13 +2807,15 @@ table tbody tr td[colspan="5"] {
   position: absolute;
   right: 0;
   top: 40px;
-  background-color: rgba(15, 23, 42, 0.9); /* Slate 900 semi-transparente */
+  background-color: rgba(15, 23, 42, 0.9);
+  /* Slate 900 semi-transparente */
   backdrop-filter: blur(10px);
   min-width: 180px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   border-radius: 12px;
   z-index: 1000;
-  border: 1px solid rgba(51, 65, 85, 0.8); /* Slate 700 mais visível */
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  /* Slate 700 mais visível */
   overflow: hidden;
   flex-direction: column;
   padding: 6px;
@@ -4558,5 +4560,748 @@ table tbody tr td[colspan="5"] {
 
   .btn-rejeitar-candidato {
     width: 100%;
+  }
+}
+
+/* ============================================
+   19. RESPONSIVIDADE PARA TABLETS E DESKTOPS PEQUENOS
+   Media queries para otimizar o layout em tablets
+   e desktops pequenos (768px - 1200px)
+   ============================================ */
+
+/* Tablets (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Sidebar mais estreita */
+  .sidebar {
+    width: 160px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 160px;
+    max-width: calc(100vw - 160px);
+    padding: 25px 20px;
+  }
+
+  /* Sidebar com texto menor */
+  .sidebar h2 {
+    font-size: 18px;
+    padding: 0 15px;
+  }
+
+  .nav-item {
+    font-size: 14px;
+    padding: 10px 18px;
+    margin: 4px 6px;
+  }
+
+  .nav-item i {
+    margin-right: 6px;
+  }
+
+  /* Cards de métricas com menos espaço */
+  .cards {
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    min-width: 220px;
+    padding: 20px;
+  }
+
+  /* Grid de candidatos com 2 colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Pipeline com colunas mais estreitas */
+  .pipeline-column {
+    min-width: 260px;
+    width: 260px;
+  }
+
+  /* Modal mais estreito */
+  .modal-content {
+    min-width: 300px;
+    max-width: 400px;
+    padding: 24px 20px 20px 20px;
+  }
+
+  .modal-content-vaga {
+    min-width: 340px;
+    max-width: 400px;
+  }
+
+  /* Pipeline header e footer com menos padding */
+  .pipeline-header {
+    padding: 20px;
+  }
+
+  .pipeline-header h1 {
+    font-size: 24px;
+  }
+
+  .pipeline-footer {
+    padding: 20px;
+  }
+
+  /* Calendar layout em uma coluna */
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Cards de vagas mantidos em coluna */
+  .cards-vagas {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Dashboard hero ajustado */
+  .dashboard-hero {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .dashboard-hero-aside {
+    width: 100%;
+  }
+
+  .dashboard-hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .dashboard-hero-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Desktops pequenos (1024px - 1200px) */
+@media (min-width: 1024px) and (max-width: 1200px) {
+  /* Sidebar com largura padrão */
+  .sidebar {
+    width: 180px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 180px;
+    max-width: calc(100vw - 180px);
+    padding: 28px 24px;
+  }
+
+  /* Cards de métricas com espaço moderado */
+  .cards {
+    gap: 25px;
+  }
+
+  .card {
+    min-width: 240px;
+    padding: 22px;
+  }
+
+  /* Grid de candidatos com 2-3 colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+  }
+
+  /* Pipeline com colunas moderadas */
+  .pipeline-column {
+    min-width: 290px;
+    width: 290px;
+  }
+
+  /* Modal com largura moderada */
+  .modal-content {
+    min-width: 340px;
+    max-width: 450px;
+    padding: 28px 24px 22px 24px;
+  }
+
+  .modal-content-vaga {
+    min-width: 380px;
+    max-width: 440px;
+  }
+
+  /* Pipeline header e footer com padding moderado */
+  .pipeline-header {
+    padding: 25px;
+  }
+
+  .pipeline-header h1 {
+    font-size: 26px;
+  }
+
+  .pipeline-footer {
+    padding: 25px;
+  }
+
+  /* Calendar layout em duas colunas compactas */
+  .calendar-layout {
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+  }
+
+  /* Cards de vagas mantidos em coluna */
+  .cards-vagas {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Dashboard hero ajustado */
+  .dashboard-hero {
+    gap: 24px;
+  }
+}
+
+/* ============================================
+   20. RESPONSIVIDADE PARA ECRÃS MAIORES
+   Media queries para otimizar o layout em monitores
+   grandes e muito grandes (1200px, 1400px, 1600px+)
+   ============================================ */
+
+/* Ecrãs grandes (1200px+) */
+@media (min-width: 1200px) {
+  /* Sidebar mais larga */
+  .sidebar {
+    width: 220px;
+  }
+
+  /* Ajustar margin-left do main para compensar sidebar */
+  .main,
+  .pipeline-main {
+    margin-left: 220px;
+    max-width: calc(100vw - 220px);
+  }
+
+  /* Cards de métricas com mais espaço */
+  .cards {
+    gap: 35px;
+  }
+
+  .card {
+    min-width: 280px;
+  }
+
+  /* Grid de candidatos com mais colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+  }
+
+  /* Cards de vagas com layout melhorado */
+  .cards-vagas {
+    gap: 16px;
+  }
+
+  /* Pipeline com colunas mais largas */
+  .pipeline-column {
+    min-width: 340px;
+    width: 340px;
+  }
+
+  /* Modal mais largo */
+  .modal-content {
+    max-width: 500px;
+  }
+
+  .modal-content-vaga {
+    min-width: 480px;
+    max-width: 540px;
+  }
+
+  /* Dashboard hero com melhor layout */
+  .dashboard-hero {
+    gap: 30px;
+  }
+
+  /* Calendar layout em duas colunas */
+  .calendar-layout {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+/* Ecrãs muito grandes (1400px+) */
+@media (min-width: 1400px) {
+  /* Sidebar ainda mais larga */
+  .sidebar {
+    width: 250px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 250px;
+    max-width: calc(100vw - 250px);
+  }
+
+  /* Cards de métricas com mais espaço */
+  .cards {
+    gap: 40px;
+  }
+
+  .card {
+    min-width: 300px;
+    padding: 30px;
+  }
+
+  /* Grid de candidatos com mais colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 28px;
+  }
+
+  /* Pipeline com colunas mais largas */
+  .pipeline-column {
+    min-width: 380px;
+    width: 380px;
+  }
+
+  /* Modal mais largo */
+  .modal-content {
+    max-width: 550px;
+    padding: 36px 32px 28px 32px;
+  }
+
+  .modal-content-vaga {
+    min-width: 520px;
+    max-width: 580px;
+  }
+
+  /* Aumentar padding do main */
+  .main {
+    padding: 40px;
+  }
+
+  /* Pipeline header com mais espaço */
+  .pipeline-header {
+    padding: 40px;
+  }
+
+  /* Pipeline footer com mais espaço */
+  .pipeline-footer {
+    padding: 40px;
+  }
+
+  /* Calendar layout com mais espaço */
+  .calendar-layout {
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
+  }
+}
+
+/* Ecrãs ultra grandes (1600px+) */
+@media (min-width: 1600px) {
+  /* Sidebar ainda mais larga */
+  .sidebar {
+    width: 280px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 280px;
+    max-width: calc(100vw - 280px);
+  }
+
+  /* Sidebar com texto maior */
+  .sidebar h2 {
+    font-size: 22px;
+  }
+
+  .nav-item {
+    font-size: 16px;
+    padding: 14px 28px;
+  }
+
+  /* Cards de métricas com mais espaço */
+  .cards {
+    gap: 45px;
+  }
+
+  .card {
+    min-width: 320px;
+    padding: 35px;
+  }
+
+  /* Grid de candidatos com mais colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+    gap: 32px;
+  }
+
+  /* Pipeline com colunas mais largas */
+  .pipeline-column {
+    min-width: 420px;
+    width: 420px;
+  }
+
+  /* Modal mais largo */
+  .modal-content {
+    max-width: 600px;
+    padding: 40px 36px 32px 36px;
+  }
+
+  .modal-content-vaga {
+    min-width: 560px;
+    max-width: 620px;
+  }
+
+  /* Aumentar padding do main */
+  .main {
+    padding: 50px;
+  }
+
+  /* Pipeline header com mais espaço */
+  .pipeline-header {
+    padding: 50px;
+  }
+
+  .pipeline-header h1 {
+    font-size: 32px;
+  }
+
+  /* Pipeline footer com mais espaço */
+  .pipeline-footer {
+    padding: 50px;
+  }
+
+  /* Calendar layout com mais espaço */
+  .calendar-layout {
+    grid-template-columns: 450px 1fr;
+    gap: 35px;
+  }
+
+  /* Cards de vagas com layout em grid para ecrãs muito grandes */
+  .cards-vagas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+  }
+
+  /* Summary cards do pipeline com mais espaço */
+  .pipeline-summary-cards {
+    gap: 16px;
+  }
+
+  .pipeline-summary-card {
+    padding: 20px;
+  }
+
+  .pipeline-summary-count {
+    font-size: 32px;
+  }
+}
+
+/* Ecrãs ultra wide (1920px+) */
+@media (min-width: 1920px) {
+  /* Sidebar ainda mais larga */
+  .sidebar {
+    width: 300px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 300px;
+    max-width: calc(100vw - 300px);
+  }
+
+  /* Sidebar com texto ainda maior */
+  .sidebar h2 {
+    font-size: 24px;
+  }
+
+  .nav-item {
+    font-size: 17px;
+    padding: 16px 32px;
+  }
+
+  /* Cards de métricas com mais espaço */
+  .cards {
+    gap: 50px;
+  }
+
+  .card {
+    min-width: 350px;
+    padding: 40px;
+  }
+
+  /* Grid de candidatos com mais colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+    gap: 36px;
+  }
+
+  /* Pipeline com colunas mais largas */
+  .pipeline-column {
+    min-width: 450px;
+    width: 450px;
+  }
+
+  /* Modal mais largo */
+  .modal-content {
+    max-width: 650px;
+    padding: 44px 40px 36px 40px;
+  }
+
+  .modal-content-vaga {
+    min-width: 600px;
+    max-width: 660px;
+  }
+
+  /* Aumentar padding do main */
+  .main {
+    padding: 60px;
+  }
+
+  /* Pipeline header com mais espaço */
+  .pipeline-header {
+    padding: 60px;
+  }
+
+  .pipeline-header h1 {
+    font-size: 36px;
+  }
+
+  /* Pipeline footer com mais espaço */
+  .pipeline-footer {
+    padding: 60px;
+  }
+
+  /* Calendar layout com mais espaço */
+  .calendar-layout {
+    grid-template-columns: 500px 1fr;
+    gap: 40px;
+  }
+
+  /* Cards de vagas com layout em grid para ecrãs muito grandes */
+  .cards-vagas {
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 24px;
+  }
+
+  /* Limitar largura máxima do conteúdo para legibilidade */
+  .main {
+    max-width: 1600px;
+    margin-left: 300px;
+    margin-right: auto;
+  }
+
+  .pipeline-main {
+    max-width: 1800px;
+    margin-left: 300px;
+    margin-right: auto;
+  }
+}
+
+/* Ecrãs muito grandes (2000px+) - para monitores 4K e ultra-wide */
+@media (min-width: 2000px) {
+  /* Sidebar mantém largura razoável */
+  .sidebar {
+    width: 320px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 320px;
+    max-width: calc(100vw - 320px);
+  }
+
+  /* Sidebar com texto maior */
+  .sidebar h2 {
+    font-size: 26px;
+  }
+
+  .nav-item {
+    font-size: 18px;
+    padding: 18px 36px;
+  }
+
+  /* Cards de métricas com mais espaço */
+  .cards {
+    gap: 55px;
+  }
+
+  .card {
+    min-width: 380px;
+    padding: 45px;
+  }
+
+  /* Grid de candidatos com mais colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 40px;
+  }
+
+  /* Pipeline com colunas mais largas */
+  .pipeline-column {
+    min-width: 480px;
+    width: 480px;
+  }
+
+  /* Modal mais largo */
+  .modal-content {
+    max-width: 700px;
+    padding: 48px 44px 40px 44px;
+  }
+
+  .modal-content-vaga {
+    min-width: 640px;
+    max-width: 700px;
+  }
+
+  /* Aumentar padding do main */
+  .main {
+    padding: 70px;
+  }
+
+  /* Pipeline header com mais espaço */
+  .pipeline-header {
+    padding: 70px;
+  }
+
+  .pipeline-header h1 {
+    font-size: 40px;
+  }
+
+  /* Pipeline footer com mais espaço */
+  .pipeline-footer {
+    padding: 70px;
+  }
+
+  /* Calendar layout com mais espaço */
+  .calendar-layout {
+    grid-template-columns: 550px 1fr;
+    gap: 45px;
+  }
+
+  /* Cards de vagas com layout em grid para ecrãs muito grandes */
+  .cards-vagas {
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 28px;
+  }
+
+  /* Limitar largura máxima do conteúdo para legibilidade */
+  .main {
+    max-width: 1900px;
+    margin-left: 320px;
+    margin-right: auto;
+  }
+
+  .pipeline-main {
+    max-width: 2100px;
+    margin-left: 320px;
+    margin-right: auto;
+  }
+}
+
+/* Ecrãs ultra 4K (2400px+) - para monitores 4K e muito grandes */
+@media (min-width: 2400px) {
+  /* Sidebar mantém largura razoável */
+  .sidebar {
+    width: 340px;
+  }
+
+  /* Ajustar margin-left do main */
+  .main,
+  .pipeline-main {
+    margin-left: 340px;
+    max-width: calc(100vw - 340px);
+  }
+
+  /* Sidebar com texto maior */
+  .sidebar h2 {
+    font-size: 28px;
+  }
+
+  .nav-item {
+    font-size: 19px;
+    padding: 20px 40px;
+  }
+
+  /* Cards de métricas com mais espaço */
+  .cards {
+    gap: 60px;
+  }
+
+  .card {
+    min-width: 400px;
+    padding: 50px;
+  }
+
+  /* Grid de candidatos com mais colunas */
+  .cards-candidatos {
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 45px;
+  }
+
+  /* Pipeline com colunas mais largas */
+  .pipeline-column {
+    min-width: 500px;
+    width: 500px;
+  }
+
+  /* Modal mais largo */
+  .modal-content {
+    max-width: 750px;
+    padding: 52px 48px 44px 48px;
+  }
+
+  .modal-content-vaga {
+    min-width: 680px;
+    max-width: 750px;
+  }
+
+  /* Aumentar padding do main */
+  .main {
+    padding: 80px;
+  }
+
+  /* Pipeline header com mais espaço */
+  .pipeline-header {
+    padding: 80px;
+  }
+
+  .pipeline-header h1 {
+    font-size: 44px;
+  }
+
+  /* Pipeline footer com mais espaço */
+  .pipeline-footer {
+    padding: 80px;
+  }
+
+  /* Calendar layout com mais espaço */
+  .calendar-layout {
+    grid-template-columns: 600px 1fr;
+    gap: 50px;
+  }
+
+  /* Cards de vagas com layout em grid para ecrãs muito grandes */
+  .cards-vagas {
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 32px;
+  }
+
+  /* Limitar largura máxima do conteúdo para legibilidade */
+  .main {
+    max-width: 2200px;
+    margin-left: 340px;
+    margin-right: auto;
+  }
+
+  .pipeline-main {
+    max-width: 2400px;
+    margin-left: 340px;
+    margin-right: auto;
   }
 }
