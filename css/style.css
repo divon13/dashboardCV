@@ -5305,3 +5305,12 @@ table tbody tr td[colspan="5"] {
     margin-right: auto;
   }
 }
+/* Logout button */
+.nav-item-logout {
+  margin-top: auto !important;
+  color: var(--error-color) !important;
+}
+.nav-item-logout:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #fca5a5 !important;
+}

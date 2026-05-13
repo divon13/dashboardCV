@@ -47,6 +47,7 @@
 
   <!-- Scripts JS (ordem importante: supabaseClient primeiro, dashboard.js por último) -->
   <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/requireAuth.js" defer></script>
   <script src="assets/js/utils.js" defer></script>
   <script src="assets/js/candidatos.js" defer></script>
   <script src="assets/js/vagas.js" defer></script>
@@ -55,7 +56,7 @@
   <script src="assets/js/dashboard.js" defer></script>
 </head>
 
-<body>
+<body style="visibility: hidden;">
 
   <!-- ── Sidebar de Navegação ──────────────────────────────────────────── -->
   <div class="sidebar">
@@ -65,6 +66,7 @@
     <a class="nav-item" href="vagas.html"><i class="fa-solid fa-briefcase"></i>Vagas</a>
     <a class="nav-item active" href="Pipeline.html"><i class="fa-solid fa-chart-column"></i>Fluxo</a>
     <a class="nav-item" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
+    <a class="nav-item nav-item-logout" href="#" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
   </div>
 
   <!-- ── Layout Principal do Pipeline ─────────────────────────────────── -->

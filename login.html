@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="midia/logo.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <title>Login - Dashboard RH</title>
+
+    <style>
+        /* Estilos Exclusivos da Página de Login */
+        body.login-body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top right, #0f172a, #020617);
+            font-family: 'Inter', sans-serif;
+            visibility: hidden; /* Revelado no auth.js após verificar a sessão */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Efeito de brilho de fundo (Glassmorphism / Glow) */
+        .login-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.15;
+            top: -100px;
+            right: -100px;
+            z-index: 0;
+            animation: pulseGlow 8s infinite alternate ease-in-out;
+        }
+
+        .login-glow-2 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--purple-color);
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.1;
+            bottom: -50px;
+            left: -100px;
+            z-index: 0;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.15; }
+            100% { transform: scale(1.2); opacity: 0.25; }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            z-index: 1;
+            perspective: 1000px;
+        }
+
+        .login-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            transform-origin: center;
+            animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px) rotateX(5deg);
+        }
+
+        @keyframes cardEnter {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .login-logo {
+            width: 70px;
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        .login-title {
+            color: var(--text-light);
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .login-subtitle {
+            color: var(--text-tertiary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--secondary-color);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid var(--border-dark);
+            color: var(--text-light);
+            padding: 14px 14px 14px 40px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: rgba(2, 6, 23, 0.9);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .form-control:focus + i {
+            color: var(--primary-color);
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--error-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="login-body">
+
+    <div class="login-glow"></div>
+    <div class="login-glow-2"></div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="midia/logo.png" alt="Logo" class="login-logo">
+                <h1 class="login-title">Bem-vindo de volta</h1>
+                <p class="login-subtitle">Faça login para acessar o painel de recrutamento</p>
+            </div>
+
+            <div id="errorMessage" class="error-message">
+                <i class="fa-solid fa-circle-exclamation"></i> Email ou senha incorretos.
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">E-mail Corporativo</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" class="form-control" placeholder="seu.nome@empresa.com" required autocomplete="email">
+                        <i class="fa-regular fa-envelope"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Palavra-passe</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="btn-login">
+                    Entrar no Dashboard <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                &copy; <script>document.write(new Date().getFullYear())</script> Dashboard RH. Todos os direitos reservados.
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do Supabase e Auth -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/supabaseClient.js"></script>
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>

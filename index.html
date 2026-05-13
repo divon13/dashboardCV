@@ -35,6 +35,7 @@
   <!-- Scripts JS carregados com defer (executam após o HTML estar pronto) -->
   <!-- A ordem importa: supabaseClient deve ser o primeiro -->
   <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/requireAuth.js" defer></script>
   <script src="assets/js/utils.js" defer></script>
   <script src="assets/js/candidatos.js" defer></script>
   <script src="assets/js/vagas.js" defer></script>
@@ -44,7 +45,7 @@
   <title>Dashboard RH</title>
 </head>
 
-<body>
+<body style="visibility: hidden;">
 
   <!-- ── Sidebar de Navegação ──────────────────────────────────────────── -->
   <!-- Fixa à esquerda em todas as páginas. O item "active" indica a página atual. -->
@@ -55,6 +56,7 @@
     <a class="nav-item" href="vagas.html"><i class="fa-solid fa-briefcase"></i>Vagas</a>
     <a class="nav-item" href="Pipeline.html"><i class="fa-solid fa-chart-column"></i>Fluxo</a>
     <a class="nav-item" href="Entrevistas.html"><i class="fa-solid fa-calendar-check"></i>Entrevistas</a>
+    <a class="nav-item nav-item-logout" href="#" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i>Sair</a>
   </div>
 
   <!-- ── Conteúdo Principal ────────────────────────────────────────────── -->
