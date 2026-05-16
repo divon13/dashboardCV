@@ -242,7 +242,7 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
     <div class="pipeline-match-score">
       <div class="match-score-label">
         <span>Pontuação de Compatibilidade</span>
-        <span class="match-score-value" style="color: ${corBarra};">${Math.round(matchScore)}%</span>
+        <span class="match-score-value">${Math.round(matchScore)}%</span>
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar-fill" style="width: ${matchScore}%; background: ${corBarra};"></div>

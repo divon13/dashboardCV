@@ -16,14 +16,14 @@
  *  10. CARDS DE CANDIDATOS
  *  11. MODAL DE DETALHES DO CANDIDATO
  *  12. PIPELINE CARD STYLES (cards arrastáveis)
- *  13. MODAL REDESIGN - DARK THEME
+ *  13. MODAL REDESIGN - CANDIDATO (tema claro)
  *  14. ENTREVISTAS REDESIGN (calendário)
  *  15. DROPDOWN PESQUISÁVEL
  *  16. KEBAB MENU
  *  17. INTERVIEW LIST VIEW & CARDS
  *  18. RESPONSIVIDADE
  *
- * Tema: Dark Mode com paleta Slate (Tailwind CSS Slate)
+ * Tema: Light mode — contraste alinhado a WCAG 2.1 AA (texto principal #222222).
  * Fonte principal: Inter (Google Fonts)
  * ─────────────────────────────────────────────────────────────
  */
@@ -56,7 +56,7 @@
   border-radius: 20px;
   border: none;
   background-color: var(--primary-color);
-  color: var(--text-light);
+  color: var(--text-on-accent);
   font-weight: bold;
   cursor: pointer;
 
@@ -105,7 +105,9 @@
   width: 100vw;
   height: 100vh;
   overflow: auto;
-  background: rgba(2, 6, 23, 0.85);
+  background: var(--overlay-scrim);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: none;
   /* Hidden by default */
   align-items: center;
@@ -116,7 +118,7 @@
   background: var(--surface-dark);
   padding: 32px 28px 24px 28px;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
   min-width: 340px;
   max-width: 420px;
   position: relative;
@@ -139,42 +141,38 @@
 
 /* ============================================
    1. VARIÁVEIS DE CORES (CSS Custom Properties)
-   Paleta Slate do Tailwind CSS adaptada para tema dark.
-   Todas as cores da aplicação são definidas aqui como
-   variáveis CSS para facilitar futuras alterações de tema.
+   Tema claro: nomes históricos mantidos (--text-light = texto principal escuro).
+   Contraste orientado a WCAG 2.1 AA (texto normal ≥4.5:1 sobre fundos claros).
    ============================================ */
 :root {
-  /* Primary Colors - Slate */
-  --background-dark: #020617;
-  /* slate-950 - Fundo principal escuro */
-  --surface-dark: #0f172a;
-  /* slate-900 - Fundo de cartões/sidebar */
-  --hover-dark: #1e293b;
-  /* slate-800 - Hover/seleção, tabela headers */
-  --border-dark: #334155;
-  /* slate-700 - Bordas */
+  /* Superfícies (nomes legados: *-dark = tokens de UI em modo claro) */
+  --background-dark: #f8fafc;
+  --surface-dark: #ffffff;
+  --hover-dark: #f1f5f9;
+  --border-dark: #e2e8f0;
 
-  /* Text Colors - Slate */
-  --text-light: #f1f5f9;
-  /* slate-100 - Texto principal */
-  --secondary-color: #cbd5e1;
-  /* slate-300 - Texto secundário */
-  --text-tertiary: #94a3b8;
-  /* slate-400 - Texto terciário */
+  /* Texto */
+  --text-light: #222222;
+  --secondary-color: #334155;
+  --text-tertiary: #475569;
   --text-muted: #64748b;
-  /* slate-500 - Texto muted */
+  --text-on-accent: #fafafa;
 
-  /* Accent Colors */
+  /* Accents */
   --primary-color: #2563eb;
-  /* blue-600 - Botões e elementos interativos */
-  --success-color: #22c55e;
-  /* green-500 - Estados de sucesso */
-  --warning-color: #eab308;
-  /* yellow-500 - Avisos */
-  --error-color: #ef4444;
-  /* red-500 - Alertas/erros */
-  --purple-color: #a855f7;
-  /* purple-500 - Ações secundárias */
+  --primary-link: #1d4ed8;
+  --success-color: #15803d;
+  --warning-color: #b45309;
+  --error-color: #b91c1c;
+  --purple-color: #7c3aed;
+
+  /* Overlay e hero */
+  --overlay-scrim: rgba(15, 23, 42, 0.45);
+  --hero-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, #ffffff 55%, var(--surface-dark) 100%);
+}
+
+html {
+  color-scheme: light;
 }
 
 /* ============================================
@@ -217,9 +215,10 @@ body {
   /* Ocupa 100% da altura da viewport */
   padding: 30px 0;
   background: var(--surface-dark);
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 4px 0 20px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border-dark);
 
 }
 
@@ -283,7 +282,7 @@ body {
   background: var(--surface-dark);
   padding: 25px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
   /* Sombra mais destacada */
   flex: 1;
   min-width: 250px;
@@ -294,7 +293,7 @@ body {
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
 }
 
 
@@ -338,7 +337,7 @@ body {
   background: var(--surface-dark);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
 }
 
 th,
@@ -407,7 +406,7 @@ table tbody tr td[colspan="5"] {
   background: linear-gradient(135deg, var(--surface-dark) 0%, var(--hover-dark) 100%);
   padding: 0;
   border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   min-width: 420px;
   max-width: 480px;
   position: relative;
@@ -493,7 +492,7 @@ table tbody tr td[colspan="5"] {
 .form-group-v2 textarea,
 .form-group-v2 select {
   width: 100%;
-  background: rgba(2, 6, 23, 0.4);
+  background: var(--surface-dark);
   color: var(--text-light);
   border: 1px solid var(--border-dark);
   border-radius: 8px;
@@ -504,12 +503,12 @@ table tbody tr td[colspan="5"] {
 }
 
 .form-group-v2 input[type="datetime-local"] {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 .form-group-v2 input[type="text"]::placeholder,
 .form-group-v2 textarea::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .form-group-v2 input[type="text"]:focus,
@@ -519,8 +518,8 @@ table tbody tr td[colspan="5"] {
 .form-group-v2 select:focus {
   outline: none;
   border-color: var(--primary-color);
-  background: rgba(2, 6, 23, 0.6);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: var(--hover-dark);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .form-group-v2 textarea {
@@ -548,19 +547,19 @@ table tbody tr td[colspan="5"] {
 }
 
 .btn-cancel {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--hover-dark);
   color: var(--text-light);
   border: 1px solid var(--border-dark);
 }
 
 .btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #e2e8f0;
   border-color: var(--primary-color);
 }
 
 .btn-submit {
   background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
-  color: var(--text-light);
+  color: var(--text-on-accent);
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
@@ -589,7 +588,7 @@ table tbody tr td[colspan="5"] {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.1);
   border: 1px solid var(--border-dark);
 }
 
@@ -662,7 +661,7 @@ table tbody tr td[colspan="5"] {
 }
 
 .btn-link:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover-dark);
 }
 
 /* ensure modal still on top */
@@ -731,6 +730,7 @@ table tbody tr td[colspan="5"] {
   /* escala normal */
   transition: transform 0.3s ease;
   /* transição suave na entrada e saída */
+  filter: brightness(0);
 }
 
 
@@ -771,7 +771,7 @@ table tbody tr td[colspan="5"] {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.1);
   border: 1px solid var(--border-dark);
   transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
@@ -779,7 +779,7 @@ table tbody tr td[colspan="5"] {
 
 .card-entrevista:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
 }
 
 .card-entrevista .card-top {
@@ -951,7 +951,7 @@ table tbody tr td[colspan="5"] {
   background: var(--surface-dark);
   border-radius: 12px;
   border: 1px solid var(--border-dark);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -960,27 +960,27 @@ table tbody tr td[colspan="5"] {
 
 /* Cores alternadas para as colunas */
 .pipeline-column-1 {
-  background: #0f172a;
+  background: var(--surface-dark);
 }
 
 .pipeline-column-2 {
-  background: #1a1f3a;
+  background: var(--hover-dark);
 }
 
 .pipeline-column-3 {
-  background: #0f172a;
+  background: var(--surface-dark);
 }
 
 .pipeline-column-4 {
-  background: #1a1f3a;
+  background: var(--hover-dark);
 }
 
 .pipeline-column-5 {
-  background: #0f172a;
+  background: var(--surface-dark);
 }
 
 .pipeline-column-6 {
-  background: #1a1f3a;
+  background: var(--hover-dark);
 }
 
 /* Cabeçalho da Coluna */
@@ -1006,7 +1006,7 @@ table tbody tr td[colspan="5"] {
 
 .pipeline-column-count {
   background: var(--primary-color);
-  color: var(--text-light);
+  color: var(--text-on-accent);
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -1077,7 +1077,7 @@ table tbody tr td[colspan="5"] {
   padding: 20px;
   border-radius: 12px;
   border: 1px solid var(--border-dark);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
 }
 
 /* Container dos Cartões de Resumo */
@@ -1102,7 +1102,7 @@ table tbody tr td[colspan="5"] {
 
 .pipeline-summary-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
 }
 
 .pipeline-summary-card h4 {
@@ -1172,7 +1172,7 @@ table tbody tr td[colspan="5"] {
   background: var(--surface-dark);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
   border: 1px solid var(--border-dark);
   display: flex;
   flex-direction: column;
@@ -1182,7 +1182,7 @@ table tbody tr td[colspan="5"] {
 
 .card-candidato:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
 }
 
 /* Header do Card (Nome/Vaga à esquerda, Nota à direita) */
@@ -1324,7 +1324,7 @@ table tbody tr td[colspan="5"] {
   width: 100%;
   padding: 12px;
   background: var(--primary-color);
-  color: var(--text-light);
+  color: var(--text-on-accent);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -1542,7 +1542,7 @@ table tbody tr td[colspan="5"] {
 .btn-download-curriculo {
   padding: 14px 32px;
   background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
-  color: var(--text-light);
+  color: var(--text-on-accent);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -1639,7 +1639,7 @@ table tbody tr td[colspan="5"] {
 
 .pipeline-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   border-color: var(--primary-color);
 }
 
@@ -1712,8 +1712,7 @@ table tbody tr td[colspan="5"] {
 }
 
 .match-score-value {
-  color: var(--warning-color);
-  /* Yellow for match score per request */
+  color: var(--text-light);
   font-weight: 700;
 }
 
@@ -1754,49 +1753,35 @@ table tbody tr td[colspan="5"] {
 .skill-tag {
   font-size: 11px;
   padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover-dark);
   color: var(--secondary-color);
   border-radius: 4px;
   border: 1px solid var(--border-dark);
 }
 
-/* =========================================
-   NEW MODAL REDESIGN - DARK THEME
-   ========================================= */
-
 /* ============================================
-   13. MODAL REDESIGN - DARK THEME
-   Redesenho completo do modal de detalhes do candidato
-   com layout de perfil profissional:
-   - Cabeçalho com avatar, nome e contactos
-   - Círculo de pontuação (match score)
-   - Grid de estatísticas (experiência, formação, etc.)
-   - Painel colapsável com resumo da IA
-   - 3 colunas: capacidades, formação, pipeline
-   - Animação de entrada (modalSlideIn)
+   13. MODAL REDESIGN — detalhe candidato (tema claro)
    ============================================ */
-/* Modal Overlay backdrop */
-.modal {
-  background: rgba(2, 6, 23, 0.95) !important;
-  /* Darker backdrop */
+
+/* Overlay: alinha com .modal global (z-index em secção vagas) */
+.modal.modal-candidato {
+  background: var(--overlay-scrim) !important;
   backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 /* Main Modal Content Container */
 .modal-content.modal-candidato-content {
-  background: #0f172a;
-  /* Slate 900 */
+  background: var(--surface-dark);
   border-radius: 20px;
-  border: 1px solid #1e293b;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12);
   padding: 0;
-  /* Remove default padding, we'll control it internally */
   max-width: 1000px;
   width: 95%;
   max-height: 90vh;
   overflow-y: auto;
-  color: #f8fafc;
-  /* Slate 50 */
+  color: var(--text-light);
   font-family: 'Inter', sans-serif;
 }
 
@@ -1806,11 +1791,11 @@ table tbody tr td[colspan="5"] {
 }
 
 .modal-content.modal-candidato-content::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: var(--hover-dark);
 }
 
 .modal-content.modal-candidato-content::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
@@ -1819,14 +1804,13 @@ table tbody tr td[colspan="5"] {
   padding: 20px 30px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-dark);
 }
 
 .btn-back-modal {
   background: transparent;
   border: none;
-  color: #3b82f6;
-  /* Blue 500 */
+  color: var(--primary-link);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -1846,7 +1830,7 @@ table tbody tr td[colspan="5"] {
   justify-content: space-between;
   align-items: center;
   padding: 30px;
-  background: linear-gradient(to right, #0f172a, #1e293b);
+  background: linear-gradient(to right, var(--hover-dark), var(--surface-dark));
 }
 
 .profile-main-info {
@@ -1860,21 +1844,20 @@ table tbody tr td[colspan="5"] {
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #3b82f6;
-  background-color: #1e293b;
+  border: 3px solid var(--primary-color);
+  background-color: var(--hover-dark);
 }
 
 .profile-text-info h1 {
   margin: 0 0 8px 0;
   font-size: 32px;
   font-weight: 700;
-  color: white;
+  color: var(--text-light);
 }
 
 .profile-role {
   font-size: 18px;
-  color: #94a3b8;
-  /* Slate 400 */
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
@@ -1882,7 +1865,7 @@ table tbody tr td[colspan="5"] {
   display: flex;
   gap: 20px;
   font-size: 14px;
-  color: #cbd5e1;
+  color: var(--secondary-color);
 }
 
 .profile-contact-row div {
@@ -1907,14 +1890,13 @@ table tbody tr td[colspan="5"] {
 
 .match-score-bg {
   fill: none;
-  stroke: #334155;
+  stroke: #cbd5e1;
   stroke-width: 8;
 }
 
 .match-score-progress {
   fill: none;
-  stroke: #10b981;
-  /* Emerald 500 */
+  stroke: #059669;
   stroke-width: 8;
   stroke-linecap: round;
   transition: stroke-dashoffset 1s ease-in-out;
@@ -1933,17 +1915,17 @@ table tbody tr td[colspan="5"] {
 .score-value {
   font-size: 28px;
   font-weight: 800;
-  color: white;
+  color: var(--text-light);
 }
 
 .score-label {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-top: -2px;
 }
 
-/* Stats Grid (Experience, Education etc) */
-.stats-grid {
+/* Stats grid dentro do modal (escopado — evita colisão com Entrevistas.html) */
+.modal-content.modal-candidato-content .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
@@ -1951,23 +1933,23 @@ table tbody tr td[colspan="5"] {
   margin-bottom: 25px;
 }
 
-.stat-card {
-  background: #172033;
+.modal-content.modal-candidato-content .stat-card {
+  background: var(--hover-dark);
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #334155;
+  border: 1px solid var(--border-dark);
 }
 
-.stat-label {
+.modal-content.modal-candidato-content .stat-label {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-bottom: 6px;
   display: block;
 }
 
-.stat-value {
+.modal-content.modal-candidato-content .stat-value {
   font-size: 16px;
-  color: white;
+  color: var(--text-light);
   font-weight: 600;
   display: block;
 }
@@ -1975,22 +1957,22 @@ table tbody tr td[colspan="5"] {
 /* Collapsible AI Summary */
 .ai-summary-section {
   margin: 0 30px 25px 30px;
-  border: 1px solid #253147;
+  border: 1px solid var(--border-dark);
   border-radius: 8px;
-  background: #131d30;
+  background: var(--hover-dark);
   overflow: hidden;
 }
 
 .ai-summary-header {
   padding: 15px 20px;
-  background: #1e293b;
+  background: var(--surface-dark);
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   border: none;
-  color: white;
+  color: var(--text-light);
   text-align: left;
 }
 
@@ -2003,7 +1985,7 @@ table tbody tr td[colspan="5"] {
 
 .ai-summary-content {
   padding: 20px;
-  color: #cbd5e1;
+  color: var(--secondary-color);
   line-height: 1.6;
   font-size: 14px;
 }
@@ -2017,11 +1999,10 @@ table tbody tr td[colspan="5"] {
 }
 
 .detail-column-box {
-  background: #172033;
-  /* Dark card bg */
+  background: var(--hover-dark);
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid #2d3b54;
+  border: 1px solid var(--border-dark);
 }
 
 .column-title {
@@ -2030,7 +2011,7 @@ table tbody tr td[colspan="5"] {
   gap: 10px;
   font-size: 16px;
   font-weight: 600;
-  color: white;
+  color: var(--text-light);
   margin-bottom: 20px;
 }
 
@@ -2044,13 +2025,13 @@ table tbody tr td[colspan="5"] {
   justify-content: space-between;
   margin-bottom: 5px;
   font-size: 13px;
-  color: #cbd5e1;
+  color: var(--secondary-color);
 }
 
 .skill-bar-bg {
   width: 100%;
   height: 8px;
-  background: #334155;
+  background: #e2e8f0;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -2058,20 +2039,20 @@ table tbody tr td[colspan="5"] {
 .skill-bar-fill {
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
 }
 
 /* Education List */
 .edu-item h4 {
   margin: 0;
   font-size: 15px;
-  color: white;
+  color: var(--text-light);
   line-height: 1.3;
 }
 
 .edu-item span {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   display: block;
   margin-top: 4px;
 }
@@ -2079,21 +2060,21 @@ table tbody tr td[colspan="5"] {
 .edu-item small {
   display: block;
   margin-top: 8px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
-/* Pipeline Stepper */
+/* Pipeline Stepper (bloco dentro do modal) */
 .pipeline-container {
   padding: 30px;
-  background: #0b1120;
+  background: var(--hover-dark);
   margin-top: 0;
 }
 
 .pipeline-title {
   font-size: 16px;
   font-weight: 600;
-  color: white;
+  color: var(--text-light);
   margin-bottom: 20px;
 }
 
@@ -2134,25 +2115,25 @@ table tbody tr td[colspan="5"] {
 
 /* Status variants */
 .step-circle.completed {
-  background: #10b981;
-  color: white;
+  background: #059669;
+  color: var(--text-on-accent);
 }
 
 .step-circle.current {
-  background: #3b82f6;
-  color: white;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  background: var(--primary-color);
+  color: var(--text-on-accent);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
 }
 
 .step-circle.pending {
-  background: #334155;
-  color: #94a3b8;
+  background: #e2e8f0;
+  color: var(--text-muted);
 }
 
 .step-line {
   width: 2px;
   flex-grow: 1;
-  background: #334155;
+  background: #e2e8f0;
   margin-top: 4px;
   margin-bottom: 4px;
   min-height: 20px;
@@ -2171,27 +2152,27 @@ table tbody tr td[colspan="5"] {
 
 .step-title {
   font-weight: 600;
-  color: white;
+  color: var(--text-light);
   font-size: 14px;
 }
 
 .step-date {
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* Recruiter Notes */
 .recruiter-section {
   padding: 30px;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid var(--border-dark);
 }
 
 .notes-input {
   width: 100%;
-  background: #172033;
-  border: 1px solid #334155;
+  background: var(--surface-dark);
+  border: 1px solid var(--border-dark);
   border-radius: 8px;
-  color: #f1f5f9;
+  color: var(--text-light);
   padding: 15px;
   font-family: inherit;
   resize: vertical;
@@ -2201,12 +2182,12 @@ table tbody tr td[colspan="5"] {
 
 .notes-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
 }
 
 .btn-save-notes {
-  background: #2563eb;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-on-accent);
   border: none;
   border-radius: 6px;
   padding: 10px 20px;
@@ -2314,7 +2295,7 @@ table tbody tr td[colspan="5"] {
   flex-direction: column;
   gap: 8px;
   /* Reduced from 12px */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
 }
 
 .stat-header {
@@ -2379,7 +2360,7 @@ table tbody tr td[colspan="5"] {
   appearance: none;
   /* Remove default arrow */
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   min-width: 160px;
@@ -2455,7 +2436,7 @@ table tbody tr td[colspan="5"] {
   border-radius: 12px;
   padding: 16px;
   /* Reduced from 24px */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
 }
 
 .calendar-header {
@@ -2568,7 +2549,7 @@ table tbody tr td[colspan="5"] {
 
 .day-cell.today .day-number {
   background: var(--primary-color);
-  color: white;
+  color: var(--text-on-accent);
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -2607,7 +2588,7 @@ table tbody tr td[colspan="5"] {
   border-radius: 12px;
   padding: 16px;
   /* Reduced from 24px */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
   display: flex;
   flex-direction: column;
 }
@@ -2677,7 +2658,8 @@ table tbody tr td[colspan="5"] {
 
 .event-status-badge {
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--hover-dark);
+  color: var(--text-muted);
   padding: 2px 8px;
   border-radius: 10px;
   align-self: flex-start;
@@ -2733,7 +2715,7 @@ table tbody tr td[colspan="5"] {
   overflow-y: auto;
   z-index: 3000;
   margin-top: 5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
 }
 
 .dropdown-options.active {
@@ -2807,15 +2789,13 @@ table tbody tr td[colspan="5"] {
   position: absolute;
   right: 0;
   top: 40px;
-  background-color: rgba(15, 23, 42, 0.9);
-  /* Slate 900 semi-transparente */
+  background-color: var(--surface-dark);
   backdrop-filter: blur(10px);
   min-width: 180px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
   border-radius: 12px;
   z-index: 1000;
-  border: 1px solid rgba(51, 65, 85, 0.8);
-  /* Slate 700 mais visível */
+  border: 1px solid var(--border-dark);
   overflow: hidden;
   flex-direction: column;
   padding: 6px;
@@ -2869,7 +2849,7 @@ table tbody tr td[colspan="5"] {
 .dropdown-item.delete-btn {
   color: var(--error-color);
   margin-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-dark);
   /* Separator for delete */
 }
 
@@ -2908,14 +2888,14 @@ table tbody tr td[colspan="5"] {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
   position: relative;
   overflow: hidden;
 }
 
 .interview-list-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
   border-color: var(--primary-color);
 }
 
@@ -2994,7 +2974,7 @@ table tbody tr td[colspan="5"] {
   margin: 0;
   font-size: 19px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-light);
   letter-spacing: -0.5px;
 }
 
@@ -3007,8 +2987,8 @@ table tbody tr td[colspan="5"] {
 .ilc-score {
   font-weight: 800;
   font-size: 18px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-light);
+  background: var(--hover-dark);
   padding: 4px 10px;
   border-radius: 8px;
 }
@@ -3075,9 +3055,10 @@ table tbody tr td[colspan="5"] {
   margin-bottom: 22px;
   padding: 22px 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.14) 0%, rgba(15, 23, 42, 0.95) 45%, var(--surface-dark) 100%);
-  border: 1px solid rgba(51, 65, 85, 0.85);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  background-color: var(--surface-dark);
+  background-image: var(--hero-gradient);
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 }
 
 .dashboard-greeting {
@@ -3119,7 +3100,7 @@ table tbody tr td[colspan="5"] {
   gap: 10px;
   padding: 10px 16px;
   border-radius: 999px;
-  background: rgba(2, 6, 23, 0.55);
+  background: var(--hover-dark);
   border: 1px solid var(--border-dark);
   font-size: 13px;
   font-weight: 500;
@@ -3152,7 +3133,7 @@ table tbody tr td[colspan="5"] {
 }
 
 .btn-dash-secondary {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-dark);
   color: var(--text-light);
   border: 1px solid var(--border-dark);
 }
@@ -3164,7 +3145,7 @@ table tbody tr td[colspan="5"] {
 
 .btn-dash-primary {
   background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
 }
@@ -3332,7 +3313,7 @@ table tbody tr td[colspan="5"] {
 
 .section-link:hover {
   background: rgba(37, 99, 235, 0.12);
-  color: #93c5fd;
+  color: var(--primary-link);
 }
 
 .section-link i {
@@ -3367,7 +3348,7 @@ table tbody tr td[colspan="5"] {
   font-size: 15px;
   border-radius: 14px;
   border: 1px dashed var(--border-dark);
-  background: rgba(2, 6, 23, 0.35);
+  background: var(--hover-dark);
 }
 
 .empty-state-dashboard i {
@@ -3511,7 +3492,7 @@ table tbody tr td[colspan="5"] {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(2, 6, 23, 0.45);
+  background: var(--hover-dark);
   border: 1px solid var(--border-dark);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -3597,7 +3578,7 @@ table tbody tr td[colspan="5"] {
 
 .card-vaga:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
   border-color: rgba(37, 99, 235, 0.45);
 }
 
@@ -3682,7 +3663,7 @@ table tbody tr td[colspan="5"] {
   padding: 48px 24px;
   border-radius: 16px;
   border: 1px dashed var(--border-dark);
-  background: rgba(2, 6, 23, 0.35);
+  background: var(--hover-dark);
 }
 
 .vagas-empty-icon {
@@ -3795,17 +3776,18 @@ table tbody tr td[colspan="5"] {
   justify-content: center;
   padding: 24px 16px;
   backdrop-filter: blur(10px);
-  background: rgba(2, 6, 23, 0.88);
+  -webkit-backdrop-filter: blur(10px);
+  background: var(--overlay-scrim);
 }
 
 /* ── Superfícies de modal ── */
 
 .modal-surface {
   border-radius: 16px;
-  border: 1px solid rgba(51, 65, 85, 0.85);
+  border: 1px solid var(--border-dark);
   box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 20px 40px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .modal-content-vaga.modal-surface--vaga {
@@ -3886,7 +3868,7 @@ table tbody tr td[colspan="5"] {
   border-radius: 16px;
   background: var(--surface-dark);
   border: 1px solid var(--border-dark);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
   text-align: center;
 }
 
@@ -3959,7 +3941,7 @@ table tbody tr td[colspan="5"] {
   font-size: 14px;
   font-weight: 600;
   color: var(--secondary-color);
-  background: rgba(2, 6, 23, 0.45);
+  background: var(--hover-dark);
   border: 1px dashed var(--border-dark);
 }
 
@@ -4019,7 +4001,7 @@ table tbody tr td[colspan="5"] {
 .det-vaga-date {
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(2, 6, 23, 0.35);
+  background: var(--hover-dark);
   border: 1px solid var(--border-dark);
 }
 
@@ -4066,8 +4048,8 @@ table tbody tr td[colspan="5"] {
   font-size: 14px;
   line-height: 1.55;
   color: var(--secondary-color);
-  background: rgba(30, 41, 59, 0.45);
-  border: 1px solid rgba(51, 65, 85, 0.55);
+  background: var(--hover-dark);
+  border: 1px solid var(--border-dark);
   white-space: pre-wrap;
 }
 
@@ -4077,7 +4059,7 @@ table tbody tr td[colspan="5"] {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  background: rgba(2, 6, 23, 0.25);
+  background: var(--hover-dark);
 }
 
 .modal-footer-actions .btn-cancel {
@@ -4099,7 +4081,7 @@ table tbody tr td[colspan="5"] {
   width: 100%;
   min-width: 0;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
@@ -4187,8 +4169,8 @@ table tbody tr td[colspan="5"] {
 }
 
 .pipeline-summary-wrapper--v2 {
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 }
 
 .pipeline-footer .pipeline-footer-title {
@@ -4200,7 +4182,7 @@ table tbody tr td[colspan="5"] {
 
 .pipeline-summary-card--danger {
   border-color: rgba(239, 68, 68, 0.45) !important;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(15, 23, 42, 0.9)) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), var(--hover-dark)) !important;
 }
 
 .pipeline-summary-card--danger .pipeline-summary-count {
@@ -4209,7 +4191,7 @@ table tbody tr td[colspan="5"] {
 
 .pipeline-column {
   border-radius: 14px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
 }
 
 .pipeline-column-header {
@@ -4439,7 +4421,7 @@ table tbody tr td[colspan="5"] {
   padding: 44px 24px;
   border-radius: 16px;
   border: 1px dashed var(--border-dark);
-  background: rgba(2, 6, 23, 0.35);
+  background: var(--hover-dark);
 }
 
 .candidatos-empty-icon {
@@ -4477,8 +4459,8 @@ table tbody tr td[colspan="5"] {
 
 .modal-candidato-content {
   border-radius: 16px;
-  border: 1px solid rgba(51, 65, 85, 0.85);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
 }
 
 .modal-candidato-body {

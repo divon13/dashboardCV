@@ -17,18 +17,18 @@
  * Retorna uma cor hexadecimal baseada na pontuação (nota) do candidato.
  * Usada para colorir o círculo de pontuação nos cards e no modal.
  *
- * Escala de cores:
- *   - Verde  (#28a745): nota >= 67 → candidato bem qualificado
- *   - Amarelo (#ffc107): nota >= 34 → qualificação média
- *   - Vermelho (#dc3545): nota < 34  → baixa qualificação
+ * Escala de cores (tons escuros para contraste AA em fundo claro):
+ *   - Verde  (#15803d): nota >= 67 → bem qualificado
+ *   - Âmbar (#b45309): nota >= 34 → qualificação média
+ *   - Vermelho (#b91c1c): nota < 34 → baixa qualificação
  *
  * @param {number} nota - Pontuação de 0 a 100
  * @returns {string} Cor em formato hexadecimal
  */
 function getCorPorPontuacao(nota) {
-    if (nota >= 67) return '#28a745'; // Verde para alta pontuação
-    if (nota >= 34) return '#ffc107'; // Amarelo para pontuação média
-    return '#dc3545'; // Vermelho para baixa pontuação
+    if (nota >= 67) return '#15803d';
+    if (nota >= 34) return '#b45309';
+    return '#b91c1c';
 }
 
 /**

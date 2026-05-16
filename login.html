@@ -21,7 +21,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(circle at top right, #0f172a, #020617);
+            background: radial-gradient(circle at 85% 8%, rgba(37, 99, 235, 0.12) 0%, transparent 42%),
+                linear-gradient(165deg, #f8fafc 0%, #ffffff 55%);
             font-family: 'Inter', sans-serif;
             visibility: hidden; /* Revelado no auth.js após verificar a sessão */
             opacity: 0;
@@ -30,7 +31,7 @@
             overflow: hidden;
         }
 
-        /* Efeito de brilho de fundo (Glassmorphism / Glow) */
+        /* Efeito de brilho de fundo (discreto em tema claro) */
         .login-glow {
             position: absolute;
             width: 400px;
@@ -38,7 +39,7 @@
             background: var(--primary-color);
             border-radius: 50%;
             filter: blur(150px);
-            opacity: 0.15;
+            opacity: 0.08;
             top: -100px;
             right: -100px;
             z-index: 0;
@@ -52,15 +53,15 @@
             background: var(--purple-color);
             border-radius: 50%;
             filter: blur(120px);
-            opacity: 0.1;
+            opacity: 0.06;
             bottom: -50px;
             left: -100px;
             z-index: 0;
         }
 
         @keyframes pulseGlow {
-            0% { transform: scale(1); opacity: 0.15; }
-            100% { transform: scale(1.2); opacity: 0.25; }
+            0% { transform: scale(1); opacity: 0.08; }
+            100% { transform: scale(1.2); opacity: 0.12; }
         }
 
         .login-container {
@@ -72,13 +73,13 @@
         }
 
         .login-card {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-dark);
             border-radius: 16px;
             padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
             transform-origin: center;
             animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             opacity: 0;
@@ -101,7 +102,7 @@
             width: 70px;
             height: auto;
             margin-bottom: 20px;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            filter: brightness(0) drop-shadow(0 2px 4px rgba(15, 23, 42, 0.08));
         }
 
         .login-title {
@@ -148,7 +149,7 @@
 
         .form-control {
             width: 100%;
-            background: rgba(2, 6, 23, 0.6);
+            background: var(--surface-dark);
             border: 1px solid var(--border-dark);
             color: var(--text-light);
             padding: 14px 14px 14px 40px;
@@ -165,8 +166,8 @@
         .form-control:focus {
             outline: none;
             border-color: var(--primary-color);
-            background: rgba(2, 6, 23, 0.9);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            background: var(--surface-dark);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
 
         .form-control:focus + i {
@@ -176,7 +177,7 @@
         .btn-login {
             width: 100%;
             background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
-            color: white;
+            color: var(--text-on-accent);
             border: none;
             padding: 14px;
             border-radius: 10px;
