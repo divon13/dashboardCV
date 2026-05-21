@@ -57,7 +57,7 @@ async function carregarEntrevistas() {
     // Define "hoje" como o início do dia atual (meia-noite) para filtrar corretamente
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const hojeISO = hoje.toISOString().split('T')[0]; // Formato "YYYY-MM-DD"
+    const hojeISO = getLocalIsoDate(hoje); // Formato "YYYY-MM-DD"
 
     // Busca entrevistas com JOIN nas tabelas relacionadas
     const { data, error } = await supabaseClient
@@ -954,7 +954,7 @@ function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj =
             renderSidePanel(selectedDate); // Atualiza o painel lateral
         };
         // Guarda a data no atributo data-date para ser usado por updateCalendarDots
-        el.setAttribute('data-date', dateObj.toISOString().split('T')[0]); // "YYYY-MM-DD"
+        el.setAttribute('data-date', getLocalIsoDate(dateObj)); // "YYYY-MM-DD"
     }
 
     el.innerHTML = `
@@ -976,11 +976,7 @@ function createDayCell(day, isOtherMonth, isToday, isSelected = false, dateObj =
  * @param {Date} date - Mês de referência (usado para contexto)
  */
 async function fetchMonthInterviews(date) {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const hojeISO = hoje.toISOString().split('T')[0];
-
-    // Busca apenas as entrevistas futuras (a partir de hoje) para não carregar todas do banco de dados
+    // Busca todas as entrevistas para permitir visualizar o histórico no calendário e painel lateral
     const { data, error } = await supabaseClient
         .from("Entrevistas")
         .select(`
@@ -1056,7 +1052,7 @@ function updateCalendarDots() {
  * @param {Date} date - O dia selecionado no calendário
  */
 function renderSidePanel(date) {
-    const dateKey = date.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const dateKey = getLocalIsoDate(date); // "YYYY-MM-DD"
     const displayDate = date.toLocaleDateString('pt-AO', { day: 'numeric', month: 'long' });
 
     // Atualiza o título do painel lateral com a data selecionada
@@ -1129,27 +1125,36 @@ function renderSidePanel(date) {
  */
 function updateStatsCounters() {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const todayStr = getLocalIsoDate(today); // "YYYY-MM-DD"
 
     // Calcula o início da semana (segunda-feira)
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Dia da semana: 0=Dom, 1=Seg...
-    const startOfWeekStr = startOfWeek.toISOString().split('T')[0];
+    const startOfWeekStr = getLocalIsoDate(startOfWeek);
 
     // Calcula o fim da semana (domingo)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    const endOfWeekStr = endOfWeek.toISOString().split('T')[0];
+    const endOfWeekStr = getLocalIsoDate(endOfWeek);
 
     // Calcula cada contador a partir da cache
     const countToday = interviewsCache.filter(i => i.Data && i.Data.startsWith(todayStr)).length;
+    
     const countWeek = interviewsCache.filter(i => {
         if (!i.Data) return false;
-        const dateStr = i.Data.split('T')[0];
+        const dateStr = i.Data.substring(0, 10); // "YYYY-MM-DD"
         return dateStr >= startOfWeekStr && dateStr <= endOfWeekStr;
     }).length;
-    const countPending = interviewsCache.filter(i => i.status === 'Agendada').length;
-    const countPresencial = interviewsCache.filter(i => i["Tipo de entrevista"] === 'Presencial').length;
+
+    // Extrai apenas as entrevistas futuras para calcular os outros cards
+    const upcomingInterviews = interviewsCache.filter(i => {
+        if (!i.Data) return false;
+        const dateStr = i.Data.substring(0, 10);
+        return dateStr >= todayStr;
+    });
+
+    const countPending = upcomingInterviews.filter(i => i.status === 'Agendada').length;
+    const countPresencial = upcomingInterviews.filter(i => i["Tipo de entrevista"] === 'Presencial').length;
 
     // Anima cada contador de 0 até o valor calculado (duração: 1 segundo)
     animateValue("statHoje", 0, countToday, 1000);
