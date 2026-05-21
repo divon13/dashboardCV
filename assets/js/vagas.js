@@ -23,7 +23,7 @@
  * Isso garante que vagas expiradas sejam tratadas corretamente na UI e métricas.
  */
 async function verificarVagasExpiradas() {
-    const hojeISO = new Date().toISOString().split('T')[0];
+    const hojeISO = getLocalIsoDate();
 
     try {
         // 1. Fecha as que expiraram (Aberta -> Encerrada)

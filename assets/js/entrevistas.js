@@ -86,7 +86,7 @@ async function carregarEntrevistas() {
     // Filtra as entrevistas que têm data igual a hoje
     const countHojeEl = document.getElementById("entrevistas-hoje-val");
     if (countHojeEl) {
-        const hojeISO = new Date().toISOString().split('T')[0];
+        const hojeISO = getLocalIsoDate();
         const numHoje = data ? data.filter(e => e.Data && e.Data.startsWith(hojeISO)).length : 0;
         countHojeEl.textContent = numHoje;
     }
@@ -609,13 +609,24 @@ async function renderListView() {
 
     listContainer.innerHTML = '';
 
-    if (interviewsCache.length === 0) {
-        listContainer.innerHTML = '<div class="empty-state">Nenhuma entrevista encontrada</div>';
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const hojeISO = getLocalIsoDate(hoje);
+
+    // Filtra para exibir apenas entrevistas de hoje em diante na vista de lista
+    const upcomingInterviews = interviewsCache.filter(i => {
+        if (!i.Data) return false;
+        const dateStr = i.Data.substring(0, 10); // Extrai apenas "YYYY-MM-DD" da string do Supabase
+        return dateStr >= hojeISO;
+    });
+
+    if (upcomingInterviews.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">Nenhuma entrevista futura encontrada</div>';
         return;
     }
 
-    // Cria um card para cada entrevista na cache
-    interviewsCache.forEach(interview => {
+    // Cria um card para cada entrevista futura
+    upcomingInterviews.forEach(interview => {
         const card = createInterviewListCard(interview);
         listContainer.appendChild(card);
     });
@@ -986,7 +997,6 @@ async function fetchMonthInterviews(date) {
       Entrevistador(id, Nome)
     `)
         .eq('Vagas.status_vagas', 'aberta')
-        .gte('Data', hojeISO)
         .order('Data', { ascending: true }); // Ordena por data crescente
 
     if (error) {

@@ -278,3 +278,18 @@ function showNotification(message, type = 'success') {
         }, 300);
     }, 5000);
 }
+
+/**
+ * Retorna a data no formato "YYYY-MM-DD" baseada no fuso horário local.
+ * Substitui o uso de .toISOString().split('T')[0] que sofre de bugs de UTC
+ * quando executado em fusos horários como UTC+1 (Angola).
+ *
+ * @param {Date} date - Objeto Date
+ * @returns {string} String no formato "YYYY-MM-DD"
+ */
+function getLocalIsoDate(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}

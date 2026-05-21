@@ -2422,8 +2422,8 @@ table tbody tr td[colspan="5"] {
 /* Calendar Layout */
 .calendar-layout {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  /* Calendar uses more space */
+  grid-template-columns: 1fr 1fr;
+  /* 50/50 split between Calendar and Details */
   gap: 20px;
   /* Reduced from 24px */
   min-height: 400px;
@@ -4726,7 +4726,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout em duas colunas compactas */
   .calendar-layout {
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
   }
 
@@ -4806,7 +4806,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout em duas colunas */
   .calendar-layout {
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -4874,7 +4874,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout com mais espaço */
   .calendar-layout {
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 30px;
   }
 }
@@ -4957,7 +4957,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout com mais espaço */
   .calendar-layout {
-    grid-template-columns: 450px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 35px;
   }
 
@@ -5060,7 +5060,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout com mais espaço */
   .calendar-layout {
-    grid-template-columns: 500px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 40px;
   }
 
@@ -5162,7 +5162,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout com mais espaço */
   .calendar-layout {
-    grid-template-columns: 550px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 45px;
   }
 
@@ -5264,7 +5264,7 @@ table tbody tr td[colspan="5"] {
 
   /* Calendar layout com mais espaço */
   .calendar-layout {
-    grid-template-columns: 600px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 50px;
   }
 
