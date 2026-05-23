@@ -121,8 +121,19 @@
           </div>
         </div>
 
-        <!-- Coluna 3: Oferta enviada — proposta de emprego enviada ao candidato -->
+        <!-- Coluna 3: Entrevista feita — entrevista já realizada, aguardar decisão -->
         <div class="pipeline-column pipeline-column-3">
+          <div class="pipeline-column-header">
+            <h3>Entrevista feita</h3>
+            <span class="pipeline-column-count">0</span>
+          </div>
+          <div class="pipeline-column-body">
+            <!-- Vazio - sem cards de candidatos -->
+          </div>
+        </div>
+
+        <!-- Coluna 4: Oferta enviada — proposta de emprego enviada ao candidato -->
+        <div class="pipeline-column pipeline-column-4">
           <div class="pipeline-column-header">
             <h3>Oferta enviada</h3>
             <span class="pipeline-column-count">0</span>
@@ -132,8 +143,8 @@
           </div>
         </div>
 
-        <!-- Coluna 4: Contratado — candidato aceite e contratado -->
-        <div class="pipeline-column pipeline-column-4">
+        <!-- Coluna 5: Contratado — candidato aceite e contratado -->
+        <div class="pipeline-column pipeline-column-5">
           <div class="pipeline-column-header">
             <h3>Contratado</h3>
             <span class="pipeline-column-count">0</span>
@@ -151,8 +162,7 @@
     <div class="pipeline-footer">
       <div class="pipeline-summary-wrapper pipeline-summary-wrapper--v2">
         <h2 class="pipeline-footer-title">Resumo do pipeline</h2>
-        <!-- .pipeline-summary-count são selecionados por índice (nth-child) em pipeline.js -->
-        <div class="pipeline-summary-cards">
+        <div class="pipeline-summary-cards" style="grid-template-columns: repeat(6, 1fr);">
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
             <h4>Aplicado</h4>
@@ -160,6 +170,10 @@
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>
             <h4>Entrevista técnica</h4>
+          </div>
+          <div class="pipeline-summary-card">
+            <p class="pipeline-summary-count">0</p>
+            <h4>Entrevista feita</h4>
           </div>
           <div class="pipeline-summary-card">
             <p class="pipeline-summary-count">0</p>

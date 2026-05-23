@@ -304,19 +304,102 @@
     </div>
   </div>
 
-  <!-- ── Modal de Confirmação de Mudança de Status da Entrevista ────────── -->
-  <div id="confirmStatusModal" class="modal modal-confirm" style="display:none;">
-    <div class="modal-confirm-card modal-confirm-card--primary">
-      <div class="modal-confirm__icon modal-confirm__icon--primary" aria-hidden="true">
-        <i class="fa-solid fa-arrow-trend-up"></i>
+  <!-- ── Modal de Condução da Entrevista ─────────────────────────────── -->
+  <!-- Aberto pelo botão "Conduzir" no card da entrevista.               -->
+  <!-- Layout amplo lado-a-lado: Currículo vs Ficha de Avaliação         -->
+  <div id="conduzirEntrevistaModal" class="modal modal-conduzir-entrevista" style="display:none;">
+    <div class="modal-content-conduzir">
+      <div class="modal-header modal-header--conduzir">
+        <div class="modal-header__lead">
+          <h2>Conduzir Entrevista: <span id="conduzirNomeCandidato">Candidato</span></h2>
+          <p class="modal-subtitle">Vaga: <span id="conduzirNomeVaga">Vaga</span></p>
+        </div>
+        <span class="close" id="fecharConduzirModal" aria-label="Fechar">&times;</span>
       </div>
-      <h2 id="statusModalTitle" class="modal-confirm__title">Avançar estado?</h2>
-      <p id="statusModalMessage" class="modal-confirm__text">Deseja atualizar o estado desta entrevista?</p>
-      <input type="hidden" id="idEntrevistaStatus">
-      <input type="hidden" id="novoStatusEntrevista">
-      <div class="modal-confirm__actions">
-        <button type="button" class="btn-cancel" id="cancelarStatusBtn">Cancelar</button>
-        <button type="button" class="btn-submit" id="confirmarStatusBtn">Confirmar</button>
+
+      <div class="modal-conduzir-body">
+        <!-- Lado Esquerdo: Visualizador do Currículo -->
+        <div class="conduzir-left">
+          <div class="pdf-viewer-container">
+            <iframe id="iframeCurriculo" src="" frameborder="0" title="Currículo do Candidato"></iframe>
+            <div id="noCurriculoMsg" class="no-pdf-msg" style="display:none;">
+              <i class="fa-solid fa-file-excel"></i>
+              <p>Currículo não disponível</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lado Direito: Guias e Avaliação -->
+        <div class="conduzir-right">
+          <!-- Guia de Perguntas (IA) -->
+          <div class="conduzir-section">
+            <h3><i class="fa-solid fa-robot"></i> Perguntas Sugeridas (IA)</h3>
+            <ul id="listaPerguntasSugeridas" class="perguntas-list">
+              <!-- Preenchido via JS -->
+            </ul>
+          </div>
+
+          <!-- Ficha de Avaliação -->
+          <form id="formAvaliacaoEntrevista">
+            <input type="hidden" id="conduzirEntrevistaId">
+            <input type="hidden" id="conduzirCandidatoId">
+            <input type="hidden" id="conduzirUrlCurriculo">
+            
+            <div class="conduzir-section">
+              <h3><i class="fa-solid fa-star-half-stroke"></i> Avaliação</h3>
+              
+              <div class="avaliacao-grid">
+                <div class="form-group-v2">
+                  <label for="notaTecnica">Conhecimento Técnico (1 a 5)</label>
+                  <select id="notaTecnica" class="filter-select form-select-full" required>
+                    <option value="">Selecione...</option>
+                    <option value="1">1 - Muito Fraco</option>
+                    <option value="2">2 - Fraco</option>
+                    <option value="3">3 - Adequado</option>
+                    <option value="4">4 - Bom</option>
+                    <option value="5">5 - Excelente</option>
+                  </select>
+                </div>
+
+                <div class="form-group-v2">
+                  <label for="notaComunicacao">Comunicação (1 a 5)</label>
+                  <select id="notaComunicacao" class="filter-select form-select-full" required>
+                    <option value="">Selecione...</option>
+                    <option value="1">1 - Muito Fraco</option>
+                    <option value="2">2 - Fraco</option>
+                    <option value="3">3 - Adequada</option>
+                    <option value="4">4 - Boa</option>
+                    <option value="5">5 - Excelente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group-v2" style="margin-top: 15px;">
+                <label for="notasEntrevistador">Notas da Entrevista</label>
+                <textarea id="notasEntrevistador" rows="5" placeholder="Registe os principais pontos da conversa, pontos fortes, etc."></textarea>
+              </div>
+            </div>
+
+            <!-- Decisão Final -->
+            <div class="conduzir-section conduz-decisao-section">
+              <h3><i class="fa-solid fa-gavel"></i> Decisão Final</h3>
+              <div class="form-group-v2">
+                <label for="decisaoFinal">Qual é o próximo passo para este candidato?</label>
+                <select id="decisaoFinal" class="filter-select form-select-full" required>
+                  <option value="">Selecione uma decisão...</option>
+                  <option value="Passar">✅ Passar de fase (Oferta enviada no pipeline)</option>
+                  <option value="Guardar">💾 Guardar (Mover para Entrevista feita)</option>
+                  <option value="Reprovar">❌ Reprovar (Eliminar candidato e currículo)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions form-actions--agendamento">
+              <button type="button" class="btn-cancel" id="cancelarConduzir">Cancelar</button>
+              <button type="submit" class="btn-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

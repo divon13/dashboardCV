@@ -28,7 +28,6 @@
  *   - updateCalendarDots()        → Adiciona pontos coloridos nos dias com entrevistas
  *   - updateStatsCounters()       → Atualiza os 4 contadores de estatísticas
  *   - animateValue()              → Anima numericamente um contador de 0 até o valor
- *   - confirmInterview()          → Avança o status: Agendada → Confirmada → Concluída
  *   - editInterview()             → Abre o modal pré-preenchido para edição
  *   - deleteInterview()           → Elimina uma entrevista da base de dados
  *   - changeMonth()               → Navega para o mês anterior/seguinte no calendário
@@ -641,7 +640,7 @@ async function renderListView() {
  *   - Nome do candidato, vaga e pontuação (%)
  *   - Data, hora e entrevistador
  *   - Observações
- *   - Menu kebab com ações: Confirmar/Concluir, Editar, Eliminar
+ *   - Menu kebab com ações: Conduzir, Editar, Eliminar
  *
  * @param {Object} i - Objeto da entrevista com JOINs do Supabase
  * @returns {HTMLElement} Elemento <div> com o card completo
@@ -686,8 +685,8 @@ function createInterviewListCard(i) {
             <div class="kebab-menu-container">
                 <button class="kebab-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 <div class="kebab-dropdown">
-                    ${status === 'Agendada' ? `<button class="dropdown-item btn-confirmar"><i class="fa-solid fa-check"></i> Confirmar</button>` : ''}
-                    ${status === 'Confirmada' ? `<button class="dropdown-item btn-confirmar"><i class="fa-solid fa-check-double"></i> Concluir</button>` : ''}
+
+                    <button class="dropdown-item btn-conduzir"><i class="fa-solid fa-clipboard-question"></i> Conduzir</button>
                     <button class="dropdown-item btn-editar"><i class="fa-solid fa-pen"></i> Editar</button>
                     <button class="dropdown-item delete-btn btn-eliminar"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
                 </div>
@@ -736,12 +735,12 @@ function createInterviewListCard(i) {
     }
 
     // ── Botões de ação do card ────────────────────────────────────────────
-    const btnConfirmar = card.querySelector('.btn-confirmar');
+    const btnConduzir = card.querySelector('.btn-conduzir');
     const btnEditar = card.querySelector('.btn-editar');
     const btnEliminar = card.querySelector('.btn-eliminar');
 
-    // Confirmar/Concluir: avança o status da entrevista
-    if (btnConfirmar) btnConfirmar.onclick = () => confirmInterview(i.id, status);
+    // Conduzir: abre o modal para avaliar o candidato
+    if (btnConduzir) btnConduzir.onclick = () => openConduzirModal(i);
     // Editar: abre o modal pré-preenchido com os dados desta entrevista
     if (btnEditar) btnEditar.onclick = () => editInterview(i);
     // Eliminar: pede confirmação e elimina a entrevista
@@ -751,35 +750,52 @@ function createInterviewListCard(i) {
 }
 
 /**
- * Abre o modal de confirmação para avançar o status da entrevista.
- *   Agendada → Confirmada → Concluída
- *
- * @param {number} id - ID da entrevista a atualizar
- * @param {string} currentStatus - Status atual da entrevista
+ * Extrai o caminho do ficheiro no bucket curriculos a partir da URL pública.
+ * @param {string} url - URL do currículo no Supabase Storage
+ * @returns {string|null} Caminho relativo no bucket ou null
  */
-function confirmInterview(id, currentStatus) {
-    const modal = document.getElementById('confirmStatusModal');
-    if (!modal) return;
-    
-    let newStatus = 'Confirmada';
-    let message = 'Deseja marcar esta entrevista como Confirmada?';
+function extrairCaminhoCurriculo(url) {
+    if (!url || typeof url !== 'string') return null;
+    const match = url.match(/\/curriculos\/(.+?)(?:\?|$)/);
+    return match ? decodeURIComponent(match[1]) : null;
+}
 
-    // Se já está Confirmada, o próximo passo é Concluída
-    if (currentStatus === 'Confirmada') {
-        newStatus = 'Concluída';
-        message = 'Deseja marcar esta entrevista como Concluída?';
+/**
+ * Remove o ficheiro do currículo no Storage e apaga o candidato e as suas entrevistas.
+ * @param {number|string} candidatoId - ID do candidato
+ * @param {string|null} urlCurriculo - URL pública do currículo (opcional)
+ * @returns {Promise<boolean>} true se eliminou com sucesso
+ */
+async function eliminarCandidatoComCurriculo(candidatoId, urlCurriculo) {
+    const caminho = extrairCaminhoCurriculo(urlCurriculo);
+    if (caminho) {
+        const { error: errStorage } = await supabaseClient.storage.from('curriculos').remove([caminho]);
+        if (errStorage) console.error('Erro ao remover currículo:', errStorage);
     }
 
-    document.getElementById('statusModalMessage').textContent = message;
-    document.getElementById('idEntrevistaStatus').value = id;
-    document.getElementById('novoStatusEntrevista').value = newStatus;
+    const { error: errEntrevistas } = await supabaseClient
+        .from('Entrevistas')
+        .delete()
+        .eq('Candidato_ID', candidatoId);
 
-    const titleEl = document.getElementById('statusModalTitle');
-    if (titleEl) {
-        titleEl.textContent = newStatus === 'Concluída' ? 'Concluir entrevista?' : 'Confirmar entrevista?';
+    if (errEntrevistas) {
+        console.error('Erro ao eliminar entrevistas do candidato:', errEntrevistas);
+        showNotification('Erro ao eliminar entrevistas associadas.', 'error');
+        return false;
     }
 
-    modal.style.display = 'flex';
+    const { error: errDelCand } = await supabaseClient
+        .from('candidatos')
+        .delete()
+        .eq('id', candidatoId);
+
+    if (errDelCand) {
+        console.error('Erro ao eliminar candidato:', errDelCand);
+        showNotification('Erro ao eliminar candidato da base de dados.', 'error');
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -993,7 +1009,7 @@ async function fetchMonthInterviews(date) {
         .select(`
       *,
       Vagas!inner(id, Titulo, status_vagas),
-      candidatos(id, nome, nota),
+      candidatos(id, nome, nota, url_curriculo, perguntas_sugeridas),
       Entrevistador(id, Nome)
     `)
         .eq('Vagas.status_vagas', 'aberta')
@@ -1116,7 +1132,19 @@ function renderSidePanel(date) {
              <div class="event-time">${time} - ${nomeVaga}</div>
              <div class="event-status-badge">${i.status}</div>
            </div>
+           <button class="btn-icon-only btn-conduzir" style="margin-left: auto; cursor: pointer; color: var(--primary-color);" title="Conduzir Entrevista">
+             <i class="fa-solid fa-clipboard-question"></i>
+           </button>
         `;
+        
+        const btnConduzir = card.querySelector('.btn-conduzir');
+        if (btnConduzir) {
+            btnConduzir.onclick = (e) => {
+                e.stopPropagation();
+                openConduzirModal(i);
+            };
+        }
+        
         listContainer.appendChild(card);
     });
 }
@@ -1235,36 +1263,6 @@ document.addEventListener('DOMContentLoaded', () => {
  * Configura os event listeners para os modais de confirmação de status e exclusão.
  */
 function setupConfirmModals() {
-    // --- Modal Status ---
-    const statusModal = document.getElementById('confirmStatusModal');
-    if (statusModal) {
-        document.getElementById('cancelarStatusBtn').addEventListener('click', () => {
-            statusModal.style.display = 'none';
-        });
-        document.getElementById('confirmarStatusBtn').addEventListener('click', async () => {
-            const id = document.getElementById('idEntrevistaStatus').value;
-            const newStatus = document.getElementById('novoStatusEntrevista').value;
-            
-            if (id && newStatus) {
-                const { error } = await supabaseClient
-                    .from('Entrevistas')
-                    .update({ status: newStatus })
-                    .eq('id', id);
-
-                if (error) {
-                    showNotification('Erro ao atualizar status: ' + error.message, 'error');
-                } else {
-                    showNotification(`Entrevista marcada como ${newStatus}.`, 'success');
-                    fetchMonthInterviews(currentDate);
-                }
-                statusModal.style.display = 'none';
-            }
-        });
-        window.addEventListener('click', (e) => {
-            if (e.target === statusModal) statusModal.style.display = 'none';
-        });
-    }
-
     // --- Modal Exclusão ---
     const deleteModal = document.getElementById('confirmDeleteInterviewModal');
     if (deleteModal) {
@@ -1294,3 +1292,156 @@ function setupConfirmModals() {
         });
     }
 }
+
+// ============================================
+// LÓGICA DO MODAL CONDUZIR ENTREVISTA
+// ============================================
+
+/**
+ * Abre o modal de condução de entrevista, carregando o PDF do candidato
+ * e as perguntas sugeridas pela IA.
+ */
+function openConduzirModal(interview) {
+    const modal = document.getElementById('conduzirEntrevistaModal');
+    if (!modal) return;
+
+    // Extrai dados do candidato e da vaga
+    const candidateObj = Array.isArray(interview.candidatos) ? interview.candidatos[0] : interview.candidatos;
+    const candName = candidateObj ? candidateObj.nome : 'Candidato Desconhecido';
+    const candId = candidateObj ? candidateObj.id : null;
+    
+    const vagaObj = Array.isArray(interview.Vagas) ? interview.Vagas[0] : interview.Vagas;
+    const vagaName = vagaObj ? vagaObj.Titulo : 'Vaga não informada';
+
+    // Preenche cabeçalho
+    document.getElementById('conduzirNomeCandidato').textContent = candName;
+    document.getElementById('conduzirNomeVaga').textContent = vagaName;
+    
+    // IDs ocultos
+    document.getElementById('conduzirEntrevistaId').value = interview.id;
+    document.getElementById('conduzirCandidatoId').value = candId;
+    document.getElementById('conduzirUrlCurriculo').value =
+        (candidateObj && candidateObj.url_curriculo) ? candidateObj.url_curriculo : '';
+
+    // Carrega currículo no iframe
+    const iframe = document.getElementById('iframeCurriculo');
+    const noCurriculoMsg = document.getElementById('noCurriculoMsg');
+    if (candidateObj && candidateObj.url_curriculo) {
+        iframe.src = candidateObj.url_curriculo;
+        iframe.style.display = 'block';
+        noCurriculoMsg.style.display = 'none';
+    } else {
+        iframe.src = '';
+        iframe.style.display = 'none';
+        noCurriculoMsg.style.display = 'flex';
+    }
+
+    // Carrega perguntas sugeridas
+    const listaPerguntas = document.getElementById('listaPerguntasSugeridas');
+    listaPerguntas.innerHTML = '';
+    
+    if (candidateObj && candidateObj.perguntas_sugeridas && Array.isArray(candidateObj.perguntas_sugeridas) && candidateObj.perguntas_sugeridas.length > 0) {
+        candidateObj.perguntas_sugeridas.forEach(pergunta => {
+            const li = document.createElement('li');
+            li.textContent = pergunta;
+            listaPerguntas.appendChild(li);
+        });
+    } else {
+        const li = document.createElement('li');
+        li.textContent = 'Nenhuma pergunta sugerida pela IA encontrada para este candidato.';
+        li.style.color = 'var(--text-muted)';
+        listaPerguntas.appendChild(li);
+    }
+
+    // Limpa formulário de avaliação
+    document.getElementById('formAvaliacaoEntrevista').reset();
+
+    // Eventos de fechar
+    const closeBtn = document.getElementById('fecharConduzirModal');
+    const cancelBtn = document.getElementById('cancelarConduzir');
+    
+    const closeModal = () => modal.style.display = 'none';
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+
+    modal.style.display = 'flex';
+}
+
+// Configura o submit do formulário de avaliação
+document.addEventListener('DOMContentLoaded', () => {
+    const formAvaliacao = document.getElementById('formAvaliacaoEntrevista');
+    if (formAvaliacao) {
+        formAvaliacao.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const entrevistaId = document.getElementById('conduzirEntrevistaId').value;
+            const candidatoId = document.getElementById('conduzirCandidatoId').value;
+            
+            const notaTecnica = document.getElementById('notaTecnica').value;
+            const notaComunicacao = document.getElementById('notaComunicacao').value;
+            const notas = document.getElementById('notasEntrevistador').value;
+            const decisao = document.getElementById('decisaoFinal').value;
+            
+            if (!decisao) {
+                showNotification('Por favor, selecione uma decisão final.', 'error');
+                return;
+            }
+
+            const notasEntrevistaObj = {
+                tecnica: parseInt(notaTecnica),
+                comunicacao: parseInt(notaComunicacao),
+                notas_gerais: notas
+            };
+
+            // Atualiza Entrevista
+            const { error: errorEntrevista } = await supabaseClient
+                .from('Entrevistas')
+                .update({ 
+                    notas_entrevista: notasEntrevistaObj,
+                    decisao_final: decisao,
+                    status: 'Concluída' // Marca como concluída
+                })
+                .eq('id', entrevistaId);
+
+            if (errorEntrevista) {
+                console.error('Erro ao salvar avaliação:', errorEntrevista);
+                showNotification('Erro ao salvar avaliação.', 'error');
+                return;
+            }
+
+            // Atualiza Candidato baseado na decisão
+            let novoStatusCandidato = null;
+            if (decisao === 'Passar') novoStatusCandidato = 'Oferta enviada';
+            else if (decisao === 'Guardar') novoStatusCandidato = 'Entrevista feita';
+            
+            if (decisao === 'Reprovar') {
+                const urlCurriculo = document.getElementById('conduzirUrlCurriculo').value || '';
+                const ok = await eliminarCandidatoComCurriculo(candidatoId, urlCurriculo);
+                if (!ok) return;
+            } else if (novoStatusCandidato) {
+                const { error: errorCand } = await supabaseClient
+                    .from('candidatos')
+                    .update({ status: novoStatusCandidato })
+                    .eq('id', candidatoId);
+                    
+                if (errorCand) {
+                    console.error('Erro ao atualizar status do candidato:', errorCand);
+                }
+            }
+
+            const msgSucesso = decisao === 'Reprovar'
+                ? 'Candidato e currículo eliminados com sucesso.'
+                : decisao === 'Guardar'
+                    ? 'Avaliação guardada. Candidato movido para Entrevista feita.'
+                    : 'Avaliação guardada. Candidato avançou no pipeline.';
+            showNotification(msgSucesso, 'success');
+            document.getElementById('conduzirEntrevistaModal').style.display = 'none';
+            
+            // Recarrega os dados locais
+            fetchMonthInterviews(currentDate);
+            
+            // Dispara evento para o pipeline atualizar
+            window.dispatchEvent(new CustomEvent('interview-concluded', { detail: { candidatoId } }));
+        };
+    }
+});

@@ -3,15 +3,16 @@
  * ─────────────────────────────────────────────────────────────
  * Módulo responsável por toda a lógica do Pipeline de Recrutamento (Pipeline.html).
  *
- * O Pipeline é um quadro Kanban com 4 colunas que representam as etapas
+ * O Pipeline é um quadro Kanban com 5 colunas que representam as etapas
  * do processo seletivo. Os candidatos são exibidos como cards e podem
  * ser movidos entre colunas por drag-and-drop.
  *
  * Colunas do Pipeline (em ordem):
- *   1. Aplicado          → Candidato acabou de se candidatar
- *   2. Entrevista técnica→ Entrevista técnica agendada/realizada
- *   3. Oferta enviada    → Proposta de emprego enviada
- *   4. Contratado        → Candidato contratado
+ *   1. Aplicado           → Candidato acabou de se candidatar
+ *   2. Entrevista técnica → Entrevista agendada (abre modal ao soltar)
+ *   3. Entrevista feita   → Entrevista conduzida (via Conduzir → Guardar)
+ *   4. Oferta enviada     → Proposta de emprego enviada
+ *   5. Contratado         → Candidato contratado
  *
  * Funcionalidades principais:
  *   - Drag-and-drop entre colunas (atualiza o status no BD automaticamente)
@@ -50,12 +51,12 @@
  * O mapeamento de status para coluna é feito pelo objeto `mapStatusToColumn`.
  */
 async function carregarPipeline() {
-    // Mapeamento: status do candidato → número da coluna (1-4)
     const mapStatusToColumn = {
         'Aplicado': 1,
         'Entrevista técnica': 2,
-        'Oferta enviada': 3,
-        'Contratado': 4
+        'Entrevista feita': 3,
+        'Oferta enviada': 4,
+        'Contratado': 5
     };
 
     // Busca todos os candidatos sem filtro
@@ -106,7 +107,7 @@ async function carregarPipeline() {
     if (filtroSelect) filtroSelect.value = filtroAtual;
 
     // ── Limpa o conteúdo de todas as colunas ─────────────────────────────
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
         const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
         if (colBody) colBody.innerHTML = '';
         const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
@@ -116,7 +117,7 @@ async function carregarPipeline() {
     document.querySelectorAll('.pipeline-summary-count').forEach(el => el.textContent = '0');
 
     // Contadores por coluna para atualizar os badges e o resumo
-    const contadores = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    const contadores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     let countRejeitados = 0;
 
     // ── Processa cada candidato ───────────────────────────────────────────
@@ -133,12 +134,12 @@ async function carregarPipeline() {
             continue;
         }
 
-        // Normaliza o status para encontrar a coluna correta
-        // Se o status não existir no mapa, usa "Aplicado" como padrão
-        let status = candidato.status ? candidato.status.toLowerCase().trim() : 'Aplicado';
-        if (!mapStatusToColumn[status]) status = 'Aplicado';
-
-        const colIndex = mapStatusToColumn[status];
+        // Mapeia o status para a coluna correta (comparação case-insensitive)
+        let status = candidato.status ? candidato.status.trim() : 'Aplicado';
+        const statusKey = Object.keys(mapStatusToColumn).find(
+            k => k.toLowerCase() === status.toLowerCase()
+        );
+        const colIndex = statusKey ? mapStatusToColumn[statusKey] : mapStatusToColumn['Aplicado'];
         const colBody = document.querySelector(`.pipeline-column-${colIndex} .pipeline-column-body`);
 
         if (colBody) {
@@ -154,7 +155,7 @@ async function carregarPipeline() {
     }
 
     // ── Atualiza os contadores das colunas e do resumo ────────────────────
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
         // Badge de contagem no cabeçalho de cada coluna
         const colCount = document.querySelector(`.pipeline-column-${i} .pipeline-column-count`);
         if (colCount) colCount.textContent = contadores[i];
@@ -175,7 +176,12 @@ async function carregarPipeline() {
 // Quando uma entrevista é agendada com sucesso (evento emitido por entrevistas.js),
 // recarrega o pipeline para refletir a mudança de status do candidato
 window.addEventListener('interview-scheduled', () => {
-    carregarPipeline();
+    setTimeout(carregarPipeline, 500); // Dá tempo para o Supabase processar a alteração
+});
+
+// Quando uma entrevista é concluída, atualiza o pipeline (ex: passa para Entrevista Feita ou é Reprovado)
+window.addEventListener('interview-concluded', () => {
+    setTimeout(carregarPipeline, 500); // Dá tempo para o Supabase processar a alteração
 });
 
 /**
@@ -233,6 +239,7 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
         <div id="pipeline-menu-${candidato.id}" class="kebab-dropdown">
             <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-regular fa-eye"></i> Ver Perfil</button>
             <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-regular fa-calendar-plus"></i> Agendar Entrevista</button>
+            <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-solid fa-star-half-stroke"></i> Ver Avaliação</button>
             <button class="dropdown-item delete-btn" data-id="${candidato.id}"><i class="fa-regular fa-circle-xmark"></i> Rejeitar</button>
         </div>
       </div>
@@ -337,6 +344,50 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
                                 hiddenV.value = vagaObj.id || '';
                             }
                         }
+                    }
+
+                } else if (actionText.includes('Ver Avaliação')) {
+                    // Busca a última avaliação deste candidato na base de dados
+                    const { data: entrevistaData, error } = await supabaseClient
+                        .from('Entrevistas')
+                        .select('notas_entrevista, decisao_final, Data, Vagas(Titulo)')
+                        .eq('Candidato_ID', candidato.id)
+                        .not('notas_entrevista', 'is', null)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .single();
+                        
+                    if (error || !entrevistaData) {
+                        alert('Ainda não existe nenhuma avaliação registada para este candidato.');
+                    } else {
+                        const n = entrevistaData.notas_entrevista || {};
+                        const notasHTML = `
+                            <div style="text-align: left; line-height: 1.6; font-size: 15px;">
+                                <p><strong>Vaga:</strong> ${entrevistaData.Vagas?.Titulo || 'N/A'}</p>
+                                <p><strong>Conhecimento Técnico:</strong> ${n.tecnica ? n.tecnica + ' / 5' : 'N/A'}</p>
+                                <p><strong>Comunicação:</strong> ${n.comunicacao ? n.comunicacao + ' / 5' : 'N/A'}</p>
+                                <p><strong>Decisão Sugerida:</strong> ${entrevistaData.decisao_final || 'N/A'}</p>
+                                <p><strong>Notas Gerais:</strong><br/> ${n.notas_gerais || 'Nenhuma nota registada.'}</p>
+                            </div>
+                        `;
+                        // Reutiliza o modal de rejeição ou cria um simples alert para simplificar
+                        const modalAval = document.createElement('div');
+                        modalAval.className = 'modal modal-agendamento';
+                        modalAval.style.display = 'flex';
+                        modalAval.style.zIndex = '9999';
+                        modalAval.innerHTML = `
+                            <div class="modal-content-vaga modal-surface" style="max-width: 500px; padding: 25px;">
+                                <div class="modal-header modal-header--surface" style="margin-bottom: 20px;">
+                                    <h2>Avaliação da Entrevista</h2>
+                                    <span class="close" style="cursor:pointer;" onclick="this.closest('.modal').remove()">&times;</span>
+                                </div>
+                                ${notasHTML}
+                                <div class="form-actions" style="margin-top: 25px;">
+                                    <button class="btn-submit" onclick="this.closest('.modal').remove()">Fechar</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modalAval);
                     }
 
                 } else if (actionText.includes('Rejeitar')) {
@@ -454,8 +505,8 @@ function configurarDragAndDrop() {
                         // se o utilizador cancelar o agendamento
                         const oldStatus = card.dataset.status;
                         const mapStatusToColumn = {
-                            'Aplicado': 1, 'Entrevista técnica': 2,
-                            'Oferta enviada': 3, 'Contratado': 4
+                            'Aplicado': 1, 'Entrevista técnica': 2, 'Entrevista feita': 3,
+                            'Oferta enviada': 4, 'Contratado': 5
                         };
                         const oldColIndex = mapStatusToColumn[oldStatus] || 1;
                         const revertTarget = document.querySelector(`.pipeline-column-${oldColIndex} .pipeline-column-body`);
@@ -497,10 +548,23 @@ function configurarDragAndDrop() {
                         if (btnCancel) btnCancel.addEventListener('click', onRevert);
                         window.addEventListener('click', onOutside);
                     }
+                } else if (novoStatusTitulo === 'Entrevista feita') {
+                    // Só avança para esta etapa via Conduzir → decisão Guardar
+                    const oldStatus = card.dataset.status;
+                    const mapRevert = {
+                        'Aplicado': 1, 'Entrevista técnica': 2, 'Entrevista feita': 3,
+                        'Oferta enviada': 4, 'Contratado': 5
+                    };
+                    const revertTarget = document.querySelector(
+                        `.pipeline-column-${mapRevert[oldStatus] || 1} .pipeline-column-body`
+                    );
+                    if (revertTarget) revertTarget.appendChild(card);
+                    recalcularContadores();
+                    alert('Para mover para "Entrevista feita", conduza a entrevista e escolha "Guardar" na decisão final.');
                 } else {
                     // ── Fluxo normal para todas as outras colunas ─────────
-                    // Atualiza o status no Supabase e recalcula os contadores
                     await atualizarStatusCandidato(cardId, novoStatusTitulo);
+                    card.dataset.status = novoStatusTitulo;
                     recalcularContadores();
                 }
             }
@@ -541,7 +605,7 @@ async function atualizarStatusCandidato(id, novoStatus) {
  * sem precisar de recarregar dados do BD.
  */
 function recalcularContadores() {
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
         const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
         const count = colBody ? colBody.children.length : 0; // Conta os cards na coluna
 

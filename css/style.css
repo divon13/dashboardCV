@@ -5296,3 +5296,161 @@ table tbody tr td[colspan="5"] {
   background: rgba(239, 68, 68, 0.1) !important;
   color: #fca5a5 !important;
 }
+
+/* ============================================
+   MODAL CONDUZIR ENTREVISTA
+   ============================================ */
+.modal-conduzir-entrevista {
+  display: none; /* Escondido por padrão */
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content-conduzir {
+  background-color: var(--surface-dark);
+  margin: auto;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 1400px;
+  height: 90vh; /* Ocupa quase toda a altura */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+  border: 1px solid var(--border-dark);
+}
+
+.modal-header--conduzir {
+  padding: 20px 30px;
+  border-bottom: 1px solid var(--border-dark);
+  background: var(--hover-dark);
+  flex-shrink: 0;
+}
+
+.modal-conduzir-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden; /* O scroll será nas colunas internas */
+}
+
+/* Lado Esquerdo - PDF */
+.conduzir-left {
+  flex: 1;
+  border-right: 1px solid var(--border-dark);
+  display: flex;
+  flex-direction: column;
+  background: #2b2b2b; /* Fundo mais escuro para contrastar com o PDF */
+}
+
+.pdf-viewer-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#iframeCurriculo {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.no-pdf-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+.no-pdf-msg i {
+  font-size: 40px;
+  margin-bottom: 15px;
+  color: var(--secondary-color);
+}
+
+/* Lado Direito - Avaliação e Guias */
+.conduzir-right {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto; /* Permite scroll vertical se o form for longo */
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  background: var(--surface-dark);
+}
+
+.conduzir-section {
+  background: var(--hover-dark);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border-dark);
+}
+
+.conduzir-section h3 {
+  font-size: 16px;
+  color: var(--text-light);
+  margin-top: 0;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.conduzir-section h3 i {
+  color: var(--primary-color);
+}
+
+.perguntas-list {
+  padding-left: 20px;
+  margin: 0;
+  color: var(--text-light);
+  font-size: 14px;
+}
+.perguntas-list li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.avaliacao-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+#notasEntrevistador {
+  width: 100%;
+  background: var(--surface-dark);
+  border: 1px solid var(--border-dark);
+  color: var(--text-light);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: inherit;
+  resize: vertical;
+}
+#notasEntrevistador:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.conduz-decisao-section {
+  border-left: 4px solid var(--primary-color);
+}
+
+/* Responsividade do Modal Lado-a-Lado */
+@media (max-width: 900px) {
+  .modal-conduzir-body {
+    flex-direction: column;
+  }
+  .conduzir-left {
+    border-right: none;
+    border-bottom: 1px solid var(--border-dark);
+    height: 40vh;
+    flex: none;
+  }
+  .conduzir-right {
+    flex: 1;
+  }
+}
