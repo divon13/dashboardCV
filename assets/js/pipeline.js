@@ -239,7 +239,7 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
         <div id="pipeline-menu-${candidato.id}" class="kebab-dropdown">
             <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-regular fa-eye"></i> Ver Perfil</button>
             <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-regular fa-calendar-plus"></i> Agendar Entrevista</button>
-            <button class="dropdown-item" data-id="${candidato.id}"><i class="fa-solid fa-star-half-stroke"></i> Ver Avaliação</button>
+            <button class="dropdown-item btn-ver-avaliacao" data-id="${candidato.id}" style="${!['aplicado', 'entrevista técnica'].includes((candidato.status || 'Aplicado').toLowerCase()) ? '' : 'display: none;'}"><i class="fa-solid fa-star-half-stroke"></i> Ver Avaliação</button>
             <button class="dropdown-item delete-btn" data-id="${candidato.id}"><i class="fa-regular fa-circle-xmark"></i> Rejeitar</button>
         </div>
       </div>
@@ -522,6 +522,8 @@ function configurarDragAndDrop() {
                         // Se a entrevista foi agendada com sucesso: atualiza o dataset do card
                         const onSuccess = () => {
                             card.dataset.status = 'Entrevista técnica';
+                            const btnAvaliacao = card.querySelector('.btn-ver-avaliacao');
+                            if (btnAvaliacao) btnAvaliacao.style.display = 'none';
                             cleanup();
                         };
 
@@ -565,6 +567,10 @@ function configurarDragAndDrop() {
                     // ── Fluxo normal para todas as outras colunas ─────────
                     await atualizarStatusCandidato(cardId, novoStatusTitulo);
                     card.dataset.status = novoStatusTitulo;
+                    const btnAvaliacao = card.querySelector('.btn-ver-avaliacao');
+                    if (btnAvaliacao) {
+                        btnAvaliacao.style.display = ['aplicado', 'entrevista técnica'].includes(novoStatusTitulo.toLowerCase()) ? 'none' : '';
+                    }
                     recalcularContadores();
                 }
             }
