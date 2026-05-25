@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="midia/logo.png">
+  <title>Minha Agenda - Dashboard RH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="assets/js/supabaseClient.js" defer></script>
+  <script src="assets/js/profiles.js" defer></script>
+  <script src="assets/js/requireAuthEquipa.js" defer></script>
+  <script src="assets/js/utils.js" defer></script>
+  <script src="assets/js/minha-agenda.js" defer></script>
+</head>
+
+<body class="ma-body" style="visibility: hidden;">
+  <header class="ma-topbar">
+    <a class="ma-topbar-brand" href="MinhaAgenda.html" aria-label="Minha Agenda">
+      <img src="midia/logo.png" alt="" class="ma-topbar-logo">
+      <span>Minha Agenda</span>
+    </a>
+    <div class="ma-topbar-actions">
+      <span class="ma-topbar-user" id="maTopbarUserName">Utilizador</span>
+      <a href="#" id="btnLogout" class="ma-logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Sair</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="ma-page main-minha-agenda">
+    <section class="ma-hero">
+      <div>
+        <p class="ma-eyebrow">Agenda do entrevistador</p>
+        <h1>Olá, <span id="maHeroNome">Utilizador</span></h1>
+        <p class="ma-hero-copy">Acompanhe entrevistas marcadas, consulte o calendário e conclua avaliações com notas e decisão final.</p>
+      </div>
+      <div class="ma-hero-summary" aria-label="Resumo da agenda">
+        <span id="maHeroTodayLabel">Hoje</span>
+        <strong id="maHeroTodayCount">0</strong>
+        <small>entrevistas para hoje</small>
+      </div>
+    </section>
+
+    <section class="ma-empty-guidance" id="maAvisoSemVinculo" style="display: none;">
+      <div class="ma-empty-icon"><i class="fa-solid fa-user-link"></i></div>
+      <div>
+        <h2>Conta ainda sem agenda associada</h2>
+        <p>Para ver entrevistas aqui, peça ao administrador para associar a sua conta a um entrevistador em Administração, na área de utilizadores.</p>
+      </div>
+    </section>
+
+    <section class="ma-stats-grid" aria-label="Resumo das entrevistas">
+      <article class="ma-stat-card ma-stat-card--indigo">
+        <span>Hoje</span>
+        <strong id="maStatHoje">0</strong>
+      </article>
+      <article class="ma-stat-card ma-stat-card--blue">
+        <span>Próximos 7 dias</span>
+        <strong id="maStatSemana">0</strong>
+      </article>
+      <article class="ma-stat-card ma-stat-card--amber">
+        <span>Por concluir</span>
+        <strong id="maStatProximas">0</strong>
+      </article>
+      <article class="ma-stat-card ma-stat-card--green">
+        <span>Concluídas</span>
+        <strong id="maStatConcluidas">0</strong>
+      </article>
+    </section>
+
+    <nav class="ma-tabs-bar" aria-label="Secções da agenda">
+      <button type="button" class="ma-tab active" data-panel="maPanelProximas"><i class="fa-solid fa-list-check"></i> Próximas</button>
+      <button type="button" class="ma-tab" data-panel="maPanelCalendario"><i class="fa-regular fa-calendar"></i> Calendário</button>
+      <button type="button" class="ma-tab" data-panel="maPanelHistorico"><i class="fa-solid fa-clock-rotate-left"></i> Histórico e notas</button>
+    </nav>
+
+    <section id="maPanelProximas" class="ma-panel active">
+      <div id="maProximasList" class="ma-cards-grid"></div>
+    </section>
+
+    <section id="maPanelCalendario" class="ma-panel">
+      <div class="calendar-layout ma-calendar-layout">
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <h2 id="maCurrentMonthDisplay">-</h2>
+            <div class="calendar-nav">
+              <button type="button" class="nav-btn" id="maPrevMonth" aria-label="Mês anterior"><i class="fa-solid fa-chevron-left"></i></button>
+              <button type="button" class="nav-btn today-btn" id="maGoToday">Hoje</button>
+              <button type="button" class="nav-btn" id="maNextMonth" aria-label="Mês seguinte"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="calendar-grid">
+            <div class="weekday">Dom</div><div class="weekday">Seg</div><div class="weekday">Ter</div>
+            <div class="weekday">Qua</div><div class="weekday">Qui</div><div class="weekday">Sex</div><div class="weekday">Sáb</div>
+            <div id="maCalendarDaysGrid" class="days-grid"></div>
+          </div>
+        </div>
+        <aside class="day-details-panel ma-day-details">
+          <h3 id="maSelectedDateDisplay">-</h3>
+          <div class="day-events-list" id="maDayEventsList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="maPanelHistorico" class="ma-panel">
+      <p class="ma-historico-intro">Entrevistas concluídas ou passadas, com notas e decisão final.</p>
+      <div id="maHistoricoList" class="ma-cards-grid"></div>
+    </section>
+  </main>
+
+  <div id="maDetalheModal" class="modal" style="display:none;">
+    <div class="modal-content-vaga modal-surface ma-modal">
+      <div class="modal-header modal-header--surface">
+        <h2>Detalhes da entrevista</h2>
+        <span class="close" id="maCloseDetalhe" aria-label="Fechar">&times;</span>
+      </div>
+      <div class="ma-detalhe-body">
+        <p><strong>Candidato:</strong> <span id="maDetalheCandidato"></span></p>
+        <p><strong>Vaga:</strong> <span id="maDetalheVaga"></span></p>
+        <p id="maDetalheContacto"></p>
+        <p><strong>Data:</strong> <span id="maDetalheData"></span></p>
+        <p><strong>Tipo:</strong> <span id="maDetalheTipo"></span></p>
+        <p><strong>Estado:</strong> <span id="maDetalheStatus"></span></p>
+        <p><strong>Decisão:</strong> <span id="maDetalheDecisao"></span></p>
+        <p><strong>Observações:</strong> <span id="maDetalheObs"></span></p>
+        <div class="ma-detalhe-notas-wrap">
+          <strong>Notas da entrevista</strong>
+          <div id="maDetalheNotas"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="maConcluirModal" class="modal" style="display:none;">
+    <div class="modal-content-vaga modal-surface ma-modal ma-concluir-modal">
+      <div class="modal-header modal-header--surface">
+        <div>
+          <h2>Concluir entrevista</h2>
+          <p id="maConcluirSubtitulo" class="ma-modal-subtitle"></p>
+        </div>
+        <span class="close" id="maCloseConcluir" aria-label="Fechar">&times;</span>
+      </div>
+      <div class="ma-concluir-layout">
+        <aside class="ma-cv-panel">
+          <div class="ma-cv-header">
+            <span><i class="fa-solid fa-file-lines"></i> Currículo</span>
+            <a id="maOpenCurriculo" href="#" target="_blank" rel="noopener" class="ma-cv-open" style="display:none;">
+              Abrir
+            </a>
+          </div>
+          <iframe id="maIframeCurriculo" title="Currículo do candidato"></iframe>
+          <div id="maNoCurriculoMsg" class="ma-no-cv-msg">
+            <i class="fa-regular fa-file-lines"></i>
+            <strong>Currículo indisponível</strong>
+            <span>Este candidato não tem um ficheiro de currículo associado.</span>
+          </div>
+        </aside>
+
+        <form id="maConcluirForm" class="ma-concluir-form">
+          <input type="hidden" id="maConcluirEntrevistaId">
+          <input type="hidden" id="maConcluirCandidatoId">
+
+          <div class="ma-form-grid">
+            <label>
+              Conhecimento técnico
+              <select id="maNotaTecnica" required>
+                <option value="">Selecione...</option>
+                <option value="1">1 - Muito fraco</option>
+                <option value="2">2 - Fraco</option>
+                <option value="3">3 - Adequado</option>
+                <option value="4">4 - Bom</option>
+                <option value="5">5 - Excelente</option>
+              </select>
+            </label>
+            <label>
+              Comunicação
+              <select id="maNotaComunicacao" required>
+                <option value="">Selecione...</option>
+                <option value="1">1 - Muito fraca</option>
+                <option value="2">2 - Fraca</option>
+                <option value="3">3 - Adequada</option>
+                <option value="4">4 - Boa</option>
+                <option value="5">5 - Excelente</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Notas da entrevista
+            <textarea id="maNotasEntrevistador" rows="5" placeholder="Registe pontos fortes, riscos, sinais importantes e próximos passos."></textarea>
+          </label>
+
+          <label>
+            Decisão final
+            <select id="maDecisaoFinal" required>
+              <option value="">Selecione uma decisão...</option>
+              <option value="Passar">Passar de fase</option>
+              <option value="Guardar">Guardar para análise</option>
+              <option value="Reprovar">Reprovar</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" id="maCancelConcluir">Cancelar</button>
+            <button type="submit" class="btn-submit"><i class="fa-solid fa-check"></i> Guardar conclusão</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

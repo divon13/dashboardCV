@@ -1,57 +1,88 @@
-// auth.js
-// Script exclusivo para a página de login.html
+// auth.js — Login único para todos os utilizadores
+
+/**
+ * Redireciona o utilizador para a sua área correta após login ou ao carregar a página.
+ *
+ * admin         → Admin.html
+ * entrevistador → MinhaAgenda.html
+ * recrutador    → index.html
+ */
+async function redirectAfterLogin() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+
+    if (typeof loadUserProfile === 'function') {
+        await loadUserProfile(session);
+    }
+
+    // loadUserProfile já redireciona sozinho se não houver perfil
+    if (!currentUserProfile) return;
+
+    if (currentUserProfile.role === 'admin') {
+        window.location.href = 'Admin.html';
+    } else if (currentUserProfile.role === 'entrevistador') {
+        window.location.href = 'MinhaAgenda.html';
+    } else {
+        // recrutador (e qualquer outro role válido)
+        window.location.href = 'index.html';
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('loginForm');
+    const loginForm    = document.getElementById('loginForm');
     const errorMessage = document.getElementById('errorMessage');
-    const btnSubmit = document.getElementById('btnSubmit');
+    const btnSubmit    = document.getElementById('btnSubmit');
 
-    // Verifica se já está logado, se sim, manda para o dashboard
+    // Se já tem sessão ativa, redireciona imediatamente
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
         if (session) {
-            window.location.href = 'index.html';
+            redirectAfterLogin();
         } else {
-            // Torna o corpo visível após confirmar que não há sessão
             document.body.style.visibility = 'visible';
-            document.body.style.opacity = '1';
+            document.body.style.opacity    = '1';
         }
     });
+
+    // Mensagens via URL
+    const params = new URLSearchParams(window.location.search);
+    const msg    = params.get('msg');
+
+    if (msg && errorMessage) {
+        const mensagens = {
+            conta_desativada: 'A sua conta foi desativada. Contacte o administrador.',
+            sem_perfil:       'Conta sem perfil associado. Contacte o administrador.',
+            acesso_negado:    'Não tem permissão para aceder a esta área.',
+        };
+        const texto = mensagens[msg] || 'Ocorreu um erro. Tente novamente.';
+        errorMessage.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${texto}`;
+        errorMessage.style.display = 'flex';
+        errorMessage.classList.add('show');
+    }
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const email = document.getElementById('email').value;
+
+            const email    = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            
+
             errorMessage.style.display = 'none';
             errorMessage.classList.remove('show');
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
+            btnSubmit.disabled     = true;
+            btnSubmit.innerHTML    = '<i class="fa-solid fa-spinner fa-spin"></i> A entrar...';
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
             if (error) {
-                errorMessage.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Email ou senha incorretos.';
+                errorMessage.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Email ou palavra-passe incorretos.';
                 errorMessage.style.display = 'flex';
-                // Pequeno delay para a animação
-                setTimeout(() => {
-                    errorMessage.classList.add('show');
-                }, 10);
-                
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = 'Entrar no Dashboard';
+                setTimeout(() => errorMessage.classList.add('show'), 10);
+                btnSubmit.disabled  = false;
+                btnSubmit.innerHTML = 'Entrar no Dashboard <i class="fa-solid fa-arrow-right"></i>';
             } else {
-                // Animação de sucesso no botão
-                btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Autenticado com sucesso!';
-                btnSubmit.style.background = '#22c55e'; // success-color
-                
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 800);
+                btnSubmit.innerHTML      = '<i class="fa-solid fa-check"></i> Autenticado!';
+                btnSubmit.style.background = '#22c55e';
+                setTimeout(() => redirectAfterLogin(), 800);
             }
         });
     }
