@@ -1202,13 +1202,6 @@ function updateStatsCounters() {
 }
 
 /**
- * Alias de updateStatsCounters() — mantido por compatibilidade.
- */
-function updateStatsPlaceholder() {
-    updateStatsCounters();
-}
-
-/**
  * Anima numericamente o conteúdo de um elemento HTML de um valor inicial até um valor final.
  * Cria um efeito de "contador a subir" muito comum em dashboards.
  *

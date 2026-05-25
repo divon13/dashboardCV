@@ -6,7 +6,7 @@
  * O Supabase é o backend-as-a-service utilizado neste projeto.
  * Ele fornece:
  *   - Base de dados PostgreSQL (tabelas: candidatos, Vagas, Entrevistas, Entrevistador)
- *   - Autenticação (não utilizada neste projeto)
+ *   - Autenticação (login único, perfis em profiles, RLS)
  *   - Storage (utilizado para armazenar currículos via url_curriculo)
  *
  * A variável `supabaseClient` fica disponível globalmente em todos

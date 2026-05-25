@@ -8,28 +8,10 @@
  */
 let currentUserProfile = null;
 
-const ROLE_ADMIN         = 'admin';
-const ROLE_ENTREVISTADOR = 'entrevistador';
-const ROLE_RECRUTADOR    = 'recrutador';
-
-const MAIN_APP_PAGES = ['index.html', 'Candidatos.html', 'vagas.html', 'Pipeline.html', 'Entrevistas.html'];
-const EQUIPA_PAGES   = ['MinhaAgenda.html', 'Admin.html'];
+const ROLE_ADMIN = 'admin';
 
 function isAdmin() {
   return currentUserProfile?.role === ROLE_ADMIN;
-}
-
-function isEntrevistador() {
-  return currentUserProfile?.role === ROLE_ENTREVISTADOR;
-}
-
-function isRecrutador() {
-  return currentUserProfile?.role === ROLE_RECRUTADOR;
-}
-
-function isEquipaPortalPage() {
-  const page = window.location.pathname.split('/').pop() || '';
-  return EQUIPA_PAGES.includes(page);
 }
 
 function getEntrevistadorId() {
@@ -64,42 +46,6 @@ async function loadUserProfile(session) {
 
   currentUserProfile = data;
   return currentUserProfile;
-}
-
-/** Navegação lateral apenas nas páginas da área da equipa */
-function applyEquipaNavigation() {
-  const role    = currentUserProfile?.role;
-  const navAdmin = document.getElementById('navEquipaAdmin');
-  if (navAdmin) {
-    navAdmin.style.display = role === ROLE_ADMIN ? '' : 'none';
-  }
-
-  const userLabel = document.getElementById('sidebarUserLabel');
-  if (userLabel && currentUserProfile) {
-    const roleLabel = role === ROLE_ADMIN ? 'Administrador' : 'Entrevistador';
-    userLabel.textContent = `${currentUserProfile.nome || currentUserProfile.email} · ${roleLabel}`;
-  }
-}
-
-/**
- * Bloqueia o acesso ao painel principal (recrutamento) para quem não é recrutador.
- * Admin  → Admin.html
- * Entrevistador → MinhaAgenda.html
- */
-function enforceMainAppAccess() {
-  if (isEquipaPortalPage()) return;
-  const page = window.location.pathname.split('/').pop() || 'index.html';
-  if (!MAIN_APP_PAGES.includes(page) || !currentUserProfile) return;
-
-  if (currentUserProfile.role === ROLE_ADMIN) {
-    window.location.href = 'Admin.html';
-  } else if (currentUserProfile.role === ROLE_ENTREVISTADOR) {
-    window.location.href = 'MinhaAgenda.html';
-  } else if (currentUserProfile.role !== ROLE_RECRUTADOR) {
-    // Role desconhecido → login
-    window.location.href = 'login.html';
-  }
-  // ROLE_RECRUTADOR → acesso permitido, não faz nada
 }
 
 function getDisplayName() {

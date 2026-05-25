@@ -1,0 +1,28 @@
+# Dependências e build
+node_modules/
+dist/
+build/
+
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Editor e IDE
+.vscode/*
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Cursor / agent skills locais
+.agents/
+
+# SO e logs
+.DS_Store
+Thumbs.db
+*.log
+
+# Notas pessoais (opcional)
+coisas para fazer*.MD
