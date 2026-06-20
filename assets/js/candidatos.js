@@ -69,13 +69,13 @@ async function carregarUsuarios() {
 
         let vagaData = null;
 
-        // Se o candidato tem uma vaga sugerida (campo de texto com o título da vaga),
+        // Se o candidato tem uma vaga associada (pelo ID),
         // busca os dados completos dessa vaga para exibir no card
-        if (candidato.vaga_sugerida && candidato.vaga_sugerida.toString().trim() !== '') {
+        if (candidato.vaga_ID) {
             const { data: vaga, error: vagaError } = await supabaseClient
                 .from("Vagas")
                 .select("Titulo, data_abertura")
-                .eq("Titulo", candidato.vaga_sugerida) // Busca pelo título (não pelo ID)
+                .eq("id", candidato.vaga_ID) // Busca pelo ID da vaga
                 .single(); // Espera apenas um resultado
 
             if (!vagaError && vaga) {
@@ -137,7 +137,7 @@ function criarCardCandidato(candidato, vagaData) {
 
     // Mostra apenas as primeiras 3 capacidades como "pills" (etiquetas)
     const capacidadesPills = capacidades.slice(0, 3).map(cap =>
-        `<span class="capacidade-pill">${cap}</span>`
+        `<span class="capacidade-pill">${escapeHtml(cap)}</span>`
     ).join('');
 
     // Se houver mais de 3 capacidades, mostra um pill extra com o número restante
@@ -148,8 +148,8 @@ function criarCardCandidato(candidato, vagaData) {
 
     // ── Nome da Vaga ──────────────────────────────────────────────────────
     // Usa o título da vaga buscada no BD; se não encontrou, usa o campo
-    // vaga_sugerida do candidato; se não tiver, mostra "Não especificada"
-    const nomeVaga = vagaData ? vagaData.Titulo : (candidato.vaga_sugerida || 'Não especificada');
+    // vaga_sugerida_ia do candidato; se não tiver, mostra "Não especificada"
+    const nomeVaga = escapeHtml(vagaData ? vagaData.Titulo : (candidato.vaga_sugerida_ia || 'Não especificada'));
 
     // ── Cálculo do Círculo de Pontuação (SVG) ────────────────────────────
     // O círculo é desenhado com stroke-dasharray e stroke-dashoffset para
@@ -178,9 +178,11 @@ function criarCardCandidato(candidato, vagaData) {
     const formacaoTexto = candidato.formacao_academica || '';
 
     // Combina experiência e formação com separador "•", ou mostra "Não informado"
-    const experienciaFormacao = experienciaTexto && formacaoTexto
-        ? `${experienciaTexto} • ${formacaoTexto}`
-        : (experienciaTexto || formacaoTexto || 'Não informado');
+    const experienciaFormacao = escapeHtml(
+        experienciaTexto && formacaoTexto
+            ? `${experienciaTexto} • ${formacaoTexto}`
+            : (experienciaTexto || formacaoTexto || 'Não informado')
+    );
 
     // ── HTML do Círculo de Pontuação ──────────────────────────────────────
     // Dois círculos SVG sobrepostos: o de fundo (cinza) e o de progresso (colorido)
@@ -201,7 +203,7 @@ function criarCardCandidato(candidato, vagaData) {
     card.innerHTML = `
     <div class="candidato-header">
       <div class="candidato-header-left">
-        <div class="candidato-nome">${candidato.nome || 'Nome não informado'}</div>
+        <div class="candidato-nome">${escapeHtml(candidato.nome || 'Nome não informado')}</div>
         <div class="candidato-vaga">${nomeVaga}</div>
       </div>
       <div class="candidato-header-right">
@@ -211,15 +213,15 @@ function criarCardCandidato(candidato, vagaData) {
     <div class="candidato-contato">
       <div class="candidato-contato-item">
         <i class="fa-solid fa-location-dot"></i>
-        <span>${candidato.Endereco || 'Não informado'}</span>
+        <span>${escapeHtml(candidato.Endereco || 'Não informado')}</span>
       </div>
       <div class="candidato-contato-item">
         <i class="fa-solid fa-envelope"></i>
-        <span>${candidato.email || 'Não informado'}</span>
+        <span>${escapeHtml(candidato.email || 'Não informado')}</span>
       </div>
       <div class="candidato-contato-item">
         <i class="fa-solid fa-phone"></i>
-        <span>${candidato.telefone || 'Não informado'}</span>
+        <span>${escapeHtml(candidato.telefone || 'Não informado')}</span>
       </div>
     </div>
     <div class="candidato-experiencia-formacao">
@@ -334,7 +336,7 @@ function abrirModalDetalhes(candidato, vagaData) {
         if (capacidades.length > 0) {
             // Renderiza cada capacidade como um pill com classe diferente (tamanho maior)
             capacidadesContainer.innerHTML = capacidades.map(cap =>
-                `<span class="capacidade-pill capacidade-pill-full">${cap}</span>`
+                `<span class="capacidade-pill capacidade-pill-full">${escapeHtml(cap)}</span>`
             ).join('');
         } else {
             capacidadesContainer.innerHTML = '<span style="color: var(--secondary-color);">Nenhuma capacidade informada</span>';
@@ -352,9 +354,9 @@ function abrirModalDetalhes(candidato, vagaData) {
     // Se não tem, o botão fica desativado (opacidade reduzida).
     const btnDownload = document.getElementById('btnDownloadCurriculo');
     if (btnDownload) {
-        if (candidato.url_curriculo) {
+        if (candidato.url_curriculo && isSafeCvUrl(candidato.url_curriculo)) {
             btnDownload.onclick = function () {
-                window.open(candidato.url_curriculo, '_blank'); // Abre em nova aba
+                openSafeCvUrl(candidato.url_curriculo);
             };
             btnDownload.disabled = false;
             btnDownload.style.opacity = '1';

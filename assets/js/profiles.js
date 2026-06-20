@@ -10,6 +10,20 @@ let currentUserProfile = null;
 
 const ROLE_ADMIN = 'admin';
 
+/**
+ * Valida a sessão com o servidor (getUser) antes de confiar no token local.
+ * @returns {Promise<object|null>} Sessão válida ou null
+ */
+async function getAuthenticatedSession() {
+  const { data: { user }, error } = await supabaseClient.auth.getUser();
+  if (error || !user) return null;
+
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session || session.user?.id !== user.id) return null;
+
+  return session;
+}
+
 function isAdmin() {
   return currentUserProfile?.role === ROLE_ADMIN;
 }
@@ -27,7 +41,7 @@ async function loadUserProfile(session) {
 
   const { data, error } = await supabaseClient
     .from('profiles')
-    .select('id, email, nome, role, entrevistador_id, ativo')
+    .select('id, email, nome, role, ativo')
     .eq('id', session.user.id)
     .maybeSingle();
 

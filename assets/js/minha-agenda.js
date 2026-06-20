@@ -6,25 +6,19 @@ let minhaAgendaSelectedDate = new Date();
 let minhaAgendaCurrentDate = new Date();
 let minhaAgendaInitialized = false;
 
-const ENTREVISTA_SELECT = `
+const BASE_QUERY_AGENDA = `
   *,
   Vagas(id, Titulo, status_vagas),
-  candidatos(id, nome, nota, email, telefone, url_curriculo, perguntas_sugeridas),
-  Entrevistador(id, Nome)
+  candidatos(id, nome, vaga_ID, status, email, telefone, url_curriculo),
+  profiles(id, nome)
 `;
 
 function minhaAgendaEntrevistadorId() {
-  return typeof getEntrevistadorId === 'function' ? getEntrevistadorId() : null;
+  return typeof currentUserProfile !== 'undefined' && currentUserProfile ? currentUserProfile.id : null;
 }
 
 function maEscape(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[ch]));
+  return typeof escapeHtml === 'function' ? escapeHtml(value) : String(value ?? '');
 }
 
 function maNormalizeStatus(status) {
@@ -139,8 +133,6 @@ function setupMinhaAgendaModals() {
 
 async function fetchMinhaAgendaInterviews() {
   const entId = minhaAgendaEntrevistadorId();
-  const aviso = document.getElementById('maAvisoSemVinculo');
-  if (aviso) aviso.style.display = !entId ? 'flex' : 'none';
 
   if (!entId) {
     minhaAgendaCache = [];
@@ -154,8 +146,8 @@ async function fetchMinhaAgendaInterviews() {
 
   const { data, error } = await supabaseClient
     .from('Entrevistas')
-    .select(ENTREVISTA_SELECT)
-    .eq('Entrevistador', entId)
+    .select(BASE_QUERY_AGENDA)
+    .eq('entrevistador', entId)
     .order('Data', { ascending: true });
 
   if (error) {
@@ -286,7 +278,7 @@ function createMinhaAgendaCard(i, isHistorico) {
     </div>
     <div class="ma-card-meta">
       <span><i class="fa-regular fa-calendar"></i> ${maEscape(dateStr)}</span>
-      <span><i class="fa-solid fa-${(i['Tipo de entrevista'] || '').toLowerCase().includes('online') ? 'video' : 'building'}"></i> ${maEscape(i['Tipo de entrevista'] || 'Presencial')}</span>
+      <span><i class="fa-solid fa-${(i.tipo_entrevista || '').toLowerCase().includes('online') ? 'video' : 'building'}"></i> ${maEscape(i.tipo_entrevista || 'Presencial')}</span>
       ${decisao}
     </div>
     ${obs ? `<p class="ma-card-obs"><strong>Observações:</strong> ${maEscape(obs)}</p>` : ''}
@@ -337,7 +329,7 @@ function openMinhaAgendaDetalheModal(i) {
   document.getElementById('maDetalheCandidato').textContent = cand?.nome || '-';
   document.getElementById('maDetalheVaga').textContent = vaga?.Titulo || '-';
   document.getElementById('maDetalheData').textContent = i.Data ? formatarData(i.Data) : '-';
-  document.getElementById('maDetalheTipo').textContent = i['Tipo de entrevista'] || '-';
+  document.getElementById('maDetalheTipo').textContent = i.tipo_entrevista || '-';
   document.getElementById('maDetalheStatus').textContent = i.status || '-';
   document.getElementById('maDetalheObs').textContent = i.Observacoes || i.Observação || 'Nenhuma';
   document.getElementById('maDetalheDecisao').textContent = i.decisao_final || '-';
@@ -377,19 +369,7 @@ function openMinhaAgendaConcluirModal(i) {
   const openCv = document.getElementById('maOpenCurriculo');
   const cvUrl = cand?.url_curriculo || '';
   if (iframe && noCvMsg && openCv) {
-    if (cvUrl) {
-      iframe.src = cvUrl;
-      iframe.style.display = 'block';
-      noCvMsg.style.display = 'none';
-      openCv.href = cvUrl;
-      openCv.style.display = 'inline-flex';
-    } else {
-      iframe.removeAttribute('src');
-      iframe.style.display = 'none';
-      noCvMsg.style.display = 'flex';
-      openCv.removeAttribute('href');
-      openCv.style.display = 'none';
-    }
+    applySafeCvToElements(cvUrl, { iframe, openLink: openCv, noCvMsg });
   }
 
   modal.style.display = 'flex';
@@ -415,6 +395,12 @@ async function handleMinhaAgendaConclusao(e) {
     notas_gerais: notasGerais
   };
 
+  const entId = minhaAgendaEntrevistadorId();
+  if (!entId) {
+    if (typeof showNotification === 'function') showNotification('Sessão inválida.', 'error');
+    return;
+  }
+
   const { error: errorEntrevista } = await supabaseClient
     .from('Entrevistas')
     .update({
@@ -422,7 +408,8 @@ async function handleMinhaAgendaConclusao(e) {
       decisao_final: decisao,
       status: 'Concluída'
     })
-    .eq('id', entrevistaId);
+    .eq('id', entrevistaId)
+    .eq('entrevistador', entId);
 
   if (errorEntrevista) {
     console.error('Erro ao salvar avaliação:', errorEntrevista);
@@ -510,7 +497,7 @@ function maUpdateCalendarDots() {
       const dots = cell.querySelector('.day-events-dots');
       if (dots && dots.children.length < 3) {
         const dot = document.createElement('div');
-        dot.className = `event-dot ${(interview['Tipo de entrevista'] || '').toLowerCase().includes('online') ? 'online' : 'presencial'}`;
+        dot.className = `event-dot ${(interview.tipo_entrevista || '').toLowerCase().includes('online') ? 'online' : 'presencial'}`;
         dots.appendChild(dot);
       }
     }

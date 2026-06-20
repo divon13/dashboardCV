@@ -12,9 +12,10 @@
  * A variável `supabaseClient` fica disponível globalmente em todos
  * os outros scripts carregados após este ficheiro.
  *
- * ATENÇÃO: A chave "anon" (pública) é segura para uso no frontend,
- * pois as permissões de acesso são controladas pelas políticas RLS
- * (Row Level Security) configuradas no painel do Supabase.
+ * ATENÇÃO: A chave "anon" (pública) é segura para uso no frontend
+ * APENAS quando as políticas RLS estão activas no Supabase.
+ * Execute sql/setup_profiles.sql e sql/03_rls_dados.sql no painel.
+ * Desactive o registo público em Authentication → Settings.
  * ─────────────────────────────────────────────────────────────
  */
 const supabaseClient = window.supabase.createClient(

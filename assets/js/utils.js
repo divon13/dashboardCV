@@ -4,14 +4,80 @@
  * Funções utilitárias partilhadas por toda a aplicação.
  *
  * Este ficheiro contém:
- *   1. getCorPorPontuacao()  → Retorna uma cor baseada na nota do candidato
- *   2. formatarData()        → Formata datas ISO para o padrão angolano (UTC+1)
- *   3. configurarModais()    → Configura os event handlers dos modais de Vagas
+ *   1. escapeHtml()          → Escapa texto para uso seguro em innerHTML
+ *   2. isSafeCvUrl()         → Valida URLs de currículo (Supabase Storage)
+ *   3. getCorPorPontuacao()  → Retorna uma cor baseada na nota do candidato
+ *   4. formatarData()        → Formata datas ISO para o padrão angolano (UTC+1)
+ *   5. configurarModais()    → Configura os event handlers dos modais de Vagas
  *
  * Todas as funções aqui definidas são globais e podem ser chamadas
  * por qualquer outro script carregado na mesma página.
  * ─────────────────────────────────────────────────────────────
  */
+
+const SUPABASE_PROJECT_HOST = 'lbpwwxallmybllvdrbeh.supabase.co';
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[ch]));
+}
+
+function safeCssClass(value) {
+    return String(value ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'default';
+}
+
+function isSafeCvUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    try {
+        const parsed = new URL(url, window.location.origin);
+        if (parsed.protocol !== 'https:') return false;
+        return parsed.hostname === SUPABASE_PROJECT_HOST
+            && parsed.pathname.includes('/storage/v1/object/')
+            && parsed.pathname.includes('/curriculos/');
+    } catch {
+        return false;
+    }
+}
+
+function applySafeCvToElements(cvUrl, { iframe, openLink, noCvMsg } = {}) {
+    const safe = isSafeCvUrl(cvUrl) ? cvUrl : '';
+    if (iframe) {
+        if (safe) {
+            iframe.src = safe;
+            iframe.style.display = 'block';
+        } else {
+            iframe.removeAttribute('src');
+            iframe.style.display = 'none';
+        }
+    }
+    if (noCvMsg) noCvMsg.style.display = safe ? 'none' : 'flex';
+    if (openLink) {
+        if (safe) {
+            openLink.href = safe;
+            openLink.style.display = 'inline-flex';
+        } else {
+            openLink.removeAttribute('href');
+            openLink.style.display = 'none';
+        }
+    }
+    return safe;
+}
+
+function openSafeCvUrl(url) {
+    if (!isSafeCvUrl(url)) return false;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return true;
+}
 
 /**
  * Retorna uma cor hexadecimal baseada na pontuação (nota) do candidato.
@@ -237,7 +303,7 @@ function showNotification(message, type = 'success') {
     notif.innerHTML = `
         <div style="display: flex; align-items: center; gap: 15px;">
             <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}" style="font-size: 1.5rem;"></i>
-            <span>${message}</span>
+            <span>${escapeHtml(message)}</span>
         </div>
     `;
     

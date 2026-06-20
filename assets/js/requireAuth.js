@@ -7,7 +7,7 @@
 // Sem sessão  → redireciona para login.html
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getAuthenticatedSession();
 
     if (!session) {
         window.location.href = 'login.html';

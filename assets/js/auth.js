@@ -8,7 +8,7 @@
  * recrutador    → index.html
  */
 async function redirectAfterLogin() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getAuthenticatedSession();
     if (!session) return;
 
     if (typeof loadUserProfile === 'function') {
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSubmit    = document.getElementById('btnSubmit');
 
     // Se já tem sessão ativa, redireciona imediatamente
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+    getAuthenticatedSession().then((session) => {
         if (session) {
             redirectAfterLogin();
         } else {

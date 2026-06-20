@@ -218,7 +218,7 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
     } catch (e) { skills = []; }
 
     // Mostra apenas as 3 primeiras capacidades como tags
-    const topSkills = skills.slice(0, 3).map(s => `<span class="skill-tag">${s}</span>`).join('');
+    const topSkills = skills.slice(0, 3).map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('');
 
     // ── Cálculo da barra de pontuação ────────────────────────────────────
     const nota = parseFloat(candidato.nota) || 0;
@@ -231,7 +231,7 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
       <div style="display:flex; align-items:center;">
           <!-- Ícone de drag (cursor grab) para indicar que o card é arrastável -->
           <div class="pipeline-card-menu" style="cursor: grab; margin-right:8px;"><i class="fa-solid fa-grip-vertical"></i></div>
-          <div class="pipeline-card-name">${candidato.nome || 'Sem Nome'}</div>
+          <div class="pipeline-card-name">${escapeHtml(candidato.nome || 'Sem Nome')}</div>
       </div>
       <!-- Menu kebab com ações do candidato -->
       <div class="kebab-menu-container">
@@ -257,7 +257,7 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
     </div>
 
     <div class="pipeline-applied-for">
-      Candidatou-se a: <strong>${nomeVaga}</strong>
+      Candidatou-se a: <strong>${escapeHtml(nomeVaga)}</strong>
     </div>
 
     <div class="pipeline-card-skills">
@@ -363,11 +363,11 @@ function criarCardPipeline(candidato, nomeVaga, vagaObj) {
                         const n = entrevistaData.notas_entrevista || {};
                         const notasHTML = `
                             <div style="text-align: left; line-height: 1.6; font-size: 15px;">
-                                <p><strong>Vaga:</strong> ${entrevistaData.Vagas?.Titulo || 'N/A'}</p>
-                                <p><strong>Conhecimento Técnico:</strong> ${n.tecnica ? n.tecnica + ' / 5' : 'N/A'}</p>
-                                <p><strong>Comunicação:</strong> ${n.comunicacao ? n.comunicacao + ' / 5' : 'N/A'}</p>
-                                <p><strong>Decisão Sugerida:</strong> ${entrevistaData.decisao_final || 'N/A'}</p>
-                                <p><strong>Notas Gerais:</strong><br/> ${n.notas_gerais || 'Nenhuma nota registada.'}</p>
+                                <p><strong>Vaga:</strong> ${escapeHtml(entrevistaData.Vagas?.Titulo || 'N/A')}</p>
+                                <p><strong>Conhecimento Técnico:</strong> ${escapeHtml(n.tecnica ? n.tecnica + ' / 5' : 'N/A')}</p>
+                                <p><strong>Comunicação:</strong> ${escapeHtml(n.comunicacao ? n.comunicacao + ' / 5' : 'N/A')}</p>
+                                <p><strong>Decisão Sugerida:</strong> ${escapeHtml(entrevistaData.decisao_final || 'N/A')}</p>
+                                <p><strong>Notas Gerais:</strong><br/> ${escapeHtml(n.notas_gerais || 'Nenhuma nota registada.')}</p>
                             </div>
                         `;
                         // Reutiliza o modal de rejeição ou cria um simples alert para simplificar

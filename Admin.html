@@ -110,12 +110,15 @@
     .admin-page-wrap {
       padding-top: 60px; /* altura da topbar */
       min-height: 100vh;
+      width: 100%;
     }
 
     .admin-page-inner {
       max-width: 1200px;
       margin: 0 auto;
       padding: 36px 28px 60px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     /* ── Cabeçalho da página ────────────────────────────────────── */
@@ -314,6 +317,7 @@
     /* ── Formulário de configurações ────────────────────────────── */
     .admin-config-form {
       max-width: 520px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -476,6 +480,7 @@
   <script src="assets/js/supabaseClient.js" defer></script>
   <script src="assets/js/profiles.js" defer></script>
   <script src="assets/js/requireAuthEquipa.js" defer></script>
+  <script src="assets/js/utils.js" defer></script>
   <script src="assets/js/admin.js" defer></script>
 </head>
 
@@ -512,9 +517,6 @@
         <button type="button" class="admin-tab active" data-panel="adminPanelUsers">
           <i class="fa-solid fa-users-gear"></i> Utilizadores
         </button>
-        <button type="button" class="admin-tab" data-panel="adminPanelEntrevistadores">
-          <i class="fa-solid fa-user-tie"></i> Entrevistadores
-        </button>
         <button type="button" class="admin-tab" data-panel="adminPanelConfig">
           <i class="fa-solid fa-sliders"></i> Definições
         </button>
@@ -537,7 +539,6 @@
                 <th>Nome</th>
                 <th>Email</th>
                 <th>Perfil</th>
-                <th>Entrevistador associado</th>
                 <th>Estado</th>
                 <th>Ações</th>
               </tr>
@@ -556,38 +557,6 @@
         </div>
       </section>
 
-      <!-- Painel: Entrevistadores -->
-      <section id="adminPanelEntrevistadores" class="admin-panel">
-        <div class="admin-panel-toolbar">
-          <div class="admin-panel-toolbar-left">
-            <input type="search" id="adminEntSearch" class="admin-search" placeholder="Pesquisar entrevistadores...">
-          </div>
-          <button type="button" class="btn-primary-admin" id="btnNovoEntrevistador">
-            <i class="fa-solid fa-plus"></i> Novo entrevistador
-          </button>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Utilizadores associados</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="adminEntTableBody">
-              <tr>
-                <td colspan="3">
-                  <div class="admin-table-empty">
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                    <p>A carregar entrevistadores...</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       <!-- Painel: Definições -->
       <section id="adminPanelConfig" class="admin-panel">
@@ -646,10 +615,7 @@
             <option value="admin">Administrador — acesso total</option>
           </select>
         </div>
-        <div class="form-group-v2" id="adminEntrevistadorGroup">
-          <label for="adminUserEntrevistador">Associar a entrevistador</label>
-          <select id="adminUserEntrevistador" class="form-select-full"></select>
-        </div>
+
         <div class="form-actions">
           <button type="button" class="btn-cancel" id="cancelAdminUser">Cancelar</button>
           <button type="submit" class="btn-submit">Guardar</button>
@@ -658,26 +624,6 @@
     </div>
   </div>
 
-  <!-- ── Modal: Entrevistador ─────────────────────────────────────── -->
-  <div id="adminEntrevistadorModal" class="modal">
-    <div class="modal-content-vaga">
-      <div class="modal-header">
-        <h2 id="adminEntModalTitle">Novo entrevistador</h2>
-        <span class="close" id="closeAdminEntModal">&times;</span>
-      </div>
-      <form id="adminEntForm" class="vaga-form-v2">
-        <input type="hidden" id="adminEntId">
-        <div class="form-group-v2">
-          <label for="adminEntNome">Nome do entrevistador</label>
-          <input type="text" id="adminEntNome" required class="form-select-full" placeholder="Nome completo">
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn-cancel" id="cancelAdminEnt">Cancelar</button>
-          <button type="submit" class="btn-submit">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- ── Toast de notificações ────────────────────────────────────── -->
   <div id="adminToast"></div>

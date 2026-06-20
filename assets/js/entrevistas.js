@@ -65,7 +65,7 @@ async function carregarEntrevistas() {
       *,
       Vagas!inner(id, Titulo, status_vagas),
       candidatos(id, nome),
-      Entrevistador(id, Nome)
+      profiles(id, nome)
     `)
         .eq('Vagas.status_vagas', 'aberta')
         .gte('Data', hojeISO)          // Apenas entrevistas de hoje em diante
@@ -127,27 +127,26 @@ function criarCardEntrevista(entrevista) {
     const nomeCandidato = extrairNomeCandidato(entrevista);
     const dataFormatada = entrevista.Data ? formatarData(entrevista.Data) : 'Data não definida';
     const status = entrevista.Status || 'Agendada';
-    const statusClass = status.toLowerCase().replace(/\s+/g, '-'); // Para classe CSS
+    const statusClass = safeCssClass(status);
 
-    // Observações são opcionais — só renderiza o bloco se existirem
     const observacoes = entrevista.Observações || entrevista.Observacoes || '';
     const observacoesHTML = observacoes
-        ? `<div class="entrevista-observacoes">${observacoes}</div>`
+        ? `<div class="entrevista-observacoes">${escapeHtml(observacoes)}</div>`
         : '';
 
     card.innerHTML = `
     <div class="card-top">
       <div class="title-area">
         <div class="entrevista-titulo">
-          <div class="entrevista-candidato">${nomeCandidato}</div>
-          <div class="entrevista-vaga">${nomeVaga}</div>
+          <div class="entrevista-candidato">${escapeHtml(nomeCandidato)}</div>
+          <div class="entrevista-vaga">${escapeHtml(nomeVaga)}</div>
         </div>
       </div>
-      <div class="chip-status chip-status-${statusClass}">${status}</div>
+      <div class="chip-status chip-status-${statusClass}">${escapeHtml(status)}</div>
     </div>
     <div class="card-bottom">
-      <span><i class="fa-solid fa-calendar-week"></i> ${dataFormatada}</span>
-      <span><i class="fa-solid fa-user"></i> ${entrevista.Entrevistador ? entrevista.Entrevistador.Nome : 'Não definido'}</span>
+      <span><i class="fa-solid fa-calendar-week"></i> ${escapeHtml(dataFormatada)}</span>
+      <span><i class="fa-solid fa-user"></i> ${escapeHtml(entrevista.profiles ? entrevista.profiles.nome : 'Não definido')}</span>
     </div>
     ${observacoesHTML}
   `;
@@ -371,13 +370,13 @@ async function populateModalSelects() {
 
     // ── Entrevistadores (select padrão) ───────────────────────────────────
     const entrevistadorSelect = document.getElementById('agEntrevistador');
-    const { data: entrevistadores } = await supabaseClient.from('Entrevistador').select('id, Nome');
+    const { data: entrevistadores } = await supabaseClient.from('profiles').select('id, nome').eq('role', 'entrevistador');
     if (entrevistadores && entrevistadorSelect) {
         entrevistadorSelect.innerHTML = '<option value="">Selecione um entrevistador...</option>';
         entrevistadores.forEach(e => {
             const opt = document.createElement('option');
             opt.value = e.id;
-            opt.textContent = e.Nome;
+            opt.textContent = e.nome;
             entrevistadorSelect.appendChild(opt);
         });
     }
@@ -490,7 +489,7 @@ async function handleAgendamentoSubmit(form) {
     const tipo = document.getElementById('agTipo').value;               // Tipo de entrevista
     const dataHora = document.getElementById('agDataHora').value;       // Data e hora
     const formDataEntrevistador = document.getElementById('agEntrevistador').value;
-    const entrevistadorId = formDataEntrevistador ? parseInt(formDataEntrevistador) : null;
+    const entrevistadorId = formDataEntrevistador || null; // Agora é UUID (string)
     const obs = document.getElementById('agObs').value;                 // Observações
 
     // ── Validação: candidato e vaga devem ser selecionados da lista ───────
@@ -511,10 +510,10 @@ async function handleAgendamentoSubmit(form) {
         "Candidato_ID": candidatoId ? parseInt(candidatoId) : null,
         "Vagas_ID": vagaId ? parseInt(vagaId) : null,
         "Data": dataHora,
-        "Entrevistador": formDataEntrevistador ? parseInt(formDataEntrevistador) : null,
+        "entrevistador": formDataEntrevistador || null,
         "Observacoes": obs,
         "status": 'Agendada',
-        "Tipo de entrevista": tipo
+        "tipo_entrevista": tipo
     };
 
     // Validação adicional: garante que os IDs são números válidos
@@ -658,19 +657,19 @@ function createInterviewListCard(i) {
     const vagaObj = Array.isArray(i.Vagas) ? i.Vagas[0] : i.Vagas;
     const vagaName = vagaObj ? vagaObj.Titulo : 'Vaga não informada';
 
-    const interviewerObj = Array.isArray(i.Entrevistador) ? i.Entrevistador[0] : i.Entrevistador;
-    const interviewerName = interviewerObj ? interviewerObj.Nome : 'Não definido';
+    const interviewerObj = Array.isArray(i.profiles) ? i.profiles[0] : i.profiles;
+    const interviewerName = interviewerObj ? interviewerObj.nome : 'Não definido';
 
     // ── Ícone do tipo de entrevista ───────────────────────────────────────
-    const type = i["Tipo de entrevista"] || 'Presencial';
+    const type = i.tipo_entrevista || 'Presencial';
     let typeIcon = 'fa-building'; // Presencial (padrão)
     if (type.toLowerCase().includes('video') || type.toLowerCase().includes('online')) typeIcon = 'fa-video';
     if (type.toLowerCase().includes('telefone')) typeIcon = 'fa-phone';
 
     const status = i.status || 'Agendada';
-    const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+    const statusClass = safeCssClass(status);
     const dateStr = i.Data ? formatarData(i.Data) : 'Sem data';
-    const timeStr = i.Data ? i.Data.split('T')[1].substring(0, 5) : '--:--'; // Extrai HH:MM
+    const timeStr = i.Data ? i.Data.split('T')[1].substring(0, 5) : '--:--';
 
     card.innerHTML = `
         <div class="ilc-header">
@@ -678,8 +677,8 @@ function createInterviewListCard(i) {
                 <i class="fa-solid ${typeIcon}"></i>
             </div>
             <div class="ilc-status-text">
-                <span class="ilc-status">${status}</span>
-                <span class="ilc-type">${type}</span>
+                <span class="ilc-status">${escapeHtml(status)}</span>
+                <span class="ilc-type">${escapeHtml(type)}</span>
             </div>
             <!-- Menu kebab com ações -->
             <div class="kebab-menu-container">
@@ -695,27 +694,27 @@ function createInterviewListCard(i) {
         
         <div class="ilc-candidate">
             <div class="ilc-cand-info">
-                <h4>${candName}</h4>
-                <span>${vagaName}</span>
+                <h4>${escapeHtml(candName)}</h4>
+                <span>${escapeHtml(vagaName)}</span>
             </div>
-            <div class="ilc-score">${score}%</div>
+            <div class="ilc-score">${escapeHtml(score)}%</div>
         </div>
 
         <div class="ilc-details">
             <div class="ilc-detail-item">
                 <i class="fa-regular fa-calendar"></i>
-                <span>${dateStr}</span>
+                <span>${escapeHtml(dateStr)}</span>
                 <i class="fa-regular fa-clock" style="margin-left:8px;"></i>
-                <span>${timeStr}</span>
+                <span>${escapeHtml(timeStr)}</span>
             </div>
             <div class="ilc-detail-item">
                 <i class="fa-solid fa-user-group"></i>
-                <span>${interviewerName}</span>
+                <span>${escapeHtml(interviewerName)}</span>
             </div>
         </div>
 
         <div class="ilc-observations">
-            ${i.Observações || i.Observacoes || 'Sem observações adicionais'}
+            ${escapeHtml(i.Observações || i.Observacoes || 'Sem observações adicionais')}
         </div>
     `;
 
@@ -834,7 +833,8 @@ async function editInterview(i) {
         document.getElementById('agVaga').value = vagaObj.id;
     }
 
-    document.getElementById('agTipo').value = i["Tipo de entrevista"] || 'Presencial';
+    document.getElementById('agObs').value = i.Observacoes || i.Observações || '';
+    document.getElementById('agTipo').value = i.tipo_entrevista || 'Presencial';
 
     // Converte a data ISO para o formato "YYYY-MM-DDTHH:MM" aceite pelo input datetime-local
     if (i.Data) {
@@ -848,11 +848,9 @@ async function editInterview(i) {
 
     // Determina o ID do entrevistador (pode estar em campos diferentes)
     let interviewerId = '';
-    if (i.Entrevistador_ID) {
-        interviewerId = i.Entrevistador_ID;
-    } else if (i.Entrevistador) {
-        // Se veio como objeto do JOIN, usa o ID do objeto
-        interviewerId = i.Entrevistador.id || i.Entrevistador;
+    if (i.entrevistador) {
+        // Supabase join pode retornar objeto se não for id direto, ou apenas a string/uuid
+        interviewerId = (i.profiles && i.profiles.id) ? i.profiles.id : (i.entrevistador.id || i.entrevistador);
     }
 
     document.getElementById('agEntrevistador').value = interviewerId;
@@ -1010,7 +1008,7 @@ async function fetchMonthInterviews(date) {
       *,
       Vagas!inner(id, Titulo, status_vagas),
       candidatos(id, nome, nota, url_curriculo, perguntas_sugeridas),
-      Entrevistador(id, Nome)
+      profiles(id, nome)
     `)
         .eq('Vagas.status_vagas', 'aberta')
         .order('Data', { ascending: true }); // Ordena por data crescente
@@ -1062,7 +1060,7 @@ function updateCalendarDots() {
             if (dotsContainer.children.length < 3) {
                 const dot = document.createElement('div');
                 // Cor diferente para entrevistas online vs presenciais
-                dot.className = `event-dot ${interview["Tipo de entrevista"] === 'Online' ? 'online' : 'presencial'}`;
+                dot.className = `event-dot ${interview.tipo_entrevista === 'Online' ? 'online' : 'presencial'}`;
                 dotsContainer.appendChild(dot);
             }
         }
@@ -1101,8 +1099,8 @@ function renderSidePanel(date) {
 
     const filtered = dayInterviews.filter(i => {
         // Filtra por tipo (presencial, video, telefone)
-        if (typeFilterValue !== 'all' && i["Tipo de entrevista"] &&
-            i["Tipo de entrevista"].toLowerCase() !== typeFilterValue) return false;
+        if (typeFilterValue !== 'all' && i.tipo_entrevista &&
+            i.tipo_entrevista.toLowerCase() !== typeFilterValue) return false;
         // Filtra por status (agendada, concluida)
         if (statusFilterValue !== 'all' && i.status &&
             i.status.toLowerCase() !== statusFilterValue) return false;
@@ -1125,12 +1123,12 @@ function renderSidePanel(date) {
         card.innerHTML = `
            <div class="event-icon-box">
              <!-- Ícone diferente para online vs presencial -->
-             <i class="fa-solid ${i["Tipo de entrevista"] === 'Online' ? 'fa-video' : 'fa-building'}"></i>
+             <i class="fa-solid ${i.tipo_entrevista === 'Online' ? 'fa-video' : 'fa-building'}"></i>
            </div>
            <div class="event-info">
-             <div class="event-title">${nomeCandidato}</div>
-             <div class="event-time">${time} - ${nomeVaga}</div>
-             <div class="event-status-badge">${i.status}</div>
+             <div class="event-title">${escapeHtml(nomeCandidato)}</div>
+             <div class="event-time">${escapeHtml(time)} - ${escapeHtml(nomeVaga)}</div>
+             <div class="event-status-badge">${escapeHtml(i.status)}</div>
            </div>
            <button class="btn-icon-only btn-conduzir" style="margin-left: auto; cursor: pointer; color: var(--primary-color);" title="Conduzir Entrevista">
              <i class="fa-solid fa-clipboard-question"></i>
@@ -1192,7 +1190,7 @@ function updateStatsCounters() {
     });
 
     const countPending = upcomingInterviews.filter(i => i.status === 'Agendada').length;
-    const countPresencial = upcomingInterviews.filter(i => i["Tipo de entrevista"] === 'Presencial').length;
+    const countPresencial = upcomingInterviews.filter(i => i.tipo_entrevista === 'Presencial').length;
 
     // Anima cada contador de 0 até o valor calculado (duração: 1 segundo)
     animateValue("statHoje", 0, countToday, 1000);
@@ -1314,20 +1312,11 @@ function openConduzirModal(interview) {
     document.getElementById('conduzirEntrevistaId').value = interview.id;
     document.getElementById('conduzirCandidatoId').value = candId;
     document.getElementById('conduzirUrlCurriculo').value =
-        (candidateObj && candidateObj.url_curriculo) ? candidateObj.url_curriculo : '';
+        (candidateObj && isSafeCvUrl(candidateObj.url_curriculo)) ? candidateObj.url_curriculo : '';
 
-    // Carrega currículo no iframe
     const iframe = document.getElementById('iframeCurriculo');
     const noCurriculoMsg = document.getElementById('noCurriculoMsg');
-    if (candidateObj && candidateObj.url_curriculo) {
-        iframe.src = candidateObj.url_curriculo;
-        iframe.style.display = 'block';
-        noCurriculoMsg.style.display = 'none';
-    } else {
-        iframe.src = '';
-        iframe.style.display = 'none';
-        noCurriculoMsg.style.display = 'flex';
-    }
+    applySafeCvToElements(candidateObj?.url_curriculo, { iframe, noCvMsg: noCurriculoMsg });
 
     // Carrega perguntas sugeridas
     const listaPerguntas = document.getElementById('listaPerguntasSugeridas');

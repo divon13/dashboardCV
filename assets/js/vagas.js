@@ -191,8 +191,8 @@ async function carregarVagas() {
         <div class="title-area">
           <div class="job-icon-wrap"><i class="fa-solid fa-briefcase"></i></div>
           <div class="job-meta">
-            <div class="job-title">${vaga.Titulo || ''}</div>
-            <span class="chip-status chip-status-vaga status-${(vaga.status_vagas || 'aberta').toLowerCase()}">${vaga.status_vagas || 'aberta'}</span>
+            <div class="job-title">${escapeHtml(vaga.Titulo || '')}</div>
+            <span class="chip-status chip-status-vaga status-${safeCssClass(vaga.status_vagas || 'aberta')}">${escapeHtml(vaga.status_vagas || 'aberta')}</span>
           </div>
         </div>
         <div class="card-actions">
@@ -207,7 +207,7 @@ async function carregarVagas() {
         </div>
       </div>
       <div class="card-bottom">
-        <span class="card-vaga-meta"><i class="fa-solid fa-calendar-xmark"></i> Encerra ${dataEncerramento}</span>
+        <span class="card-vaga-meta"><i class="fa-solid fa-calendar-xmark"></i> Encerra ${escapeHtml(dataEncerramento)}</span>
         <span class="card-vaga-meta"><i class="fa-solid fa-users"></i> ${candidatosCount} candidato${candidatosCount === 1 ? '' : 's'}</span>
       </div>
       </div>
@@ -433,13 +433,16 @@ document.addEventListener('DOMContentLoaded', () => {
         vagaForm.addEventListener('submit', async (event) => {
             event.preventDefault(); // Impede o reload da página
 
+            const { data: userData } = await supabaseClient.auth.getUser();
+            const userId = userData?.user?.id || null;
+
             // Recolhe os dados do formulário
             const dadosVaga = {
                 Titulo: document.getElementById('titulo').value,
                 Descricao: document.getElementById('descricao').value,
                 Requisitos: document.getElementById('requisitos').value,
                 data_encerramento: document.getElementById('dataEncerramento').value,
-                AdminID: 1 // ID do administrador (placeholder fixo por enquanto)
+                admin_id: userId
             };
 
             const id = document.getElementById('vagaId').value; // Vazio se for nova vaga
