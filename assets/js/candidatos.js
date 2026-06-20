@@ -97,6 +97,8 @@ async function carregarUsuarios() {
       </div>`;
     }
     atualizarContagemCandidatosVisiveis();
+    configurarFiltroCandidatos();
+    aplicarFiltroCandidatos();
 }
 
 /**
@@ -176,6 +178,21 @@ function criarCardCandidato(candidato, vagaData) {
         }
     }
     const formacaoTexto = candidato.formacao_academica || '';
+
+    card.dataset.search = [
+        candidato.nome,
+        candidato.email,
+        candidato.telefone,
+        candidato.Endereco,
+        candidato.status,
+        candidato.vaga_sugerida,
+        candidato.vaga_sugerida_ia,
+        vagaData ? vagaData.Titulo : '',
+        experienciaTexto,
+        formacaoTexto,
+        capacidades.join(' '),
+        candidato.nota
+    ].filter(Boolean).join(' ').toLowerCase();
 
     // Combina experiência e formação com separador "•", ou mostra "Não informado"
     const experienciaFormacao = escapeHtml(
@@ -274,8 +291,31 @@ function atualizarContagemCandidatosVisiveis() {
     const container = document.getElementById('candidatesCardsContainer');
     const label = document.getElementById('candidatosCountLabel');
     if (!container || !label) return;
-    const total = container.querySelectorAll('.card-candidato').length;
+    let total = 0;
+    container.querySelectorAll('.card-candidato').forEach(card => {
+        if (card.style.display !== 'none') total++;
+    });
     label.textContent = total === 1 ? '1 candidato' : `${total} candidatos`;
+}
+
+function configurarFiltroCandidatos() {
+    const input = document.getElementById('filtroCandidatos');
+    if (!input || input.dataset.bound === '1') return;
+    input.dataset.bound = '1';
+    input.addEventListener('input', aplicarFiltroCandidatos);
+}
+
+function aplicarFiltroCandidatos() {
+    const input = document.getElementById('filtroCandidatos');
+    const container = document.getElementById('candidatesCardsContainer');
+    if (!input || !container) return;
+
+    const q = input.value.trim().toLowerCase();
+    container.querySelectorAll('.card-candidato').forEach(card => {
+        const haystack = card.dataset.search || card.textContent || '';
+        card.style.display = !q || haystack.toLowerCase().includes(q) ? '' : 'none';
+    });
+    atualizarContagemCandidatosVisiveis();
 }
 
 /**

@@ -106,6 +106,10 @@ async function carregarPipeline() {
     // Restaura a seleção do filtro após re-popular o select
     if (filtroSelect) filtroSelect.value = filtroAtual;
 
+    const buscaInput = document.getElementById('filtroPipelineBusca');
+    const buscaAtual = buscaInput ? buscaInput.value.trim().toLowerCase() : '';
+    configurarFiltroBuscaPipeline();
+
     // ── Limpa o conteúdo de todas as colunas ─────────────────────────────
     for (let i = 1; i <= 5; i++) {
         const colBody = document.querySelector(`.pipeline-column-${i} .pipeline-column-body`);
@@ -147,8 +151,25 @@ async function carregarPipeline() {
             const vagaObj = candidato.vaga_sugerida ? mapaVagasPorTitulo[candidato.vaga_sugerida] : null;
             const nomeVaga = vagaObj ? vagaObj.Titulo : (candidato.vaga_sugerida || 'Geral');
 
+            const searchText = [
+                candidato.nome,
+                candidato.email,
+                candidato.telefone,
+                candidato.status,
+                candidato.vaga_sugerida,
+                candidato.vaga_sugerida_ia,
+                nomeVaga,
+                candidato.nota,
+                Array.isArray(candidato.Capacidades) ? candidato.Capacidades.join(' ') : candidato.Capacidades
+            ].filter(Boolean).join(' ').toLowerCase();
+
+            if (buscaAtual && !searchText.includes(buscaAtual)) {
+                continue;
+            }
+
             // Cria o card e adiciona à coluna correta
             const card = criarCardPipeline(candidato, nomeVaga, vagaObj);
+            card.dataset.search = searchText;
             colBody.appendChild(card);
             contadores[colIndex]++;
         }
@@ -183,6 +204,13 @@ window.addEventListener('interview-scheduled', () => {
 window.addEventListener('interview-concluded', () => {
     setTimeout(carregarPipeline, 500); // Dá tempo para o Supabase processar a alteração
 });
+
+function configurarFiltroBuscaPipeline() {
+    const input = document.getElementById('filtroPipelineBusca');
+    if (!input || input.dataset.bound === '1') return;
+    input.dataset.bound = '1';
+    input.addEventListener('input', carregarPipeline);
+}
 
 /**
  * Cria e retorna o elemento HTML de um card de candidato para o pipeline.

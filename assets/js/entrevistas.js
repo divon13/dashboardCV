@@ -246,16 +246,31 @@ async function initCalendarPage() {
     if (btnClearFilters) btnClearFilters.addEventListener('click', () => {
         document.getElementById('filterType').value = 'all';
         document.getElementById('filterStatus').value = 'all';
+        const searchInput = document.getElementById('filtroEntrevistasBusca');
+        if (searchInput) searchInput.value = '';
         renderSidePanel(selectedDate); // Re-renderiza com filtros limpos
+        renderListView();
     });
 
     // Filtro por tipo de entrevista → re-renderiza o painel ao mudar
     const filterType = document.getElementById('filterType');
-    if (filterType) filterType.addEventListener('change', () => renderSidePanel(selectedDate));
+    if (filterType) filterType.addEventListener('change', () => {
+        renderSidePanel(selectedDate);
+        renderListView();
+    });
 
     // Filtro por status → re-renderiza o painel ao mudar
     const filterStatus = document.getElementById('filterStatus');
-    if (filterStatus) filterStatus.addEventListener('change', () => renderSidePanel(selectedDate));
+    if (filterStatus) filterStatus.addEventListener('change', () => {
+        renderSidePanel(selectedDate);
+        renderListView();
+    });
+
+    const filtroBuscaEntrevistas = document.getElementById('filtroEntrevistasBusca');
+    if (filtroBuscaEntrevistas) filtroBuscaEntrevistas.addEventListener('input', () => {
+        renderSidePanel(selectedDate);
+        renderListView();
+    });
 
     // ── Toggle de Vista (Calendário / Lista) ──────────────────────────────
     const viewCalendar = document.getElementById('viewCalendar');
@@ -615,7 +630,7 @@ async function renderListView() {
     const upcomingInterviews = interviewsCache.filter(i => {
         if (!i.Data) return false;
         const dateStr = i.Data.substring(0, 10); // Extrai apenas "YYYY-MM-DD" da string do Supabase
-        return dateStr >= hojeISO;
+        return dateStr >= hojeISO && entrevistaPassaFiltrosAtuais(i);
     });
 
     if (upcomingInterviews.length === 0) {
@@ -628,6 +643,44 @@ async function renderListView() {
         const card = createInterviewListCard(interview);
         listContainer.appendChild(card);
     });
+}
+
+function entrevistaPassaFiltrosAtuais(i) {
+    const filterType = document.getElementById('filterType');
+    const filterStatus = document.getElementById('filterStatus');
+    const searchInput = document.getElementById('filtroEntrevistasBusca');
+
+    const typeFilterValue = filterType ? filterType.value : 'all';
+    const statusFilterValue = filterStatus ? filterStatus.value : 'all';
+    const searchValue = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    const tipo = (i.tipo_entrevista || '').toLowerCase();
+    const status = (i.status || i.Status || '').toLowerCase();
+
+    if (typeFilterValue !== 'all' && tipo && tipo !== typeFilterValue) return false;
+    if (statusFilterValue !== 'all' && status && status !== statusFilterValue) return false;
+    if (searchValue && !montarTextoBuscaEntrevista(i).includes(searchValue)) return false;
+
+    return true;
+}
+
+function montarTextoBuscaEntrevista(i) {
+    const candidateObj = Array.isArray(i.candidatos) ? i.candidatos[0] : i.candidatos;
+    const vagaObj = Array.isArray(i.Vagas) ? i.Vagas[0] : i.Vagas;
+    const interviewerObj = Array.isArray(i.profiles) ? i.profiles[0] : i.profiles;
+
+    return [
+        candidateObj && candidateObj.nome,
+        candidateObj && candidateObj.email,
+        vagaObj && vagaObj.Titulo,
+        interviewerObj && interviewerObj.nome,
+        i.tipo_entrevista,
+        i.status,
+        i.Status,
+        i.Data,
+        i.Observações,
+        i.Observacoes
+    ].filter(Boolean).join(' ').toLowerCase();
 }
 
 /**
@@ -670,6 +723,7 @@ function createInterviewListCard(i) {
     const statusClass = safeCssClass(status);
     const dateStr = i.Data ? formatarData(i.Data) : 'Sem data';
     const timeStr = i.Data ? i.Data.split('T')[1].substring(0, 5) : '--:--';
+    card.dataset.search = montarTextoBuscaEntrevista(i);
 
     card.innerHTML = `
         <div class="ilc-header">
@@ -1092,20 +1146,7 @@ function renderSidePanel(date) {
     const dayInterviews = interviewsCache.filter(i => i.Data && i.Data.startsWith(dateKey));
 
     // ── Aplica os filtros ativos ───────────────────────────────────────────
-    const filterType = document.getElementById('filterType');
-    const filterStatus = document.getElementById('filterStatus');
-    const typeFilterValue = filterType ? filterType.value : 'all';
-    const statusFilterValue = filterStatus ? filterStatus.value : 'all';
-
-    const filtered = dayInterviews.filter(i => {
-        // Filtra por tipo (presencial, video, telefone)
-        if (typeFilterValue !== 'all' && i.tipo_entrevista &&
-            i.tipo_entrevista.toLowerCase() !== typeFilterValue) return false;
-        // Filtra por status (agendada, concluida)
-        if (statusFilterValue !== 'all' && i.status &&
-            i.status.toLowerCase() !== statusFilterValue) return false;
-        return true;
-    });
+    const filtered = dayInterviews.filter(entrevistaPassaFiltrosAtuais);
 
     if (filtered.length === 0) {
         listContainer.innerHTML = `<div class="empty-state-small">Nenhuma entrevista encontrada</div>`;
@@ -1120,6 +1161,7 @@ function renderSidePanel(date) {
 
         const card = document.createElement('div');
         card.className = 'side-event-card';
+        card.dataset.search = montarTextoBuscaEntrevista(i);
         card.innerHTML = `
            <div class="event-icon-box">
              <!-- Ícone diferente para online vs presencial -->
