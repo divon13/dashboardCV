@@ -29,7 +29,22 @@ function isAdmin() {
 }
 
 function getEntrevistadorId() {
-  return currentUserProfile?.entrevistador_id ?? null;
+  return currentUserProfile?.id ?? null;
+}
+
+/**
+ * Lista perfis com role entrevistador (ativos), para dropdowns de agendamento.
+ * Requer a política RLS profiles_select_entrevistadores (sql/04_rls_entrevistadores.sql).
+ */
+async function fetchEntrevistadoresAtivos() {
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('id, nome, email')
+    .eq('role', 'entrevistador')
+    .eq('ativo', true)
+    .order('nome', { ascending: true });
+
+  return { data: data || [], error };
 }
 
 /**

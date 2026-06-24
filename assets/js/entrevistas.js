@@ -383,15 +383,34 @@ async function populateModalSelects() {
         );
     }
 
-    // ── Entrevistadores (select padrão) ───────────────────────────────────
+    // ── Entrevistadores (select padrão — perfis com role entrevistador) ───
     const entrevistadorSelect = document.getElementById('agEntrevistador');
-    const { data: entrevistadores } = await supabaseClient.from('profiles').select('id, nome').eq('role', 'entrevistador');
-    if (entrevistadores && entrevistadorSelect) {
+    if (entrevistadorSelect) {
+        entrevistadorSelect.innerHTML = '<option value="">A carregar...</option>';
+
+        const { data: entrevistadores, error } = typeof fetchEntrevistadoresAtivos === 'function'
+            ? await fetchEntrevistadoresAtivos()
+            : { data: [], error: { message: 'Função fetchEntrevistadoresAtivos indisponível.' } };
+
+        if (error) {
+            console.error('Erro ao carregar entrevistadores:', error);
+            entrevistadorSelect.innerHTML = '<option value="">Erro ao carregar entrevistadores</option>';
+            if (typeof showNotification === 'function') {
+                showNotification('Não foi possível carregar entrevistadores. Verifique as políticas RLS no Supabase.', 'error');
+            }
+            return;
+        }
+
         entrevistadorSelect.innerHTML = '<option value="">Selecione um entrevistador...</option>';
+        if (entrevistadores.length === 0) {
+            entrevistadorSelect.innerHTML = '<option value="">Nenhum entrevistador ativo</option>';
+            return;
+        }
+
         entrevistadores.forEach(e => {
             const opt = document.createElement('option');
             opt.value = e.id;
-            opt.textContent = e.nome;
+            opt.textContent = e.nome || e.email || 'Sem nome';
             entrevistadorSelect.appendChild(opt);
         });
     }
