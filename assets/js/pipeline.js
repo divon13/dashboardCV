@@ -2239,6 +2239,8 @@ function gerarEmailContratacaoHtml(dados) {
 
 async function buscarEPreencherEntrevista(candidatoId, candidatoNome) {
     try {
+        console.log('Buscando entrevista para candidato:', candidatoId);
+        
         // Buscar entrevista agendada para este candidato
         const { data: entrevistas, error } = await supabaseClient
             .from('Entrevistas')
@@ -2247,9 +2249,11 @@ async function buscarEPreencherEntrevista(candidatoId, candidatoNome) {
             .eq('status', 'Agendada')
             .single();
 
+        console.log('Resultado da busca de entrevista:', entrevistas, error);
+
         if (error) {
             console.error('Erro ao buscar entrevista:', error);
-            return;
+            // Continua mesmo sem entrevista - pode ser conduzida sem agendamento prévio
         }
 
         // Buscar dados completos do candidato
@@ -2258,6 +2262,8 @@ async function buscarEPreencherEntrevista(candidatoId, candidatoNome) {
             .select('*')
             .eq('id', candidatoId)
             .single();
+
+        console.log('Dados do candidato:', candidato, candError);
 
         if (candError) {
             console.error('Erro ao buscar candidato:', candError);
@@ -2282,6 +2288,7 @@ async function buscarEPreencherEntrevista(candidatoId, candidatoNome) {
         document.getElementById('pipelineDecisaoFinal').value = entrevistas?.decisao_final || '';
 
         // Renderizar perguntas sugeridas
+        console.log('Renderizando perguntas sugeridas para candidato:', candidato?.perguntas_sugeridas);
         renderPipelinePerguntasSugeridas(candidato);
 
         // Preencher currículo
@@ -2289,6 +2296,8 @@ async function buscarEPreencherEntrevista(candidatoId, candidatoNome) {
         const noCvMsg = document.getElementById('pipelineNoCurriculoMsg');
         const openCv = document.getElementById('pipelineOpenCurriculo');
         const cvUrl = candidato?.url_curriculo || '';
+        console.log('URL do currículo:', cvUrl);
+        console.log('Elementos do currículo:', { iframe: !!iframe, noCvMsg: !!noCvMsg, openCv: !!openCv });
         if (iframe && noCvMsg && openCv) {
             applySafeCvToElements(cvUrl, { iframe, openLink: openCv, noCvMsg });
         }
