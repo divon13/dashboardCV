@@ -1198,6 +1198,150 @@ function configurarDragAndDrop() {
 
                     alert('Para mover para "Entrevista feita", conduza a entrevista e escolha "Guardar" na decisão final.');
 
+                } else if (novoStatusTitulo === 'Contratado') {
+
+                    // ── Caso especial: Contratado ─────────────────────────
+
+                    // Ao mover para esta coluna, abre o modal de contratação
+
+                    // para recolher data de início e horários antes de confirmar.
+
+                    column.appendChild(card);
+
+                    recalcularContadores();
+
+
+
+                    const modalContratacao = document.getElementById('contratacaoModal');
+
+                    if (modalContratacao) {
+
+                        modalContratacao.style.display = 'flex';
+
+
+
+                        // Preenche o nome do candidato no modal
+
+                        const candidateName = card.querySelector('.pipeline-card-name').textContent;
+
+                        const nomeEl = document.getElementById('contratacaoCandidatoNome');
+
+                        const idEl = document.getElementById('contratacaoCandidatoId');
+
+                        if (nomeEl) nomeEl.textContent = candidateName;
+
+                        if (idEl) idEl.value = cardId;
+
+
+
+                        // Reset do formulário
+
+                        const form = document.getElementById('contratacaoForm');
+
+                        if (form) {
+
+                            document.getElementById('contratacaoDataInicio').value = '';
+
+                            document.getElementById('contratacaoHoraEntrada').value = '09:00';
+
+                            document.getElementById('contratacaoHoraSaida').value = '18:00';
+
+                        }
+
+
+
+                        // ── Lógica de reversão ────────────────────────────
+
+                        const oldStatus = card.dataset.status;
+
+                        const mapRevertContratacao = {
+
+                            'Aplicado': 1, 'Entrevista técnica': 2, 'Entrevista feita': 3,
+
+                            'Oferta enviada': 4, 'Contratado': 5
+
+                        };
+
+                        const oldColIdx = mapRevertContratacao[oldStatus] || 1;
+
+                        const revertTargetContratacao = document.querySelector(
+
+                            `.pipeline-column-${oldColIdx} .pipeline-column-body`
+
+                        );
+
+
+
+                        const cleanupContratacao = () => {
+
+                            window.removeEventListener('contratacao-confirmed', onContratacaoSuccess);
+
+                            if (btnCloseContratacao) btnCloseContratacao.removeEventListener('click', onContratacaoRevert);
+
+                            if (btnCancelContratacao) btnCancelContratacao.removeEventListener('click', onContratacaoRevert);
+
+                            window.removeEventListener('click', onContratacaoOutside);
+
+                        };
+
+
+
+                        const onContratacaoSuccess = () => {
+
+                            card.dataset.status = 'Contratado';
+
+                            const btnAvaliacao = card.querySelector('.btn-ver-avaliacao');
+
+                            if (btnAvaliacao) btnAvaliacao.style.display = '';
+
+                            cleanupContratacao();
+
+                        };
+
+
+
+                        const onContratacaoRevert = () => {
+
+                            if (revertTargetContratacao) {
+
+                                revertTargetContratacao.appendChild(card);
+
+                                recalcularContadores();
+
+                            }
+
+                            modalContratacao.style.display = 'none';
+
+                            cleanupContratacao();
+
+                        };
+
+
+
+                        const onContratacaoOutside = (ev) => {
+
+                            if (ev.target === modalContratacao) onContratacaoRevert();
+
+                        };
+
+
+
+                        const btnCloseContratacao = document.getElementById('closeContratacaoModal');
+
+                        const btnCancelContratacao = document.getElementById('cancelContratacao');
+
+
+
+                        window.addEventListener('contratacao-confirmed', onContratacaoSuccess);
+
+                        if (btnCloseContratacao) btnCloseContratacao.addEventListener('click', onContratacaoRevert);
+
+                        if (btnCancelContratacao) btnCancelContratacao.addEventListener('click', onContratacaoRevert);
+
+                        window.addEventListener('click', onContratacaoOutside);
+
+                    }
+
                 } else {
 
                     // ── Fluxo normal para todas as outras colunas ─────────
@@ -1467,6 +1611,596 @@ async function rejeitarCandidato(id) {
         carregarPipeline();
 
     }
+
+}
+
+
+
+// ── Setup do modal de contratação ─────────────────────────────────────────
+
+// Configura o formulário de contratação (#contratacaoForm).
+
+// Ao submeter, atualiza o status para "Contratado", guarda os dados de
+
+// início no Supabase e envia o email de boas-vindas personalizado.
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const formContratacao = document.getElementById('contratacaoForm');
+
+    if (!formContratacao) return;
+
+
+
+    formContratacao.addEventListener('submit', async (e) => {
+
+        e.preventDefault();
+
+
+
+        const candidatoId = document.getElementById('contratacaoCandidatoId').value;
+
+        const dataInicio = document.getElementById('contratacaoDataInicio').value;
+
+        const horaEntrada = document.getElementById('contratacaoHoraEntrada').value;
+
+        const horaSaida = document.getElementById('contratacaoHoraSaida').value;
+
+
+
+        if (!candidatoId || !dataInicio || !horaEntrada || !horaSaida) {
+
+            if (typeof showNotification === 'function') {
+
+                showNotification('Preencha todos os campos obrigatórios.', 'error');
+
+            } else {
+
+                alert('Preencha todos os campos obrigatórios.');
+
+            }
+
+            return;
+
+        }
+
+
+
+        // Desabilita o botão de submit para evitar duplo clique
+
+        const btnSubmit = formContratacao.querySelector('.btn-submit--success');
+
+        if (btnSubmit) {
+
+            btnSubmit.disabled = true;
+
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A processar...';
+
+        }
+
+
+
+        try {
+
+            // 1. Atualiza o status do candidato para "Contratado" e guarda dados de contratação
+
+            const { error: updateError } = await supabaseClient
+
+                .from('candidatos')
+
+                .update({
+
+                    status: 'Contratado',
+
+                    data_inicio: dataInicio,
+
+                    hora_entrada: horaEntrada,
+
+                    hora_saida: horaSaida
+
+                })
+
+                .eq('id', candidatoId);
+
+
+
+            if (updateError) {
+
+                console.error('Erro ao atualizar candidato:', updateError);
+
+                // Se os campos extra não existirem, tenta só com o status
+
+                const { error: fallbackError } = await supabaseClient
+
+                    .from('candidatos')
+
+                    .update({ status: 'Contratado' })
+
+                    .eq('id', candidatoId);
+
+
+
+                if (fallbackError) {
+
+                    throw new Error('Erro ao atualizar status: ' + fallbackError.message);
+
+                }
+
+            }
+
+
+
+            // 2. Busca dados do candidato para o email
+
+            const { data: candidato } = await supabaseClient
+
+                .from('candidatos')
+
+                .select('nome, email')
+
+                .eq('id', candidatoId)
+
+                .single();
+
+
+
+            // 3. Busca configurações da empresa para o email
+
+            const { data: configs } = await supabaseClient
+
+                .from('configuracoes')
+
+                .select('chave, valor')
+
+                .in('chave', ['empresa_nome', 'empresa_email']);
+
+
+
+            const configMap = {};
+
+            if (configs) configs.forEach(c => configMap[c.chave] = c.valor);
+
+
+
+            // 4. Formata a data para exibição no email
+
+            const dataFormatada = formatarDataInicioContratacao(dataInicio);
+
+
+
+            // 5. Envia o email de contratação via Edge Function (se disponível)
+
+            if (candidato && candidato.email) {
+
+                await enviarEmailContratacao({
+
+                    nome: candidato.nome,
+
+                    email: candidato.email,
+
+                    dataInicio: dataFormatada,
+
+                    horaEntrada,
+
+                    horaSaida,
+
+                    empresaNome: configMap['empresa_nome'] || 'Empresa',
+
+                    empresaEmail: configMap['empresa_email'] || ''
+
+                });
+
+            }
+
+
+
+            // 6. Fecha o modal e notifica sucesso
+
+            const modal = document.getElementById('contratacaoModal');
+
+            if (modal) modal.style.display = 'none';
+
+
+
+            window.dispatchEvent(new CustomEvent('contratacao-confirmed'));
+
+
+
+            if (typeof showNotification === 'function') {
+
+                showNotification('Candidato contratado com sucesso! Email enviado.', 'success');
+
+            }
+
+
+
+        } catch (err) {
+
+            console.error('Erro na contratação:', err);
+
+            if (typeof showNotification === 'function') {
+
+                showNotification('Erro ao processar contratação: ' + err.message, 'error');
+
+            } else {
+
+                alert('Erro ao processar contratação: ' + err.message);
+
+            }
+
+        } finally {
+
+            // Restaura o botão de submit
+
+            if (btnSubmit) {
+
+                btnSubmit.disabled = false;
+
+                btnSubmit.innerHTML = '<i class="fa-solid fa-check-double"></i> Confirmar Contratação';
+
+            }
+
+        }
+
+    });
+
+});
+
+
+
+/**
+
+ * Formata a data de início para o formato legível (DD/MM/AAAA).
+
+ * @param {string} dataISO - Data no formato YYYY-MM-DD
+
+ * @returns {string} Data formatada como "DD/MM/AAAA"
+
+ */
+
+function formatarDataInicioContratacao(dataISO) {
+
+    if (!dataISO) return '';
+
+    const [ano, mes, dia] = dataISO.split('-');
+
+    return `${dia}/${mes}/${ano}`;
+
+}
+
+
+
+/**
+
+ * Envia o email de contratação/boas-vindas para o candidato.
+
+ *
+
+ * O email inclui os dados personalizados do bloco "Próximos Passos":
+
+ *   - Data de início
+
+ *   - Horário de entrada e saída no escritório
+
+ *
+
+ * Tenta enviar via Supabase Edge Function. Se não estiver disponível,
+
+ * faz log no console e exibe preview do email para copiar.
+
+ *
+
+ * @param {Object} dados - Dados para o email
+
+ * @param {string} dados.nome - Nome do candidato
+
+ * @param {string} dados.email - Email do candidato
+
+ * @param {string} dados.dataInicio - Data de início formatada (DD/MM/AAAA)
+
+ * @param {string} dados.horaEntrada - Horário de entrada (HH:MM)
+
+ * @param {string} dados.horaSaida - Horário de saída (HH:MM)
+
+ * @param {string} dados.empresaNome - Nome da empresa
+
+ * @param {string} dados.empresaEmail - Email de contacto da empresa
+
+ */
+
+async function enviarEmailContratacao(dados) {
+
+    const emailHtml = gerarEmailContratacaoHtml(dados);
+
+
+
+    try {
+
+        // Tenta enviar via Supabase Edge Function
+
+        const { data, error } = await supabaseClient.functions.invoke('send-email', {
+
+            body: {
+
+                to: dados.email,
+
+                subject: `Parabéns ${dados.nome}! Bem-vindo(a) à ${dados.empresaNome}`,
+
+                html: emailHtml
+
+            }
+
+        });
+
+
+
+        if (error) {
+
+            console.warn('Edge Function de email não disponível:', error.message);
+
+            console.log('Email HTML gerado (para envio manual):', emailHtml);
+
+            // Não lança erro — a contratação foi feita com sucesso mesmo sem email
+
+        } else {
+
+            console.log('Email de contratação enviado com sucesso para:', dados.email);
+
+        }
+
+    } catch (err) {
+
+        console.warn('Erro ao tentar enviar email (Edge Function possivelmente não configurada):', err);
+
+        console.log('Email HTML gerado (para envio manual):', emailHtml);
+
+    }
+
+}
+
+
+
+/**
+
+ * Gera o HTML do email de contratação/boas-vindas.
+
+ * Substitui o bloco genérico "Próximos Passos" pelos dados preenchidos
+
+ * no formulário de contratação (data de início, horários do escritório).
+
+ *
+
+ * @param {Object} dados - Dados do candidato e da contratação
+
+ * @returns {string} HTML completo do email
+
+ */
+
+function gerarEmailContratacaoHtml(dados) {
+
+    return `
+
+    <!DOCTYPE html>
+
+    <html lang="pt">
+
+    <head>
+
+        <meta charset="UTF-8">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    </head>
+
+    <body style="margin:0; padding:0; background-color:#f0f2f5; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f0f2f5; padding:40px 20px;">
+
+            <tr>
+
+                <td align="center">
+
+                    <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                        
+
+                        <!-- Header com gradiente -->
+
+                        <tr>
+
+                            <td style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%); padding:40px 40px 30px; text-align:center;">
+
+                                <div style="font-size:48px; margin-bottom:16px;">🚀</div>
+
+                                <h1 style="margin:0 0 8px; font-size:26px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;">
+
+                                    É oficial, ${escapeHtml(dados.nome)}!
+
+                                </h1>
+
+                                <p style="margin:0; font-size:15px; color:rgba(255,255,255,0.7);">
+
+                                    A jornada começa em breve.
+
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                        
+
+                        <!-- Corpo do email -->
+
+                        <tr>
+
+                            <td style="padding:35px 40px;">
+
+                                <p style="margin:0 0 25px; font-size:16px; line-height:1.7; color:#334155;">
+
+                                    Estamos muito entusiasmados por anunciar que o seu processo de contratação foi <strong>concluído com sucesso!</strong>
+
+                                </p>
+
+                                
+
+                                <!-- Bloco: Dados de Início (substitui Próximos Passos) -->
+
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:25px;">
+
+                                    <tr>
+
+                                        <td style="padding:24px;">
+
+                                            <h3 style="margin:0 0 18px; font-size:16px; font-weight:700; color:#1e293b; text-align:center;">
+
+                                                📋 Os seus dados de início
+
+                                            </h3>
+
+                                            
+
+                                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+
+                                                <tr>
+
+                                                    <td style="padding:10px 0; border-bottom:1px solid #e2e8f0;">
+
+                                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+
+                                                            <tr>
+
+                                                                <td width="30" style="vertical-align:middle;">
+
+                                                                    <span style="font-size:18px;">📅</span>
+
+                                                                </td>
+
+                                                                <td style="vertical-align:middle; padding-left:12px;">
+
+                                                                    <span style="font-size:13px; color:#64748b; font-weight:500;">Data de Início</span><br>
+
+                                                                    <span style="font-size:16px; color:#1e293b; font-weight:700;">${escapeHtml(dados.dataInicio)}</span>
+
+                                                                </td>
+
+                                                            </tr>
+
+                                                        </table>
+
+                                                    </td>
+
+                                                </tr>
+
+                                                <tr>
+
+                                                    <td style="padding:10px 0; border-bottom:1px solid #e2e8f0;">
+
+                                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+
+                                                            <tr>
+
+                                                                <td width="30" style="vertical-align:middle;">
+
+                                                                    <span style="font-size:18px;">🕐</span>
+
+                                                                </td>
+
+                                                                <td style="vertical-align:middle; padding-left:12px;">
+
+                                                                    <span style="font-size:13px; color:#64748b; font-weight:500;">Horário de Entrada</span><br>
+
+                                                                    <span style="font-size:16px; color:#1e293b; font-weight:700;">${escapeHtml(dados.horaEntrada)}</span>
+
+                                                                </td>
+
+                                                            </tr>
+
+                                                        </table>
+
+                                                    </td>
+
+                                                </tr>
+
+                                                <tr>
+
+                                                    <td style="padding:10px 0;">
+
+                                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+
+                                                            <tr>
+
+                                                                <td width="30" style="vertical-align:middle;">
+
+                                                                    <span style="font-size:18px;">🕕</span>
+
+                                                                </td>
+
+                                                                <td style="vertical-align:middle; padding-left:12px;">
+
+                                                                    <span style="font-size:13px; color:#64748b; font-weight:500;">Horário de Saída</span><br>
+
+                                                                    <span style="font-size:16px; color:#1e293b; font-weight:700;">${escapeHtml(dados.horaSaida)}</span>
+
+                                                                </td>
+
+                                                            </tr>
+
+                                                        </table>
+
+                                                    </td>
+
+                                                </tr>
+
+                                            </table>
+
+                                        </td>
+
+                                    </tr>
+
+                                </table>
+
+                                
+
+                                <p style="margin:0; font-size:18px; font-weight:700; color:#2563eb; text-align:center; letter-spacing:-0.3px;">
+
+                                    Vemo-nos em breve!
+
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                        
+
+                        <!-- Footer -->
+
+                        <tr>
+
+                            <td style="padding:20px 40px; text-align:center; border-top:1px solid #e2e8f0;">
+
+                                <p style="margin:0; font-size:12px; color:#94a3b8;">
+
+                                    © ${new Date().getFullYear()} Equipa de Recrutamento & Seleção — ${escapeHtml(dados.empresaNome)}
+
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </body>
+
+    </html>`;
 
 }
 

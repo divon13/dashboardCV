@@ -527,6 +527,118 @@ table tbody tr td[colspan="5"] {
   resize: vertical;
 }
 
+/* ── Upload drop area ──────────────────────────────────────── */
+.upload-drop-area {
+  border: 2px dashed var(--border-dark);
+  border-radius: 10px;
+  background: var(--surface-dark);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.upload-drop-area:hover,
+.upload-drop-area.dragover {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.upload-drop-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.upload-drop-placeholder i {
+  font-size: 28px;
+  color: var(--primary-color);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.upload-drop-area:hover .upload-drop-placeholder i {
+  opacity: 1;
+}
+
+.upload-drop-placeholder p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.upload-drop-link {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.upload-drop-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.upload-drop-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.upload-drop-preview > i {
+  font-size: 22px;
+  color: #2b579a;
+}
+
+.upload-file-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-light);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.upload-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.upload-existing-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--primary-color);
+  text-decoration: none;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.upload-existing-link:hover {
+  text-decoration: underline;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;
@@ -6394,4 +6506,45 @@ table tbody tr td[colspan="5"] {
   .conduzir-right {
     flex: 1;
   }
+}
+
+/* Estilos para o Modal de Contratação */
+.modal-content-vaga.modal-surface--contratacao {
+  min-width: min(100%, 440px);
+  max-width: 520px;
+}
+
+.modal-header--contratacao {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+}
+
+.contratacao-candidato-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 10px;
+  margin-bottom: 22px;
+  color: var(--text-light);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.contratacao-candidato-info i {
+  color: #10b981;
+  font-size: 1.25rem;
+}
+
+.btn-submit--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-submit--success:hover {
+  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.45) !important;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
 }

@@ -294,6 +294,25 @@ function configurarEventosVagas(container, data) {
             document.getElementById('dataEncerramento').value = vaga.data_encerramento
                 ? vaga.data_encerramento.substring(0, 10)
                 : '';
+
+            // ── Proposta: mostra ficheiro existente ou limpa ────────────
+            const propostaFile = document.getElementById('propostaFile');
+            const propostaPlaceholder = document.getElementById('propostaPlaceholder');
+            const propostaPreview = document.getElementById('propostaPreview');
+            const propostaFileName = document.getElementById('propostaFileName');
+            if (propostaFile) propostaFile.value = '';
+
+            if (vaga.url_proposta) {
+                // Extrai o nome do ficheiro da URL
+                const nomeArquivo = decodeURIComponent(vaga.url_proposta.split('/').pop());
+                propostaFileName.textContent = nomeArquivo;
+                propostaPlaceholder.style.display = 'none';
+                propostaPreview.style.display = 'flex';
+            } else {
+                propostaPlaceholder.style.display = 'flex';
+                propostaPreview.style.display = 'none';
+            }
+
             document.getElementById('vagaModal').style.display = 'flex';
         };
     });
@@ -428,6 +447,89 @@ async function carregarVagasAbertas() {
 //   - Se #vagaId tiver valor → é uma edição (UPDATE)
 //   - Se #vagaId estiver vazio → é uma criação (INSERT)
 document.addEventListener('DOMContentLoaded', () => {
+
+    // ── Interação do campo de upload de proposta ──────────────────────────
+    const propostaDropArea  = document.getElementById('propostaDropArea');
+    const propostaFileInput = document.getElementById('propostaFile');
+    const propostaPlaceholder = document.getElementById('propostaPlaceholder');
+    const propostaPreview   = document.getElementById('propostaPreview');
+    const propostaFileName  = document.getElementById('propostaFileName');
+    const propostaRemoveBtn = document.getElementById('propostaRemoveBtn');
+
+    if (propostaDropArea && propostaFileInput) {
+        // Clique na área abre o seletor de ficheiros
+        propostaDropArea.addEventListener('click', (e) => {
+            if (e.target.closest('.upload-remove-btn')) return; // Não abrir se clicou em remover
+            propostaFileInput.click();
+        });
+
+        // Quando o utilizador seleciona um ficheiro
+        propostaFileInput.addEventListener('change', () => {
+            const file = propostaFileInput.files[0];
+            if (file) {
+                _mostrarFicheiroProposta(file.name);
+            }
+        });
+
+        // Drag & Drop
+        ['dragenter', 'dragover'].forEach(evt => {
+            propostaDropArea.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                propostaDropArea.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evt => {
+            propostaDropArea.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                propostaDropArea.classList.remove('dragover');
+            });
+        });
+
+        propostaDropArea.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            // Valida extensão
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['doc', 'docx'].includes(ext)) {
+                alert('Apenas ficheiros .doc ou .docx são permitidos.');
+                return;
+            }
+            // Valida tamanho (10 MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('O ficheiro excede o limite de 10 MB.');
+                return;
+            }
+
+            // Transfere para o input file via DataTransfer
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            propostaFileInput.files = dt.files;
+            _mostrarFicheiroProposta(file.name);
+        });
+
+        // Botão remover
+        if (propostaRemoveBtn) {
+            propostaRemoveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                propostaFileInput.value = '';
+                propostaPlaceholder.style.display = 'flex';
+                propostaPreview.style.display = 'none';
+            });
+        }
+    }
+
+    /** Mostra o preview com o nome do ficheiro */
+    function _mostrarFicheiroProposta(nome) {
+        if (propostaFileName) propostaFileName.textContent = nome;
+        if (propostaPlaceholder) propostaPlaceholder.style.display = 'none';
+        if (propostaPreview) propostaPreview.style.display = 'flex';
+    }
+
+    // ── Handler do formulário de vagas ─────────────────────────────────────
     const vagaForm = document.getElementById('vagaForm');
     if (vagaForm) {
         vagaForm.addEventListener('submit', async (event) => {
@@ -445,9 +547,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 admin_id: userId
             };
 
+            // ── Upload da proposta (se houver ficheiro selecionado) ────────
+            const propostaInput = document.getElementById('propostaFile');
+            const ficheiroProposta = propostaInput?.files[0] || null;
+
             const id = document.getElementById('vagaId').value; // Vazio se for nova vaga
 
             try {
+                // Se há ficheiro novo, faz o upload para o Supabase Storage
+                if (ficheiroProposta) {
+                    const ext = ficheiroProposta.name.split('.').pop().toLowerCase();
+                    const timestamp = Date.now();
+                    const caminhoStorage = `propostas/${timestamp}_${ficheiroProposta.name}`;
+
+                    const { data: uploadData, error: uploadError } = await supabaseClient
+                        .storage
+                        .from('propostas')
+                        .upload(caminhoStorage, ficheiroProposta, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (uploadError) throw new Error('Erro ao enviar proposta: ' + uploadError.message);
+
+                    // Obtém a URL pública do ficheiro carregado
+                    const { data: urlData } = supabaseClient
+                        .storage
+                        .from('propostas')
+                        .getPublicUrl(caminhoStorage);
+
+                    dadosVaga.url_proposta = urlData.publicUrl;
+                }
+
                 if (id) {
                     // ── Modo Edição: atualiza a vaga existente ────────────────
                     const { data, error } = await supabaseClient
@@ -477,6 +608,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 vagaForm.reset();
                 document.getElementById('vagaId').value = ''; // Limpa o ID para o próximo uso
+
+                // Limpa o preview da proposta
+                if (propostaPlaceholder) propostaPlaceholder.style.display = 'flex';
+                if (propostaPreview) propostaPreview.style.display = 'none';
 
             } catch (err) {
                 console.error('Erro ao salvar vaga:', err.message || err);

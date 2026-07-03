@@ -376,6 +376,55 @@
     </div>
   </div>
 
+  <!-- ── Modal de Contratação ─────────────────────────────────────────── -->
+  <!-- Aberto quando um candidato é arrastado para a coluna "Contratado".  -->
+  <!-- Pede data de início, horário de entrada e saída para incluir no     -->
+  <!-- email de contratação no lugar do bloco "Próximos Passos".           -->
+  <div id="contratacaoModal" class="modal modal-agendamento" style="display:none;">
+    <div class="modal-content-vaga modal-surface modal-surface--contratacao">
+      <div class="modal-header modal-header--surface modal-header--contratacao">
+        <div class="modal-header__lead">
+          <p class="modal-eyebrow">Contratação</p>
+          <h2>Finalizar contratação</h2>
+          <p class="modal-subtitle">Preencha os dados de início para incluir no email de boas-vindas do candidato.</p>
+        </div>
+        <span class="close" id="closeContratacaoModal" aria-label="Fechar">&times;</span>
+      </div>
+      <form id="contratacaoForm" class="vaga-form-v2 form-contratacao">
+        <input type="hidden" id="contratacaoCandidatoId">
+
+        <!-- Nome do candidato (exibido, não editável) -->
+        <div class="contratacao-candidato-info" id="contratacaoCandidatoInfo">
+          <i class="fa-solid fa-user-check"></i>
+          <span id="contratacaoCandidatoNome">—</span>
+        </div>
+
+        <!-- Data de Início -->
+        <div class="form-group-v2">
+          <label for="contratacaoDataInicio"><i class="fa-regular fa-calendar"></i> Data de Início</label>
+          <input type="date" id="contratacaoDataInicio" required class="form-input-datetime">
+        </div>
+
+        <!-- Horários de Entrada e Saída -->
+        <div class="form-agendamento__pair">
+          <div class="form-group-v2">
+            <label for="contratacaoHoraEntrada"><i class="fa-regular fa-clock"></i> Horário de Entrada</label>
+            <input type="time" id="contratacaoHoraEntrada" required class="form-input-datetime" value="09:00">
+          </div>
+          <div class="form-group-v2">
+            <label for="contratacaoHoraSaida"><i class="fa-solid fa-clock"></i> Horário de Saída</label>
+            <input type="time" id="contratacaoHoraSaida" required class="form-input-datetime" value="18:00">
+          </div>
+        </div>
+
+        <div class="form-actions form-actions--agendamento">
+          <button type="button" class="btn-cancel" id="cancelContratacao">Cancelar</button>
+          <button type="submit" class="btn-submit btn-submit--success"><i class="fa-solid fa-check-double"></i> Confirmar Contratação</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
 
 </html>

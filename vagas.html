@@ -157,6 +157,25 @@
             <input type="date" id="dataEncerramento" required>
           </div>
 
+          <div class="form-group-v2">
+            <label><i class="fa-solid fa-file-word"></i> Proposta (documento Word)</label>
+            <div class="upload-drop-area" id="propostaDropArea">
+              <input type="file" id="propostaFile" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+              <div class="upload-drop-placeholder" id="propostaPlaceholder">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>Arraste o ficheiro aqui ou <span class="upload-drop-link">clique para selecionar</span></p>
+                <span class="upload-drop-hint">.doc, .docx — máx. 10 MB</span>
+              </div>
+              <div class="upload-drop-preview" id="propostaPreview" style="display:none;">
+                <i class="fa-solid fa-file-word"></i>
+                <span class="upload-file-name" id="propostaFileName"></span>
+                <button type="button" class="upload-remove-btn" id="propostaRemoveBtn" title="Remover ficheiro">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button type="button" id="btnCancelar" class="btn-cancel">Cancelar</button>
             <button type="submit" id="btnSalvar" class="btn-submit">Salvar Vaga</button>
