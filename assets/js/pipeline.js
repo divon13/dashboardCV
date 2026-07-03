@@ -1174,29 +1174,60 @@ function configurarDragAndDrop() {
 
                 } else if (novoStatusTitulo === 'Entrevista feita') {
 
-                    // Só avança para esta etapa via Conduzir → decisão Guardar
+                    // ── Abre modal de conduzir entrevista ─────────────────
 
-                    const oldStatus = card.dataset.status;
-
-                    const mapRevert = {
-
-                        'Aplicado': 1, 'Entrevista técnica': 2, 'Entrevista feita': 3,
-
-                        'Oferta enviada': 4, 'Contratado': 5
-
-                    };
-
-                    const revertTarget = document.querySelector(
-
-                        `.pipeline-column-${mapRevert[oldStatus] || 1} .pipeline-column-body`
-
-                    );
-
-                    if (revertTarget) revertTarget.appendChild(card);
+                    column.appendChild(card);
 
                     recalcularContadores();
 
-                    alert('Para mover para "Entrevista feita", conduza a entrevista e escolha "Guardar" na decisão final.');
+                    const modalConcluir = document.getElementById('pipelineConcluirModal');
+
+                    if (modalConcluir) {
+
+                        // Buscar dados do candidato e entrevista
+                        const candidateName = card.querySelector('.pipeline-card-name').textContent;
+                        const candidateId = cardId;
+
+                        // Preencher campos básicos
+                        document.getElementById('pipelineConcluirCandidatoId').value = candidateId;
+                        document.getElementById('pipelineConcluirSubtitulo').textContent = candidateName;
+
+                        // Buscar entrevista agendada para este candidato
+                        buscarEPreencherEntrevista(candidateId, candidateName);
+
+                        modalConcluir.style.display = 'flex';
+
+                        // ── Lógica de reversão ────────────────────────────
+                        const oldStatus = card.dataset.status;
+                        const mapRevertConcluir = {
+                            'Aplicado': 1, 'Entrevista técnica': 2, 'Entrevista feita': 3,
+                            'Oferta enviada': 4, 'Contratado': 5
+                        };
+                        const oldColIdx = mapRevertConcluir[oldStatus] || 1;
+                        const revertTargetConcluir = document.querySelector(
+                            `.pipeline-column-${oldColIdx} .pipeline-column-body`
+                        );
+
+                        // Se cancelar, reverte para coluna original
+                        const cancelBtn = document.getElementById('cancelPipelineConcluir');
+                        const closeBtn = document.getElementById('closePipelineConcluir');
+                        
+                        const revertir = () => {
+                            if (revertTargetConcluir) revertTargetConcluir.appendChild(card);
+                            recalcularContadores();
+                            modalConcluir.style.display = 'none';
+                        };
+
+                        if (cancelBtn) {
+                            cancelBtn.onclick = revertir;
+                        }
+                        if (closeBtn) {
+                            closeBtn.onclick = revertir;
+                        }
+                        modalConcluir.onclick = (e) => {
+                            if (e.target === modalConcluir) revertir();
+                        };
+                    }
 
                 } else if (novoStatusTitulo === 'Contratado') {
 
@@ -2203,4 +2234,166 @@ function gerarEmailContratacaoHtml(dados) {
     </html>`;
 
 }
+
+// ── Funções para Modal de Conclusão de Entrevista no Pipeline ─────────────
+
+async function buscarEPreencherEntrevista(candidatoId, candidatoNome) {
+    try {
+        // Buscar entrevista agendada para este candidato
+        const { data: entrevistas, error } = await supabaseClient
+            .from('Entrevistas')
+            .select('*, candidatos(*), Vagas(*)')
+            .eq('candidato_ID', candidatoId)
+            .eq('status', 'Agendada')
+            .single();
+
+        if (error) {
+            console.error('Erro ao buscar entrevista:', error);
+            return;
+        }
+
+        // Buscar dados completos do candidato
+        const { data: candidato, error: candError } = await supabaseClient
+            .from('candidatos')
+            .select('*')
+            .eq('id', candidatoId)
+            .single();
+
+        if (candError) {
+            console.error('Erro ao buscar candidato:', candError);
+            return;
+        }
+
+        // Preencher campos do modal
+        document.getElementById('pipelineConcluirEntrevistaId').value = entrevistas?.id || '';
+        
+        const vagaNome = entrevistas?.Vagas?.Titulo || candidato?.vaga_Titulo || 'Vaga';
+        document.getElementById('pipelineConcluirSubtitulo').textContent = `${candidatoNome} - ${vagaNome}`;
+
+        // Preencher notas existentes (se houver)
+        let notas = entrevistas?.notas_entrevista || {};
+        if (typeof notas === 'string') {
+            try { notas = JSON.parse(notas); } catch { notas = { notas_gerais: notas }; }
+        }
+
+        document.getElementById('pipelineNotaTecnica').value = notas.tecnica || '';
+        document.getElementById('pipelineNotaComunicacao').value = notas.comunicacao || '';
+        document.getElementById('pipelineNotasEntrevistador').value = notas.notas_gerais || notas.observacoes || '';
+        document.getElementById('pipelineDecisaoFinal').value = entrevistas?.decisao_final || '';
+
+        // Renderizar perguntas sugeridas
+        renderPipelinePerguntasSugeridas(candidato);
+
+        // Preencher currículo
+        const iframe = document.getElementById('pipelineIframeCurriculo');
+        const noCvMsg = document.getElementById('pipelineNoCurriculoMsg');
+        const openCv = document.getElementById('pipelineOpenCurriculo');
+        const cvUrl = candidato?.url_curriculo || '';
+        if (iframe && noCvMsg && openCv) {
+            applySafeCvToElements(cvUrl, { iframe, openLink: openCv, noCvMsg });
+        }
+
+    } catch (err) {
+        console.error('Erro ao buscar entrevista:', err);
+    }
+}
+
+function renderPipelinePerguntasSugeridas(candidato) {
+    const list = document.getElementById('pipelinePerguntasSugeridas');
+    if (!list) return;
+
+    list.innerHTML = '';
+    let perguntasRaw = candidato?.perguntas_sugeridas;
+    if (typeof perguntasRaw === 'string') {
+        try { perguntasRaw = JSON.parse(perguntasRaw); } catch { perguntasRaw = [perguntasRaw]; }
+    }
+    const perguntas = Array.isArray(perguntasRaw) ? perguntasRaw.filter(Boolean) : [];
+
+    if (perguntas.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'Nenhuma pergunta sugerida pela IA encontrada para este candidato.';
+        li.className = 'ma-pergunta-empty';
+        list.appendChild(li);
+        return;
+    }
+
+    perguntas.forEach((pergunta) => {
+        const li = document.createElement('li');
+        li.textContent = pergunta;
+        list.appendChild(li);
+    });
+}
+
+async function handlePipelineConclusao(e) {
+    e.preventDefault();
+    const entrevistaId = document.getElementById('pipelineConcluirEntrevistaId').value;
+    const candidatoId = document.getElementById('pipelineConcluirCandidatoId').value;
+    const tecnica = document.getElementById('pipelineNotaTecnica').value;
+    const comunicacao = document.getElementById('pipelineNotaComunicacao').value;
+    const notasGerais = document.getElementById('pipelineNotasEntrevistador').value.trim();
+    const decisao = document.getElementById('pipelineDecisaoFinal').value;
+
+    if (!decisao) {
+        if (typeof showNotification === 'function') showNotification('Selecione uma decisão final.', 'error');
+        return;
+    }
+
+    const notasEntrevistaObj = {
+        tecnica: parseInt(tecnica, 10) || 0,
+        comunicacao: parseInt(comunicacao, 10) || 0,
+        notas_gerais: notasGerais
+    };
+
+    // Atualizar entrevista
+    if (entrevistaId) {
+        const { error: errorEntrevista } = await supabaseClient
+            .from('Entrevistas')
+            .update({
+                notas_entrevista: notasEntrevistaObj,
+                decisao_final: decisao,
+                status: 'Concluída'
+            })
+            .eq('id', entrevistaId);
+
+        if (errorEntrevista) {
+            console.error('Erro ao salvar avaliação:', errorEntrevista);
+            if (typeof showNotification === 'function') showNotification('Erro ao salvar a conclusão.', 'error');
+            return;
+        }
+    }
+
+    // Atualizar status do candidato
+    if (candidatoId) {
+        const novoStatusCandidato = {
+            'Passar': 'Entrevista feita',
+            'Guardar': 'Entrevista feita',
+            'Reprovar': 'Rejeitado'
+        }[decisao];
+
+        if (novoStatusCandidato) {
+            const { error: errorCand } = await supabaseClient
+                .from('candidatos')
+                .update({ status: novoStatusCandidato })
+                .eq('id', candidatoId);
+            if (errorCand) console.error('Erro ao atualizar status do candidato:', errorCand);
+        }
+    }
+
+    if (typeof showNotification === 'function') showNotification('Entrevista concluída com sucesso.', 'success');
+    document.getElementById('pipelineConcluirModal').style.display = 'none';
+    
+    // Recarregar pipeline
+    await carregarPipeline();
+    
+    // Dispatch evento para atualizar outras partes da aplicação
+    window.dispatchEvent(new CustomEvent('interview-concluded', { detail: { candidatoId } }));
+}
+
+// Configurar handler do form de conclusão
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('pipelineConcluirForm');
+    if (form) {
+        form.addEventListener('submit', handlePipelineConclusao);
+    }
+});
 

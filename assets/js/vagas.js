@@ -556,27 +556,39 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Se há ficheiro novo, faz o upload para o Supabase Storage
                 if (ficheiroProposta) {
+                    console.log('Iniciando upload da proposta:', ficheiroProposta.name, ficheiroProposta.size, 'bytes');
+                    
                     const ext = ficheiroProposta.name.split('.').pop().toLowerCase();
                     const timestamp = Date.now();
-                    const caminhoStorage = `propostas/${timestamp}_${ficheiroProposta.name}`;
+                    const caminhoStorage = `proposta/${timestamp}_${ficheiroProposta.name}`;
+
+                    console.log('Caminho no Storage:', caminhoStorage);
 
                     const { data: uploadData, error: uploadError } = await supabaseClient
                         .storage
-                        .from('propostas')
+                        .from('proposta')
                         .upload(caminhoStorage, ficheiroProposta, {
                             cacheControl: '3600',
                             upsert: false
                         });
 
-                    if (uploadError) throw new Error('Erro ao enviar proposta: ' + uploadError.message);
+                    if (uploadError) {
+                        console.error('Erro no upload para Storage:', uploadError);
+                        throw new Error('Erro ao enviar proposta: ' + uploadError.message);
+                    }
+
+                    console.log('Upload concluído com sucesso:', uploadData);
 
                     // Obtém a URL pública do ficheiro carregado
                     const { data: urlData } = supabaseClient
                         .storage
-                        .from('propostas')
+                        .from('proposta')
                         .getPublicUrl(caminhoStorage);
 
+                    console.log('URL pública gerada:', urlData.publicUrl);
                     dadosVaga.url_proposta = urlData.publicUrl;
+                } else {
+                    console.log('Nenhum ficheiro de proposta selecionado');
                 }
 
                 if (id) {

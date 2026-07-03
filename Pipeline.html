@@ -425,6 +425,92 @@
     </div>
   </div>
 
+  <!-- ── Modal de Conclusão de Entrevista ───────────────────────────────── -->
+  <!-- Aberto quando um candidato é movido para "Entrevista feita".        -->
+  <!-- Permite avaliar a entrevista e tomar decisão final.                 -->
+  <div id="pipelineConcluirModal" class="modal" style="display:none;">
+    <div class="modal-content-vaga modal-surface ma-modal ma-concluir-modal">
+      <div class="modal-header modal-header--surface">
+        <div>
+          <h2>Conduzir entrevista</h2>
+          <p id="pipelineConcluirSubtitulo" class="ma-modal-subtitle"></p>
+        </div>
+        <span class="close" id="closePipelineConcluir" aria-label="Fechar">&times;</span>
+      </div>
+      <div class="ma-concluir-layout">
+        <aside class="ma-cv-panel">
+          <div class="ma-cv-header">
+            <span><i class="fa-solid fa-file-lines"></i> Currículo</span>
+            <a id="pipelineOpenCurriculo" href="#" target="_blank" rel="noopener" class="ma-cv-open" style="display:none;">
+              Abrir
+            </a>
+          </div>
+          <iframe id="pipelineIframeCurriculo" title="Currículo do candidato"></iframe>
+          <div id="pipelineNoCurriculoMsg" class="ma-no-cv-msg">
+            <i class="fa-regular fa-file-lines"></i>
+            <strong>Currículo indisponível</strong>
+            <span>Este candidato não tem um ficheiro de currículo associado.</span>
+          </div>
+        </aside>
+
+        <form id="pipelineConcluirForm" class="ma-concluir-form">
+          <input type="hidden" id="pipelineConcluirEntrevistaId">
+          <input type="hidden" id="pipelineConcluirCandidatoId">
+
+          <section class="ma-conduzir-section">
+            <h3><i class="fa-solid fa-robot"></i> Perguntas sugeridas</h3>
+            <ul id="pipelinePerguntasSugeridas" class="ma-perguntas-list"></ul>
+          </section>
+
+          <div class="ma-form-grid">
+            <label>
+              Conhecimento técnico
+              <select id="pipelineNotaTecnica" required>
+                <option value="">Selecione...</option>
+                <option value="1">1 - Muito fraco</option>
+                <option value="2">2 - Fraco</option>
+                <option value="3">3 - Adequado</option>
+                <option value="4">4 - Bom</option>
+                <option value="5">5 - Excelente</option>
+              </select>
+            </label>
+            <label>
+              Comunicação
+              <select id="pipelineNotaComunicacao" required>
+                <option value="">Selecione...</option>
+                <option value="1">1 - Muito fraca</option>
+                <option value="2">2 - Fraca</option>
+                <option value="3">3 - Adequada</option>
+                <option value="4">4 - Boa</option>
+                <option value="5">5 - Excelente</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Notas da entrevista
+            <textarea id="pipelineNotasEntrevistador" rows="5" placeholder="Registe pontos fortes, riscos, sinais importantes e próximos passos."></textarea>
+          </label>
+
+          <label>
+            Decisão final
+            <select id="pipelineDecisaoFinal" required>
+              <option value="">Selecione uma decisão...</option>
+              <option value="Passar">Passar de fase</option>
+              <option value="Guardar">Guardar para análise</option>
+              <option value="Reprovar">Reprovar</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" id="cancelPipelineConcluir">Cancelar</button>
+            <button type="submit" class="btn-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar entrevista</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>
