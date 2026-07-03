@@ -843,9 +843,10 @@ function createInterviewListCard(i) {
             <div class="kebab-menu-container">
                 <button class="kebab-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 <div class="kebab-dropdown">
-
+                    ${status.toLowerCase() !== 'concluída' && status.toLowerCase() !== 'concluida' ? `
                     <button class="dropdown-item btn-conduzir"><i class="fa-solid fa-clipboard-question"></i> Conduzir</button>
                     <button class="dropdown-item btn-editar"><i class="fa-solid fa-pen"></i> Editar</button>
+                    ` : ''}
                     <button class="dropdown-item delete-btn btn-eliminar"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
                 </div>
             </div>
@@ -1277,9 +1278,11 @@ function renderSidePanel(date) {
              <div class="event-time">${escapeHtml(time)} - ${escapeHtml(nomeVaga)}</div>
              <div class="event-status-badge">${escapeHtml(i.status)}</div>
            </div>
+           ${i.status.toLowerCase() !== 'concluída' && i.status.toLowerCase() !== 'concluida' ? `
            <button class="btn-icon-only btn-conduzir" style="margin-left: auto; cursor: pointer; color: var(--primary-color);" title="Conduzir Entrevista">
              <i class="fa-solid fa-clipboard-question"></i>
            </button>
+           ` : ''}
         `;
         
         const btnConduzir = card.querySelector('.btn-conduzir');
