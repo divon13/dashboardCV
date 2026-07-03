@@ -138,6 +138,36 @@ function formatarData(dataISO) {
 }
 
 /**
+ * Formata uma string de data ISO 8601 para apenas a data (sem hora),
+ * ajustando para o fuso horário de Angola (Africa/Luanda, UTC+1).
+ *
+ * Exemplo de entrada:  "2025-01-15T10:30:00Z"
+ * Exemplo de saída:    "15/01/2025"
+ *
+ * @param {string} dataISO - Data no formato ISO 8601
+ * @returns {string} Data formatada como "DD/MM/AAAA" ou string vazia se inválida
+ */
+function formatarDataSemHora(dataISO) {
+    if (!dataISO) return '';
+    const data = new Date(dataISO);
+    if (isNaN(data.getTime())) return dataISO;
+
+    const formatter = new Intl.DateTimeFormat('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+
+    const partes = formatter.formatToParts(data);
+    const dia = partes.find(p => p.type === 'day').value;
+    const mes = partes.find(p => p.type === 'month').value;
+    const ano = partes.find(p => p.type === 'year').value;
+
+    return `${dia}/${mes}/${ano}`;
+}
+
+/**
  * Configura todos os event handlers dos modais relacionados com Vagas.
  *
  * Esta função é chamada uma vez no DOMContentLoaded (via dashboard.js)

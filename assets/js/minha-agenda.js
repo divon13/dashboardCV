@@ -9,7 +9,7 @@ let minhaAgendaInitialized = false;
 const BASE_QUERY_AGENDA = `
   *,
   Vagas(id, Titulo, status_vagas),
-  candidatos(id, nome, vaga_ID, status, email, telefone, url_curriculo),
+  candidatos(id, nome, vaga_ID, status, email, telefone, url_curriculo, perguntas_sugeridas),
   profiles(id, nome)
 `;
 
@@ -285,7 +285,7 @@ function createMinhaAgendaCard(i, isHistorico) {
     ${isHistorico && notasHtml ? `<div class="ma-card-notas">${notasHtml}</div>` : ''}
     <div class="ma-card-actions">
       <button type="button" class="btn-text ma-btn-detalhe"><i class="fa-solid fa-eye"></i> Ver detalhes</button>
-      ${!concluida ? '<button type="button" class="ma-btn-concluir"><i class="fa-solid fa-check"></i> Concluir</button>' : ''}
+      ${!concluida ? '<button type="button" class="ma-btn-concluir"><i class="fa-solid fa-clipboard-question"></i> Conduzir</button>' : ''}
     </div>
   `;
 
@@ -363,6 +363,7 @@ function openMinhaAgendaConcluirModal(i) {
   document.getElementById('maNotaComunicacao').value = notas.comunicacao || '';
   document.getElementById('maNotasEntrevistador').value = notas.notas_gerais || notas.observacoes || '';
   document.getElementById('maDecisaoFinal').value = i.decisao_final || '';
+  renderMinhaAgendaPerguntasSugeridas(cand);
 
   const iframe = document.getElementById('maIframeCurriculo');
   const noCvMsg = document.getElementById('maNoCurriculoMsg');
@@ -373,6 +374,32 @@ function openMinhaAgendaConcluirModal(i) {
   }
 
   modal.style.display = 'flex';
+}
+
+function renderMinhaAgendaPerguntasSugeridas(candidato) {
+  const list = document.getElementById('maPerguntasSugeridas');
+  if (!list) return;
+
+  list.innerHTML = '';
+  let perguntasRaw = candidato?.perguntas_sugeridas;
+  if (typeof perguntasRaw === 'string') {
+    try { perguntasRaw = JSON.parse(perguntasRaw); } catch { perguntasRaw = [perguntasRaw]; }
+  }
+  const perguntas = Array.isArray(perguntasRaw) ? perguntasRaw.filter(Boolean) : [];
+
+  if (perguntas.length === 0) {
+    const li = document.createElement('li');
+    li.textContent = 'Nenhuma pergunta sugerida pela IA encontrada para este candidato.';
+    li.className = 'ma-pergunta-empty';
+    list.appendChild(li);
+    return;
+  }
+
+  perguntas.forEach((pergunta) => {
+    const li = document.createElement('li');
+    li.textContent = pergunta;
+    list.appendChild(li);
+  });
 }
 
 async function handleMinhaAgendaConclusao(e) {
@@ -419,7 +446,7 @@ async function handleMinhaAgendaConclusao(e) {
 
   if (candidatoId) {
     const novoStatusCandidato = {
-      Passar: 'Oferta enviada',
+      Passar: 'Entrevista feita',
       Guardar: 'Entrevista feita',
       Reprovar: 'Rejeitado'
     }[decisao];

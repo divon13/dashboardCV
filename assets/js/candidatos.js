@@ -337,7 +337,7 @@ function abrirModalDetalhes(candidato, vagaData) {
 
     // ── Preenche as informações principais ───────────────────────────────
     document.getElementById('modal-descricao-IA').textContent = candidato.descricao_IA || 'Não disponível';
-    document.getElementById('modal-registro').textContent = candidato.registro ? formatarData(candidato.registro) : 'Não informado';
+    document.getElementById('modal-registro').textContent = candidato.registro ? formatarDataSemHora(candidato.registro) : 'Não informado';
     document.getElementById('modal-nome').textContent = candidato.nome || 'Não informado';
     document.getElementById('modal-email').textContent = candidato.email || 'Não informado';
     document.getElementById('modal-telefone').textContent = candidato.telefone || 'Não informado';

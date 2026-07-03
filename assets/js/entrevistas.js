@@ -360,26 +360,43 @@ function setupAgendamentoModal() {
  */
 async function populateModalSelects() {
     // ── Candidatos (dropdown pesquisável) ─────────────────────────────────
-    const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome');
+    const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome, vaga_ID');
+    const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
+    const vagasPorId = {};
+
+    if (vagas) {
+        vagas.forEach(v => {
+            vagasPorId[String(v.id)] = v;
+        });
+    }
     if (candidates) {
         setupSearchableDropdown(
             'searchCandidato',   // ID do input de pesquisa
             'optionsCandidato',  // ID do container de opções
             'agCandidato',       // ID do input hidden (guarda o ID selecionado)
-            candidates.map(c => ({ id: c.id, label: c.nome })), // Transforma em {id, label}
+            candidates.map(c => {
+                const vaga = c.vaga_ID ? vagasPorId[String(c.vaga_ID)] : null;
+                return {
+                    id: c.id,
+                    label: c.nome,
+                    vagaId: c.vaga_ID || '',
+                    vagaTitulo: vaga ? vaga.Titulo : ''
+                };
+            }),
             true // keepExisting: mantém o valor atual se já estiver preenchido (modo edição)
         );
     }
 
     // ── Vagas (dropdown pesquisável - apenas vagas abertas) ───────────────
-    const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo').eq('status_vagas', 'aberta');
-    if (vagas) {
+    const { data: vagasAbertas } = await supabaseClient.from('Vagas').select('id, Titulo').eq('status_vagas', 'aberta');
+    if (false && vagasAbertas) {
         setupSearchableDropdown(
             'searchVaga',
             'optionsVaga',
             'agVaga',
             vagas.map(v => ({ id: v.id, label: v.Titulo })),
-            true
+            true,
+            preencherVagaDoCandidatoNoModal
         );
     }
 
@@ -416,6 +433,62 @@ async function populateModalSelects() {
     }
 }
 
+function preencherVagaDoCandidatoNoModal(candidato) {
+    const inputVaga = document.getElementById('searchVaga');
+    const hiddenVaga = document.getElementById('agVaga');
+    if (!inputVaga || !hiddenVaga) return;
+
+    hiddenVaga.value = candidato?.vagaId || '';
+    inputVaga.value = candidato?.vagaTitulo || '';
+    inputVaga.placeholder = candidato?.vagaId
+        ? 'Vaga sem titulo cadastrado'
+        : 'Candidato sem vaga associada';
+}
+
+async function preencherVagaDoCandidatoPorId(candidatoId) {
+    const inputVaga = document.getElementById('searchVaga');
+    const hiddenVaga = document.getElementById('agVaga');
+    if (!inputVaga || !hiddenVaga || !candidatoId) return null;
+
+    const { data: candidato, error } = await supabaseClient
+        .from('candidatos')
+        .select('vaga_ID')
+        .eq('id', candidatoId)
+        .single();
+
+    if (error) {
+        console.error('Erro ao buscar vaga do candidato:', error);
+        hiddenVaga.value = '';
+        inputVaga.value = '';
+        return null;
+    }
+
+    const vagaId = candidato?.vaga_ID || '';
+    hiddenVaga.value = vagaId;
+
+    if (!vagaId) {
+        inputVaga.value = '';
+        inputVaga.placeholder = 'Candidato sem vaga associada';
+        return null;
+    }
+
+    const { data: vaga, error: vagaError } = await supabaseClient
+        .from('Vagas')
+        .select('id, Titulo')
+        .eq('id', vagaId)
+        .single();
+
+    if (vagaError) {
+        console.error('Erro ao buscar dados da vaga do candidato:', vagaError);
+        inputVaga.value = '';
+        inputVaga.placeholder = 'Vaga nao encontrada';
+        return { id: vagaId, Titulo: '' };
+    }
+
+    inputVaga.value = vaga?.Titulo || '';
+    return vaga;
+}
+
 /**
  * Configura um dropdown com pesquisa em tempo real (searchable dropdown).
  *
@@ -433,7 +506,7 @@ async function populateModalSelects() {
  * @param {Array} items - Array de objetos {id, label} com as opções disponíveis
  * @param {boolean} keepExisting - Se true, não limpa o valor hidden ao inicializar
  */
-function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExisting = false) {
+function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExisting = false, onSelect = null) {
     const input = document.getElementById(inputId);
     const container = document.getElementById(containerId);
     const hidden = document.getElementById(hiddenId);
@@ -470,6 +543,10 @@ function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExis
                 e.stopPropagation(); // Impede que o clique feche o dropdown prematuramente
                 input.value = item.label; // Mostra o nome no input visível
                 hidden.value = item.id;   // Guarda o ID no input hidden
+                if (typeof onSelect === 'function') onSelect(item);
+                if (inputId === 'searchCandidato' && typeof preencherVagaDoCandidatoNoModal === 'function') {
+                    preencherVagaDoCandidatoNoModal(item);
+                }
                 container.classList.remove('active'); // Fecha o dropdown
             };
             container.appendChild(div);
@@ -487,6 +564,11 @@ function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExis
 
     // Filtra as opções em tempo real conforme o utilizador digita
     input.oninput = (e) => {
+        hidden.value = '';
+        if (typeof onSelect === 'function') onSelect(null);
+        if (inputId === 'searchCandidato' && typeof preencherVagaDoCandidatoNoModal === 'function') {
+            preencherVagaDoCandidatoNoModal(null);
+        }
         renderOptions(e.target.value);
         container.classList.add('active');
     };
@@ -519,7 +601,7 @@ function setupSearchableDropdown(inputId, containerId, hiddenId, items, keepExis
 async function handleAgendamentoSubmit(form) {
     // Recolhe os valores dos campos do formulário
     const candidatoId = document.getElementById('agCandidato').value;   // ID do candidato (hidden)
-    const vagaId = document.getElementById('agVaga').value;             // ID da vaga (hidden)
+    let vagaId = document.getElementById('agVaga').value;               // ID da vaga (hidden)
     const tipo = document.getElementById('agTipo').value;               // Tipo de entrevista
     const dataHora = document.getElementById('agDataHora').value;       // Data e hora
     const formDataEntrevistador = document.getElementById('agEntrevistador').value;
@@ -530,11 +612,15 @@ async function handleAgendamentoSubmit(form) {
     // Os inputs hidden ficam vazios se o utilizador apenas digitou sem selecionar
     if (!candidatoId) {
         showNotification('Por favor, selecione um candidato da lista.', 'error');
-        return;
+        return false;
     }
+
+    await preencherVagaDoCandidatoPorId(candidatoId);
+    vagaId = document.getElementById('agVaga').value;
+
     if (!vagaId) {
-        showNotification('Por favor, selecione uma vaga da lista.', 'error');
-        return;
+        showNotification('Este candidato nao tem vaga associada.', 'error');
+        return false;
     }
 
     const interviewId = document.getElementById('agendamentoId').value; // Vazio se nova entrevista
@@ -1454,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Atualiza Candidato baseado na decisão
             let novoStatusCandidato = null;
-            if (decisao === 'Passar') novoStatusCandidato = 'Oferta enviada';
+            if (decisao === 'Passar') novoStatusCandidato = 'Entrevista feita';
             else if (decisao === 'Guardar') novoStatusCandidato = 'Entrevista feita';
             
             if (decisao === 'Reprovar') {
@@ -1476,7 +1562,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? 'Candidato e currículo eliminados com sucesso.'
                 : decisao === 'Guardar'
                     ? 'Avaliação guardada. Candidato movido para Entrevista feita.'
-                    : 'Avaliação guardada. Candidato avançou no pipeline.';
+                    : 'Avaliação guardada. Candidato movido para Entrevista feita.';
             showNotification(msgSucesso, 'success');
             document.getElementById('conduzirEntrevistaModal').style.display = 'none';
             

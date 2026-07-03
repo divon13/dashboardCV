@@ -39,7 +39,7 @@
       <div>
         <p class="ma-eyebrow">Agenda do entrevistador</p>
         <h1>Olá, <span id="maHeroNome">Utilizador</span></h1>
-        <p class="ma-hero-copy">Acompanhe entrevistas marcadas, consulte o calendário e conclua avaliações com notas e decisão final.</p>
+        <p class="ma-hero-copy">Acompanhe entrevistas marcadas, consulte o calendário e conduza avaliações com currículo, perguntas e decisão final.</p>
       </div>
       <div class="ma-hero-summary" aria-label="Resumo da agenda">
         <span id="maHeroTodayLabel">Hoje</span>
@@ -135,7 +135,7 @@
     <div class="modal-content-vaga modal-surface ma-modal ma-concluir-modal">
       <div class="modal-header modal-header--surface">
         <div>
-          <h2>Concluir entrevista</h2>
+          <h2>Conduzir entrevista</h2>
           <p id="maConcluirSubtitulo" class="ma-modal-subtitle"></p>
         </div>
         <span class="close" id="maCloseConcluir" aria-label="Fechar">&times;</span>
@@ -159,6 +159,11 @@
         <form id="maConcluirForm" class="ma-concluir-form">
           <input type="hidden" id="maConcluirEntrevistaId">
           <input type="hidden" id="maConcluirCandidatoId">
+
+          <section class="ma-conduzir-section">
+            <h3><i class="fa-solid fa-robot"></i> Perguntas sugeridas</h3>
+            <ul id="maPerguntasSugeridas" class="ma-perguntas-list"></ul>
+          </section>
 
           <div class="ma-form-grid">
             <label>
@@ -202,7 +207,7 @@
 
           <div class="form-actions">
             <button type="button" class="btn-cancel" id="maCancelConcluir">Cancelar</button>
-            <button type="submit" class="btn-submit"><i class="fa-solid fa-check"></i> Guardar conclusão</button>
+            <button type="submit" class="btn-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar entrevista</button>
           </div>
         </form>
       </div>

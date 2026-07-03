@@ -208,7 +208,7 @@
         <div class="modal-header__lead">
           <p class="modal-eyebrow">Agenda</p>
           <h2>Agendar entrevista</h2>
-          <p class="modal-subtitle">Associe candidato e vaga, depois defina tipo, data e entrevistador.</p>
+          <p class="modal-subtitle">Selecione o candidato; a vaga associada será preenchida automaticamente.</p>
         </div>
         <span class="close" id="closeAgendamentoModal" aria-label="Fechar">&times;</span>
       </div>
@@ -231,11 +231,8 @@
         <!-- Campo Vaga: dropdown pesquisável -->
         <div class="form-group-v2">
           <label for="searchVaga">Vaga</label>
-          <div class="searchable-dropdown" id="dropdownVaga">
-            <input type="text" id="searchVaga" placeholder="Pesquisar vaga..." class="filter-select modal-search-input" autocomplete="off">
-            <input type="hidden" id="agVaga"><!-- ID real da vaga selecionada -->
-            <div class="dropdown-options" id="optionsVaga"></div>
-          </div>
+          <input type="text" id="searchVaga" placeholder="Selecione o candidato..." class="filter-select modal-search-input" readonly style="background-color: var(--hover-dark); cursor: default;">
+          <input type="hidden" id="agVaga"><!-- ID real da vaga selecionada -->
         </div>
 
         <div class="form-agendamento__pair">
