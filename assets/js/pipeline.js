@@ -1032,7 +1032,7 @@ function configurarDragAndDrop() {
                 // Impede pular etapas (mover mais de 1 etapa para frente)
                 if (newOrder > currentOrder + 1) {
                     const statusPular = Object.keys(pipelineOrder).find(k => pipelineOrder[k] === currentOrder + 1);
-                    showNotification(`⚠️ Não é permitido pular etapas do pipeline. O candidato deve passar por "${statusPular}" antes de ir para "${novoStatusTitulo}".`, 'error');
+                    showNotification(`Não é permitido pular etapas do pipeline. O candidato deve passar por "${statusPular}" antes de ir para "${novoStatusTitulo}".`, 'error');
                     card.style.display = 'block';
                     return;
                 }
@@ -1201,60 +1201,10 @@ function configurarDragAndDrop() {
 
                 } else if (novoStatusTitulo === 'Entrevista feita') {
 
-                    // ── Abre modal de conduzir entrevista ─────────────────
-
-                    column.appendChild(card);
-
-                    recalcularContadores();
-
-                    const modalConcluir = document.getElementById('pipelineConcluirModal');
-
-                    if (modalConcluir) {
-
-                        // Buscar dados do candidato e entrevista
-                        const candidateName = card.querySelector('.pipeline-card-name').textContent;
-                        const candidateId = cardId;
-
-                        // Preencher campos básicos
-                        document.getElementById('pipelineConcluirCandidatoId').value = candidateId;
-                        document.getElementById('pipelineConcluirSubtitulo').textContent = candidateName;
-
-                        // Buscar entrevista agendada para este candidato
-                        buscarEPreencherEntrevista(candidateId, candidateName);
-
-                        modalConcluir.style.display = 'flex';
-
-                        // ── Lógica de reversão ────────────────────────────
-                        const oldStatus = card.dataset.status;
-                        const mapRevertConcluir = {
-                            'Aplicado': 1, 'Entrevista técnica': 2, 'Entrevista feita': 3,
-                            'Oferta enviada': 4, 'Contratado': 5
-                        };
-                        const oldColIdx = mapRevertConcluir[oldStatus] || 1;
-                        const revertTargetConcluir = document.querySelector(
-                            `.pipeline-column-${oldColIdx} .pipeline-column-body`
-                        );
-
-                        // Se cancelar, reverte para coluna original
-                        const cancelBtn = document.getElementById('cancelPipelineConcluir');
-                        const closeBtn = document.getElementById('closePipelineConcluir');
-                        
-                        const revertir = () => {
-                            if (revertTargetConcluir) revertTargetConcluir.appendChild(card);
-                            recalcularContadores();
-                            modalConcluir.style.display = 'none';
-                        };
-
-                        if (cancelBtn) {
-                            cancelBtn.onclick = revertir;
-                        }
-                        if (closeBtn) {
-                            closeBtn.onclick = revertir;
-                        }
-                        modalConcluir.onclick = (e) => {
-                            if (e.target === modalConcluir) revertir();
-                        };
-                    }
+                    // ── Validação: apenas entrevistador designado pode concluir ──
+                    showNotification('⚠️ Apenas o entrevistador designado pode concluir a entrevista. Aceda a "Minha Agenda" para conduzir entrevistas.', 'error');
+                    card.style.display = 'block';
+                    return;
 
                 } else if (novoStatusTitulo === 'Contratado') {
 

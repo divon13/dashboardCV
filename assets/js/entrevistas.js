@@ -1566,70 +1566,107 @@ function openConduzirModal(interview) {
         if (hoursDiff > 2) {
             const hoursUntil = Math.floor(hoursDiff);
             const minutesUntil = Math.floor((hoursDiff - hoursUntil) * 60);
-            
-            const confirmEarly = confirm(
-                `⚠️ AVISO: Esta entrevista está agendada para ${formatarData(interview.Data)}.\n\n` +
-                `Faltam aproximadamente ${hoursUntil} horas e ${minutesUntil} minutos até a hora agendada.\n\n` +
-                `Tem a certeza que deseja conduzir a entrevista agora?`
-            );
-            
-            if (!confirmEarly) {
-                return; // Utilizador cancelou, não abre o modal
+
+            // Usa modal customizado em vez de confirm()
+            const earlyModal = document.getElementById('confirmEarlyStartModal');
+            const scheduledTimeEl = document.getElementById('earlyStartScheduledTime');
+            const timeDiffEl = document.getElementById('earlyStartTimeDiff');
+            const cancelBtn = document.getElementById('cancelEarlyStart');
+            const confirmBtn = document.getElementById('confirmEarlyStart');
+
+            if (earlyModal && scheduledTimeEl && timeDiffEl && cancelBtn && confirmBtn) {
+                scheduledTimeEl.textContent = formatarData(interview.Data);
+                timeDiffEl.textContent = `Faltam aproximadamente ${hoursUntil} horas e ${minutesUntil} minutos até a hora agendada.`;
+
+                earlyModal.style.display = 'flex';
+
+                // Remove listeners anteriores para evitar duplicação
+                const newCancelBtn = cancelBtn.cloneNode(true);
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+                // Handler para cancelar
+                newCancelBtn.addEventListener('click', () => {
+                    earlyModal.style.display = 'none';
+                });
+
+                // Handler para confirmar
+                newConfirmBtn.addEventListener('click', () => {
+                    earlyModal.style.display = 'none';
+                    // Continua com a abertura do modal de condução
+                    openConduzirEntrevistaModalInternal(interview);
+                });
+
+                // Fecha ao clicar fora
+                earlyModal.onclick = (e) => {
+                    if (e.target === earlyModal) {
+                        earlyModal.style.display = 'none';
+                    }
+                };
+
+                return; // Não abre o modal diretamente, espera confirmação
             }
         }
     }
 
-    // Extrai dados do candidato e da vaga
-    const candidateObj = Array.isArray(interview.candidatos) ? interview.candidatos[0] : interview.candidatos;
-    const candName = candidateObj ? candidateObj.nome : 'Candidato Desconhecido';
-    const candId = candidateObj ? candidateObj.id : null;
-    
-    const vagaObj = Array.isArray(interview.Vagas) ? interview.Vagas[0] : interview.Vagas;
-    const vagaName = vagaObj ? vagaObj.Titulo : 'Vaga não informada';
+    // Função interna para abrir o modal de condução após confirmação
+    function openConduzirEntrevistaModalInternal(interview) {
+        // Extrai dados do candidato e da vaga
+        const candidateObj = Array.isArray(interview.candidatos) ? interview.candidatos[0] : interview.candidatos;
+        const candName = candidateObj ? candidateObj.nome : 'Candidato Desconhecido';
+        const candId = candidateObj ? candidateObj.id : null;
 
-    // Preenche cabeçalho
-    document.getElementById('conduzirNomeCandidato').textContent = candName;
-    document.getElementById('conduzirNomeVaga').textContent = vagaName;
-    
-    // IDs ocultos
-    document.getElementById('conduzirEntrevistaId').value = interview.id;
-    document.getElementById('conduzirCandidatoId').value = candId;
-    document.getElementById('conduzirUrlCurriculo').value =
-        (candidateObj && isSafeCvUrl(candidateObj.url_curriculo)) ? candidateObj.url_curriculo : '';
+        const vagaObj = Array.isArray(interview.Vagas) ? interview.Vagas[0] : interview.Vagas;
+        const vagaName = vagaObj ? vagaObj.Titulo : 'Vaga não informada';
 
-    const iframe = document.getElementById('iframeCurriculo');
-    const noCurriculoMsg = document.getElementById('noCurriculoMsg');
-    applySafeCvToElements(candidateObj?.url_curriculo, { iframe, noCvMsg: noCurriculoMsg });
+        // Preenche cabeçalho
+        document.getElementById('conduzirNomeCandidato').textContent = candName;
+        document.getElementById('conduzirNomeVaga').textContent = vagaName;
 
-    // Carrega perguntas sugeridas
-    const listaPerguntas = document.getElementById('listaPerguntasSugeridas');
-    listaPerguntas.innerHTML = '';
-    
-    if (candidateObj && candidateObj.perguntas_sugeridas && Array.isArray(candidateObj.perguntas_sugeridas) && candidateObj.perguntas_sugeridas.length > 0) {
-        candidateObj.perguntas_sugeridas.forEach(pergunta => {
+        // IDs ocultos
+        document.getElementById('conduzirEntrevistaId').value = interview.id;
+        document.getElementById('conduzirCandidatoId').value = candId;
+        document.getElementById('conduzirUrlCurriculo').value =
+            (candidateObj && isSafeCvUrl(candidateObj.url_curriculo)) ? candidateObj.url_curriculo : '';
+
+        const iframe = document.getElementById('iframeCurriculo');
+        const noCurriculoMsg = document.getElementById('noCurriculoMsg');
+        applySafeCvToElements(candidateObj?.url_curriculo, { iframe, noCvMsg: noCurriculoMsg });
+
+        // Carrega perguntas sugeridas
+        const listaPerguntas = document.getElementById('listaPerguntasSugeridas');
+        listaPerguntas.innerHTML = '';
+
+        if (candidateObj && candidateObj.perguntas_sugeridas && Array.isArray(candidateObj.perguntas_sugeridas) && candidateObj.perguntas_sugeridas.length > 0) {
+            candidateObj.perguntas_sugeridas.forEach(pergunta => {
+                const li = document.createElement('li');
+                li.textContent = pergunta;
+                listaPerguntas.appendChild(li);
+            });
+        } else {
             const li = document.createElement('li');
-            li.textContent = pergunta;
+            li.textContent = 'Nenhuma pergunta sugerida pela IA encontrada para este candidato.';
+            li.style.color = 'var(--text-muted)';
             listaPerguntas.appendChild(li);
-        });
-    } else {
-        const li = document.createElement('li');
-        li.textContent = 'Nenhuma pergunta sugerida pela IA encontrada para este candidato.';
-        li.style.color = 'var(--text-muted)';
-        listaPerguntas.appendChild(li);
+        }
+
+        // Limpa formulário de avaliação
+        document.getElementById('formAvaliacaoEntrevista').reset();
+
+        // Eventos de fechar
+        const closeBtn = document.getElementById('fecharConduzirModal');
+        const cancelBtn = document.getElementById('cancelarConduzir');
+
+        const closeModal = () => modal.style.display = 'none';
+        if (closeBtn) closeBtn.onclick = closeModal;
+        if (cancelBtn) cancelBtn.onclick = closeModal;
+
+        modal.style.display = 'flex';
     }
 
-    // Limpa formulário de avaliação
-    document.getElementById('formAvaliacaoEntrevista').reset();
-
-    // Eventos de fechar
-    const closeBtn = document.getElementById('fecharConduzirModal');
-    const cancelBtn = document.getElementById('cancelarConduzir');
-    
-    const closeModal = () => modal.style.display = 'none';
-    if (closeBtn) closeBtn.onclick = closeModal;
-    if (cancelBtn) cancelBtn.onclick = closeModal;
-
-    modal.style.display = 'flex';
+    // Se não houver aviso de início antecipado, abre diretamente
+    openConduzirEntrevistaModalInternal(interview);
 }
 
 // Configura o submit do formulário de avaliação

@@ -306,6 +306,23 @@
     </div>
   </div>
 
+  <!-- ── Modal de Aviso de Início Antecipado ───────────────────────────── -->
+  <div id="confirmEarlyStartModal" class="modal modal-confirm" style="display:none;">
+    <div class="modal-confirm-card modal-confirm-card--primary">
+      <div class="modal-confirm__icon modal-confirm__icon--primary" aria-hidden="true">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <h2 class="modal-confirm__title">Iniciar entrevista antecipadamente?</h2>
+      <p class="modal-confirm__text">Esta entrevista está agendada para:</p>
+      <p id="earlyStartScheduledTime" class="modal-confirm__highlight"></p>
+      <p id="earlyStartTimeDiff" class="modal-confirm__text"></p>
+      <div class="modal-confirm__actions">
+        <button type="button" id="cancelEarlyStart" class="btn-cancel">Cancelar</button>
+        <button type="button" id="confirmEarlyStart" class="btn-submit">Iniciar agora</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Modal de Condução da Entrevista ─────────────────────────────── -->
   <!-- Aberto pelo botão "Conduzir" no card da entrevista.               -->
   <!-- Layout amplo lado-a-lado: Currículo vs Ficha de Avaliação         -->
