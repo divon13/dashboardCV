@@ -52,6 +52,32 @@
  * Também atualiza o contador "Entrevistas Hoje" (#entrevistas-hoje-val)
  * se o elemento existir na página.
  */
+function getCurrentDateTimeLocalMinute() {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    return now.toLocaleString('sv-SE', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    }).replace(' ', 'T').substring(0, 16);
+}
+
+function updateAgendamentoMinDateTime() {
+    const input = document.getElementById('agDataHora');
+    if (!input) return;
+    input.min = getCurrentDateTimeLocalMinute();
+}
+
+function isAgendamentoDateTimeValid(dataHora) {
+    if (!dataHora) return false;
+
+    const selected = new Date(dataHora);
+    if (Number.isNaN(selected.getTime())) return false;
+
+    const now = new Date();
+    now.setSeconds(0, 0);
+    return selected >= now;
+}
+
 async function carregarEntrevistas() {
     // Define "hoje" como o início do dia atual (meia-noite) para filtrar corretamente
     const hoje = new Date();
@@ -309,12 +335,20 @@ function setupAgendamentoModal() {
     const btnClose = document.getElementById('closeAgendamentoModal'); // Botão "X"
     const btnCancel = document.getElementById('cancelAgendamento');    // Botão "Cancelar"
     const form = document.getElementById('agendamentoForm');
+    const inputDataHora = document.getElementById('agDataHora');
+
+    updateAgendamentoMinDateTime();
+    if (inputDataHora) {
+        inputDataHora.addEventListener('focus', updateAgendamentoMinDateTime);
+        inputDataHora.addEventListener('click', updateAgendamentoMinDateTime);
+    }
 
     // Abre o modal e popula os dropdowns com dados do BD
     if (btnOpen) {
         btnOpen.addEventListener('click', async () => {
             if (form) form.reset(); // Limpa o formulário para nova entrevista
             document.getElementById('agendamentoId').value = ''; // Garante modo de criação
+            updateAgendamentoMinDateTime();
             modal.style.display = 'flex';
             await populateModalSelects(); // Carrega candidatos, vagas e entrevistadores
         });
@@ -359,8 +393,13 @@ function setupAgendamentoModal() {
  * enquanto o de entrevistador é um <select> HTML padrão.
  */
 async function populateModalSelects() {
+    updateAgendamentoMinDateTime();
+
     // ── Candidatos (dropdown pesquisável) ─────────────────────────────────
-    const { data: candidates } = await supabaseClient.from('candidatos').select('id, nome, vaga_ID');
+    const { data: candidates } = await supabaseClient
+        .from('candidatos')
+        .select('id, nome, vaga_ID, status')
+        .or('status.eq.Aplicado,status.is.null');
     const { data: vagas } = await supabaseClient.from('Vagas').select('id, Titulo');
     const vagasPorId = {};
 
@@ -489,6 +528,22 @@ async function preencherVagaDoCandidatoPorId(candidatoId) {
     return vaga;
 }
 
+async function candidatoEstaEmAplicado(candidatoId) {
+    const { data, error } = await supabaseClient
+        .from('candidatos')
+        .select('status')
+        .eq('id', candidatoId)
+        .single();
+
+    if (error) {
+        console.error('Erro ao validar status do candidato:', error);
+        return false;
+    }
+
+    const status = (data?.status || 'Aplicado').trim();
+    return status === 'Aplicado';
+}
+
 /**
  * Configura um dropdown com pesquisa em tempo real (searchable dropdown).
  *
@@ -610,6 +665,12 @@ async function handleAgendamentoSubmit(form) {
 
     // ── Validação: candidato e vaga devem ser selecionados da lista ───────
     // Os inputs hidden ficam vazios se o utilizador apenas digitou sem selecionar
+    updateAgendamentoMinDateTime();
+    if (!isAgendamentoDateTimeValid(dataHora)) {
+        showNotification('Nao e possivel marcar entrevistas antes da data e hora atual.', 'error');
+        return false;
+    }
+
     if (!candidatoId) {
         showNotification('Por favor, selecione um candidato da lista.', 'error');
         return false;
@@ -624,6 +685,8 @@ async function handleAgendamentoSubmit(form) {
     }
 
     const interviewId = document.getElementById('agendamentoId').value; // Vazio se nova entrevista
+
+    // Removida validação restritiva - permite agendar entrevista ao mover card no pipeline
 
     // Objeto com os dados a guardar na tabela Entrevistas
     const dataToSave = {
@@ -644,6 +707,52 @@ async function handleAgendamentoSubmit(form) {
     if (!dataToSave.Vagas_ID || isNaN(dataToSave.Vagas_ID)) {
         showNotification('Erro: Por favor, selecione uma vaga válida da lista.', 'error');
         return false;
+    }
+
+    // ── Verifica conflito de agenda do entrevistador (janela de 30 min) ─────
+    if (entrevistadorId) {
+        const datePrefix = dataHora.split('T')[0];
+        const startTime = new Date(dataHora).getTime();
+        const endTime = startTime + (30 * 60 * 1000); // 30 minutos depois
+
+        // Busca todas as entrevistas do mesmo entrevistador no mesmo dia
+        let query = supabaseClient
+            .from('Entrevistas')
+            .select('id, Data')
+            .eq('entrevistador', entrevistadorId)
+            .gte('Data', `${datePrefix}T00:00:00`)
+            .lte('Data', `${datePrefix}T23:59:59`);
+
+        if (interviewId) {
+            query = query.neq('id', interviewId);
+        }
+
+        const { data: dayInterviews, error: overlapError } = await query;
+
+        console.log('Verificando conflito de agenda:', { entrevistadorId, datePrefix, dayInterviews, overlapError });
+
+        if (overlapError) {
+            console.error('Erro ao verificar conflito de agenda:', overlapError);
+        } else if (dayInterviews && dayInterviews.length > 0) {
+            const hasConflict = dayInterviews.some(interview => {
+                const existingTimeMs = new Date(interview.Data).getTime();
+                const existingEndTime = existingTimeMs + (30 * 60 * 1000); // Assume 30 min por entrevista
+
+                // Verifica se há sobreposição
+                const overlaps = (startTime < existingEndTime) && (endTime > existingTimeMs);
+                const diffMins = Math.abs(startTime - existingTimeMs) / (1000 * 60);
+
+                console.log(`Comparando: ${new Date(dataHora)} com ${new Date(interview.Data)}, diferença: ${diffMins} minutos, sobreposição: ${overlaps}`);
+                return overlaps;
+            });
+
+            if (hasConflict) {
+                showNotification('O entrevistador já tem uma entrevista agendada num intervalo inferior a 30 minutos.', 'error');
+                return false;
+            }
+        }
+    } else {
+        console.warn('Nenhum entrevistador selecionado - verificação de conflito não realizada');
     }
 
     let result;
@@ -797,7 +906,7 @@ function montarTextoBuscaEntrevista(i) {
  *   - Nome do candidato, vaga e pontuação (%)
  *   - Data, hora e entrevistador
  *   - Observações
- *   - Menu kebab com ações: Conduzir, Editar, Eliminar
+ *   - Menu kebab com ações: Editar, Eliminar
  *
  * @param {Object} i - Objeto da entrevista com JOINs do Supabase
  * @returns {HTMLElement} Elemento <div> com o card completo
@@ -844,10 +953,9 @@ function createInterviewListCard(i) {
                 <button class="kebab-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                 <div class="kebab-dropdown">
                     ${status.toLowerCase() !== 'concluída' && status.toLowerCase() !== 'concluida' ? `
-                    <button class="dropdown-item btn-conduzir"><i class="fa-solid fa-clipboard-question"></i> Conduzir</button>
                     <button class="dropdown-item btn-editar"><i class="fa-solid fa-pen"></i> Editar</button>
                     ` : ''}
-                    <button class="dropdown-item delete-btn btn-eliminar"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+                    <button class="dropdown-item delete-btn btn-eliminar"><i class="fa-solid fa-trash-can"></i> Cancelar</button>
                 </div>
             </div>
         </div>
@@ -894,12 +1002,9 @@ function createInterviewListCard(i) {
     }
 
     // ── Botões de ação do card ────────────────────────────────────────────
-    const btnConduzir = card.querySelector('.btn-conduzir');
     const btnEditar = card.querySelector('.btn-editar');
     const btnEliminar = card.querySelector('.btn-eliminar');
 
-    // Conduzir: abre o modal para avaliar o candidato
-    if (btnConduzir) btnConduzir.onclick = () => openConduzirModal(i);
     // Editar: abre o modal pré-preenchido com os dados desta entrevista
     if (btnEditar) btnEditar.onclick = () => editInterview(i);
     // Eliminar: pede confirmação e elimina a entrevista
@@ -939,7 +1044,7 @@ async function eliminarCandidatoComCurriculo(candidatoId, urlCurriculo) {
 
     if (errEntrevistas) {
         console.error('Erro ao eliminar entrevistas do candidato:', errEntrevistas);
-        showNotification('Erro ao eliminar entrevistas associadas.', 'error');
+        showNotification('Erro ao cancelar entrevistas associadas.', 'error');
         return false;
     }
 
@@ -949,8 +1054,8 @@ async function eliminarCandidatoComCurriculo(candidatoId, urlCurriculo) {
         .eq('id', candidatoId);
 
     if (errDelCand) {
-        console.error('Erro ao eliminar candidato:', errDelCand);
-        showNotification('Erro ao eliminar candidato da base de dados.', 'error');
+        console.error('Erro ao retirar candidato:', errDelCand);
+        showNotification('Erro ao retirar candidato da base de dados.', 'error');
         return false;
     }
 
@@ -972,6 +1077,7 @@ async function editInterview(i) {
     const modal = document.getElementById('agendamentoModal');
     if (!modal) return;
 
+    updateAgendamentoMinDateTime();
     modal.style.display = 'flex';
     document.getElementById('agendamentoId').value = i.id; // Indica modo de edição
 
@@ -1285,6 +1391,9 @@ function renderSidePanel(date) {
            ` : ''}
         `;
         
+        const btnConduzirRecrutador = card.querySelector('.btn-conduzir');
+        if (btnConduzirRecrutador) btnConduzirRecrutador.remove();
+
         const btnConduzir = card.querySelector('.btn-conduzir');
         if (btnConduzir) {
             btnConduzir.onclick = (e) => {
@@ -1420,9 +1529,9 @@ function setupConfirmModals() {
                     .eq('id', id);
 
                 if (error) {
-                    showNotification('Erro ao eliminar entrevista: ' + error.message, 'error');
+                    showNotification('Erro ao cancelar entrevista: ' + error.message, 'error');
                 } else {
-                    showNotification('Entrevista eliminada com sucesso.', 'success');
+                    showNotification('Entrevista cancelada com sucesso.', 'success');
                     fetchMonthInterviews(currentDate);
                 }
                 deleteModal.style.display = 'none';
@@ -1445,6 +1554,30 @@ function setupConfirmModals() {
 function openConduzirModal(interview) {
     const modal = document.getElementById('conduzirEntrevistaModal');
     if (!modal) return;
+
+    // ── Validação: aviso se a entrevista estiver a ser conduzida demasiado cedo ──
+    // Verifica se a tentativa de condução é mais de 2 horas antes da hora agendada
+    if (interview.Data) {
+        const scheduledTime = new Date(interview.Data);
+        const currentTime = new Date();
+        const timeDiffMs = scheduledTime - currentTime;
+        const hoursDiff = timeDiffMs / (1000 * 60 * 60);
+
+        if (hoursDiff > 2) {
+            const hoursUntil = Math.floor(hoursDiff);
+            const minutesUntil = Math.floor((hoursDiff - hoursUntil) * 60);
+            
+            const confirmEarly = confirm(
+                `⚠️ AVISO: Esta entrevista está agendada para ${formatarData(interview.Data)}.\n\n` +
+                `Faltam aproximadamente ${hoursUntil} horas e ${minutesUntil} minutos até a hora agendada.\n\n` +
+                `Tem a certeza que deseja conduzir a entrevista agora?`
+            );
+            
+            if (!confirmEarly) {
+                return; // Utilizador cancelou, não abre o modal
+            }
+        }
+    }
 
     // Extrai dados do candidato e da vaga
     const candidateObj = Array.isArray(interview.candidatos) ? interview.candidatos[0] : interview.candidatos;
@@ -1562,7 +1695,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const msgSucesso = decisao === 'Reprovar'
-                ? 'Candidato e currículo eliminados com sucesso.'
+                ? 'Candidato e currículo retirados com sucesso.'
                 : decisao === 'Guardar'
                     ? 'Avaliação guardada. Candidato movido para Entrevista feita.'
                     : 'Avaliação guardada. Candidato movido para Entrevista feita.';

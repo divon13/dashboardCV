@@ -1008,7 +1008,34 @@ function configurarDragAndDrop() {
 
                 const novoStatusTitulo = parentColumn.querySelector('h3').textContent.trim();
 
+                const currentStatus = card.dataset.status || 'Aplicado';
 
+                // ── Validação: impedir retroceder ou pular etapas ────────────────
+                const pipelineOrder = {
+                    'Aplicado': 1,
+                    'Entrevista técnica': 2,
+                    'Entrevista feita': 3,
+                    'Oferta enviada': 4,
+                    'Contratado': 5
+                };
+
+                const currentOrder = pipelineOrder[currentStatus] || 1;
+                const newOrder = pipelineOrder[novoStatusTitulo] || 1;
+
+                // Impede retroceder no pipeline
+                if (newOrder < currentOrder) {
+                    showNotification(`⚠️ Não é permitido recuar no pipeline. O candidato está em "${currentStatus}" e você tentou movê-lo para "${novoStatusTitulo}".`, 'error');
+                    card.style.display = 'block';
+                    return;
+                }
+
+                // Impede pular etapas (mover mais de 1 etapa para frente)
+                if (newOrder > currentOrder + 1) {
+                    const statusPular = Object.keys(pipelineOrder).find(k => pipelineOrder[k] === currentOrder + 1);
+                    showNotification(`⚠️ Não é permitido pular etapas do pipeline. O candidato deve passar por "${statusPular}" antes de ir para "${novoStatusTitulo}".`, 'error');
+                    card.style.display = 'block';
+                    return;
+                }
 
                 card.style.display = 'block'; // Torna o card visível novamente
 

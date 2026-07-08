@@ -3931,7 +3931,10 @@ table tbody tr td[colspan="5"] {
   padding: 0 !important;
   max-width: min(100%, 720px);
   width: 94vw;
+  max-height: 85vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header--surface {
@@ -4097,6 +4100,8 @@ table tbody tr td[colspan="5"] {
 
 .modal-detalhes-vaga__body {
   padding: 20px 24px 8px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .det-vaga-meta {
@@ -4178,6 +4183,35 @@ table tbody tr td[colspan="5"] {
   background: var(--hover-dark);
   border: 1px solid var(--border-dark);
   white-space: pre-wrap;
+}
+
+.det-vaga-prose-container {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--hover-dark);
+  border: 1px solid var(--border-dark);
+}
+
+.det-vaga-proposta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.det-vaga-proposta-link:hover {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: rgba(37, 99, 235, 0.5);
+  transform: translateY(-1px);
 }
 
 .modal-footer-actions {

@@ -201,7 +201,7 @@ async function carregarVagas() {
              <div id="menu-${vaga.id}" class="kebab-dropdown">
                <button class="dropdown-item view-btn" data-id="${vaga.id}"><i class="fa-regular fa-eye"></i> Ver Detalhes</button>
                <button class="dropdown-item edit-btn" data-id="${vaga.id}"><i class="fa-regular fa-pen-to-square"></i> Editar</button>
-               <button class="dropdown-item delete-btn" data-id="${vaga.id}"><i class="fa-regular fa-trash-can"></i> Eliminar</button>
+               <button class="dropdown-item delete-btn" data-id="${vaga.id}"><i class="fa-regular fa-trash-can"></i> Arquivar</button>
              </div>
            </div>
         </div>
@@ -382,7 +382,9 @@ function preencherModalDetalhes(vaga) {
         requisitos: document.getElementById('det-requisitos'),
         status: document.getElementById('det-status'),
         abertura: document.getElementById('det-abertura'),
-        encerramento: document.getElementById('det-encerramento')
+        encerramento: document.getElementById('det-encerramento'),
+        propostaSection: document.getElementById('det-proposta-section'),
+        propostaLink: document.getElementById('det-proposta-link')
     };
 
     // Preenche cada campo, verificando se o elemento existe antes de atribuir
@@ -401,6 +403,16 @@ function preencherModalDetalhes(vaga) {
         elementos.encerramento.textContent = vaga.data_encerramento
             ? formatarData(vaga.data_encerramento)
             : '';
+    }
+
+    // ── Proposta (documento Word) ─────────────────────────────────────
+    if (elementos.propostaSection && elementos.propostaLink) {
+        if (vaga.url_proposta) {
+            elementos.propostaSection.style.display = 'block';
+            elementos.propostaLink.href = vaga.url_proposta;
+        } else {
+            elementos.propostaSection.style.display = 'none';
+        }
     }
 }
 

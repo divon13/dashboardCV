@@ -96,25 +96,25 @@
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
         <input type="search" id="filtroVagas" class="vagas-search-input" placeholder="Pesquisar por título ou estado..." autocomplete="off" aria-label="Pesquisar vagas">
       </div>
-      <p class="vagas-toolbar-hint"><i class="fa-solid fa-circle-info"></i> Clique nos ⋮ de cada card para editar, ver detalhes ou eliminar.</p>
+      <p class="vagas-toolbar-hint"><i class="fa-solid fa-circle-info"></i> Clique nos ⋮ de cada card para editar, ver detalhes ou arquivar.</p>
     </div>
 
     <!-- ── Modal de Confirmação de Eliminação ─────────────────────────── -->
-    <!-- Aberto pelo botão "Eliminar" no menu kebab de um card de vaga.   -->
-    <!-- O título da vaga a eliminar é mostrado em #deleteVagaTitulo.     -->
-    <!-- Ao confirmar, eliminarVaga() em vagas.js é chamado.              -->
+    <!-- Aberto pelo botão "Arquivar" no menu kebab de um card de vaga.   -->
+    <!-- O título da vaga a arquivar é mostrado em #deleteVagaTitulo.     -->
+    <!-- Ao confirmar, arquivarVaga() em vagas.js é chamado.              -->
     <div id="confirmDeleteModal" class="modal modal-confirm" style="display:none;">
       <div class="modal-confirm-card modal-confirm-card--danger">
         <button type="button" class="close modal-confirm__close" id="fecharConfirmDelete" aria-label="Fechar">&times;</button>
         <div class="modal-confirm__icon" aria-hidden="true">
           <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-        <h2 class="modal-confirm__title">Eliminar vaga?</h2>
-        <p class="modal-confirm__text">Esta ação não pode ser desfeita. A posição deixa de aparecer na lista de vagas ativas.</p>
+        <h2 class="modal-confirm__title">Arquivar vaga?</h2>
+        <p class="modal-confirm__text">A posição deixa de aparecer na lista de vagas ativas e passa para o arquivo.</p>
         <p id="deleteVagaTitulo" class="modal-confirm__highlight"></p>
         <div class="modal-confirm__actions">
           <button type="button" id="cancelarDeleteBtn" class="btn-cancel">Cancelar</button>
-          <button type="button" id="confirmarDeleteBtn" class="btn-submit btn-submit--danger">Apagar</button>
+          <button type="button" id="confirmarDeleteBtn" class="btn-submit btn-submit--danger">Arquivar</button>
         </div>
       </div>
     </div>
@@ -217,6 +217,14 @@
           <div class="det-vaga-section">
             <h3 class="det-vaga-h"><i class="fa-solid fa-list-check"></i> Requisitos</h3>
             <div id="det-requisitos" class="det-vaga-prose"></div>
+          </div>
+          <div class="det-vaga-section" id="det-proposta-section" style="display:none;">
+            <h3 class="det-vaga-h"><i class="fa-solid fa-file-word"></i> Proposta</h3>
+            <div class="det-vaga-prose-container">
+              <a id="det-proposta-link" href="#" target="_blank" class="det-vaga-proposta-link">
+                <i class="fa-solid fa-download"></i> Baixar proposta
+              </a>
+            </div>
           </div>
         </div>
         <div class="modal-footer-actions">

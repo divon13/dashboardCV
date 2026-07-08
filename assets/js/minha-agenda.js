@@ -345,9 +345,34 @@ function openMinhaAgendaDetalheModal(i) {
   modal.style.display = 'flex';
 }
 
+function confirmarInicioAntecipadoMinhaAgenda(i) {
+  if (!i || !i.Data) return true;
+
+  const scheduledTime = new Date(i.Data);
+  if (Number.isNaN(scheduledTime.getTime())) return true;
+
+  const currentTime = new Date();
+  const hoursDiff = (scheduledTime - currentTime) / (1000 * 60 * 60);
+
+  if (hoursDiff <= 2) return true;
+
+  const hoursUntil = Math.floor(hoursDiff);
+  const minutesUntil = Math.floor((hoursDiff - hoursUntil) * 60);
+  const dataFormatada = typeof formatarData === 'function'
+    ? formatarData(i.Data)
+    : scheduledTime.toLocaleString();
+
+  return confirm(
+    `AVISO: Esta entrevista esta agendada para ${dataFormatada}.\n\n` +
+    `Faltam aproximadamente ${hoursUntil} horas e ${minutesUntil} minutos ate a hora marcada.\n\n` +
+    'Tem a certeza que deseja comecar a entrevista agora?'
+  );
+}
+
 function openMinhaAgendaConcluirModal(i) {
   const modal = document.getElementById('maConcluirModal');
   if (!modal) return;
+  if (!confirmarInicioAntecipadoMinhaAgenda(i)) return;
 
   const cand = Array.isArray(i.candidatos) ? i.candidatos[0] : i.candidatos;
   const vaga = Array.isArray(i.Vagas) ? i.Vagas[0] : i.Vagas;

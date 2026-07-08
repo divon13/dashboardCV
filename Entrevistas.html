@@ -296,12 +296,12 @@
       <div class="modal-confirm__icon" aria-hidden="true">
         <i class="fa-solid fa-calendar-xmark"></i>
       </div>
-      <h2 class="modal-confirm__title">Eliminar entrevista?</h2>
-      <p class="modal-confirm__text">Esta ação não pode ser desfeita.</p>
+      <h2 class="modal-confirm__title">Cancelar entrevista?</h2>
+      <p class="modal-confirm__text">Esta ação não pode ser desfeita. O histórico da entrevista será perdido.</p>
       <input type="hidden" id="idEntrevistaDelete">
       <div class="modal-confirm__actions">
-        <button type="button" class="btn-cancel" id="cancelarDeleteInterview">Cancelar</button>
-        <button type="button" class="btn-submit btn-submit--danger" id="confirmarDeleteInterview">Eliminar</button>
+        <button type="button" id="cancelarDeleteInterview" class="btn-cancel">Voltar</button>
+        <button type="button" class="btn-submit btn-submit--danger" id="confirmarDeleteInterview">Cancelar</button>
       </div>
     </div>
   </div>
@@ -390,7 +390,7 @@
                 <select id="decisaoFinal" class="filter-select form-select-full" required>
                   <option value="">Selecione uma decisão...</option>
                   <option value="Passar">✅ Passar de fase (Entrevista feita no pipeline)</option>
-                  <option value="Reprovar">❌ Reprovar (Eliminar candidato e currículo)</option>
+                  <option value="Reprovar">❌ Reprovar (Retirar candidato e currículo)</option>
                 </select>
               </div>
             </div>
